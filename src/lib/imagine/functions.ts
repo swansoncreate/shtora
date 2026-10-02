@@ -72,9 +72,10 @@ export async function runImageEdit(
   prompt?: string,
   extra?: string | string[],
   mode: "identity" | "compose" = "identity",
+  aspectRatio?: string,
 ) {
   if (imagineCooling()) return { ok: false as const, error: imagineRateMessage() };
-  return enqueue(() => runImageEditOnce(imageDataUrl, prompt, extra, mode));
+  return enqueue(() => runImageEditOnce(imageDataUrl, prompt, extra, mode, aspectRatio));
 }
 
 async function runImageEditOnce(
@@ -82,6 +83,7 @@ async function runImageEditOnce(
   prompt?: string,
   extra?: string | string[],
   mode: "identity" | "compose" = "identity",
+  aspectRatio?: string,
 ) {
   if (imagineCooling()) return { ok: false as const, error: imagineRateMessage() };
   const apiKey = typeof process === "undefined" ? "" : process.env.XAI_API_KEY;
@@ -112,7 +114,7 @@ async function runImageEditOnce(
         ? `${bodyPrompt} <IMAGE_1> same face.`
         : bodyPrompt;
 
-  const aspect = /1:1|1080x1080/.test(bodyPrompt) ? "1:1" : "9:16";
+  const aspect = aspectRatio === "1:1" ? "1:1" : "9:16";
   const payloads: Array<Record<string, unknown>> = [];
   if (refs.length > 1) {
     payloads.push({

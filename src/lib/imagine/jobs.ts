@@ -174,7 +174,7 @@ export async function runStill(job: StillJob) {
     job.kind === "full" ||
     (/сзад|задом|со спин|from behind|нагн|по(пу|пку) лучше/.test(asked) && !/сиськ|грудь/.test(asked)) ||
     /боком|сбоку/.test(asked);
-  const pic = await runImageEdit(job.source, prompt, extras, mode);
+  const pic = await runImageEdit(job.source, prompt, extras, mode, job.kind === "feed" ? "1:1" : undefined);
   if (pic.ok) return { ok: true as const, url: pic.url, prompt };
   if (job.kind === "feed") return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
   if (cam) {
