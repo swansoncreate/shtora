@@ -42,6 +42,28 @@ export function SettingsSheet({
   const [clearing, setClearing] = useState(false);
   const [chatDump, setChatDump] = useState("");
   const [tab, setTab] = useState<SettingsTab>("insta");
+  const [apifyDraft, setApifyDraft] = useState("");
+  const [appKeyDraft, setAppKeyDraft] = useState("");
+  const [appSecretDraft, setAppSecretDraft] = useState("");
+  const [chatKeyDraft, setChatKeyDraft] = useState("");
+  const [secretFlags, setSecretFlags] = useState({ hiker: false, tikhub: false, apify: false, dropbox: false });
+
+  async function saveSecrets(partial: Record<string, string>) {
+    const body = Object.fromEntries(Object.entries(partial).filter(([, value]) => value.trim()));
+    if (!Object.keys(body).length) return;
+    const res = await apiFetch("/api/tokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const flags = (await res.json().catch(() => null)) as typeof secretFlags | null;
+    if (!res.ok || !flags) throw new Error("Не удалось сохранить");
+    setSecretFlags(flags);
+    setApifyDraft("");
+    setAppSecretDraft("");
+    setChatKeyDraft("");
+    onPatch({ apifyToken: "", dropboxAppSecret: "", chatApiKey: "" });
+  }
 
   useEffect(() => {
     if (!open) {
@@ -97,8 +119,8 @@ export function SettingsSheet({
   }
 
   function connectDropboxForever() {
-    const key = settings.dropboxAppKey.trim();
-    const secret = settings.dropboxAppSecret.trim();
+    const key = appKeyDraft.trim() || settings.dropboxAppKey.trim();
+    const secret = appSecretDraft.trim() || settings.dropboxAppSecret.trim();
     if (!key || !secret) {
       toast.error("Сначала вставь App key и App secret");
       return;
@@ -106,6 +128,8 @@ export function SettingsSheet({
     const redirect = dropboxRedirectUri();
     sessionStorage.setItem("shtora-dbx-key", key);
     sessionStorage.setItem("shtora-dbx-secret", secret);
+    void saveSecrets({ dropboxAppKey: key, dropboxAppSecret: secret }).catch(() => undefined);
+    setAppSecretDraft("");
     window.location.href = dropboxAuthorizeUrl(key, redirect);
   }
 
@@ -219,12 +243,21 @@ export function SettingsSheet({
                       </label>
                       <Input
                         id="apify-token"
-                        value={settings.apifyToken}
-                        onChange={(e) => onPatch({ apifyToken: e.target.value })}
+                        value={apifyDraft}
+                        onChange={(e) => setApifyDraft(e.target.value)}
                         autoComplete="off"
                         spellCheck={false}
-                        placeholder="apify_api_…"
+                        type="password"
+                        placeholder={secretFlags.apify || settings.apifyToken ? "задан, не показываем" : "apify_api_…"}
                       />
+                      <Button
+                        type="button"
+                        variant="subtle"
+                        className="mt-3 h-11 rounded-lg"
+                        onClick={() => void saveSecrets({ apifyToken: apifyDraft }).then(() => toast.success("Сохранено")).catch((err) => toast.error(err instanceof Error ? err.message : "Не удалось сохранить"))}
+                      >
+                        Сохранить
+                      </Button>
                     </Section>
                     <Section title="Кэш">
                       <p className="text-xs leading-relaxed text-subtle">Посты на диске сервера. Очистка снова потратит Apify.</p>
@@ -257,23 +290,23 @@ export function SettingsSheet({
                       </label>
                       <Input
                         id="dropbox-app-key"
-                        value={settings.dropboxAppKey}
-                        onChange={(e) => onPatch({ dropboxAppKey: e.target.value })}
+                        value={appKeyDraft}
+                        onChange={(e) => setAppKeyDraft(e.target.value)}
                         autoComplete="off"
                         spellCheck={false}
-                        placeholder="из Settings приложения Dropbox"
+                        placeholder={settings.dropboxAppKey ? "задан, вставь заново для OAuth" : "из Settings приложения Dropbox"}
                       />
                       <label className="mb-2 mt-3 block text-sm font-medium text-fg" htmlFor="dropbox-app-secret">
                         App secret
                       </label>
                       <Input
                         id="dropbox-app-secret"
-                        value={settings.dropboxAppSecret}
-                        onChange={(e) => onPatch({ dropboxAppSecret: e.target.value })}
+                        value={appSecretDraft}
+                        onChange={(e) => setAppSecretDraft(e.target.value)}
                         autoComplete="off"
                         spellCheck={false}
                         type="password"
-                        placeholder="Show рядом с App secret"
+                        placeholder={secretFlags.dropbox || settings.dropboxAppSecret ? "задан, не показываем" : "Show рядом с App secret"}
                       />
                       <p className="mt-3 text-xs leading-relaxed text-subtle">Redirect URI — в Dropbox App → OAuth 2:</p>
                       <p className="mt-1 break-all rounded-lg bg-elevated px-3 py-2 font-mono text-[11px] text-muted">
@@ -370,11 +403,15 @@ export function SettingsSheet({
                         <Input
                           id="openrouter-key"
                           type="password"
-                          value={settings.chatApiKey}
-                          onChange={(e) => onPatch({ chatApiKey: e.target.value })}
+                          value={chatKeyDraft}
+                          onChange={(e) => setChatKeyDraft(e.target.value)}
+                          onBlur={() => {
+                            if (!chatKeyDraft.trim()) return;
+                            void saveSecrets({ chatApiKey: chatKeyDraft }).catch(() => undefined);
+                          }}
                           autoComplete="off"
                           spellCheck={false}
-                          placeholder="sk-or-v1-…"
+                          placeholder={settings.chatApiKey ? "задан, не показываем" : "sk-or-v1-…"}
                         />
                         <label className="mb-2 mt-4 block text-sm font-medium text-fg" htmlFor="chat-model">
                           Модель

@@ -38,22 +38,11 @@ export function readStudioLocal(): StudioItem[] {
   }
 }
 
-export function writeStudioLocal(items: StudioItem[]) {
-  const slim = items
-    .filter((item) => item.url && !item.url.startsWith("blob:") && !item.url.startsWith("data:"))
-    .slice(0, 80);
-  if (!slim.length) {
-    const prev = readStudioLocal();
-    if (prev.length) return;
-  }
+export function clearStudioLocal() {
   try {
-    localStorage.setItem(KEY, JSON.stringify(slim.length ? slim : items.slice(0, 24)));
+    localStorage.removeItem(KEY);
   } catch {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(slim.slice(0, 16)));
-    } catch {
-      /* full */
-    }
+    /* ignore */
   }
 }
 

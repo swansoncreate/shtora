@@ -209,24 +209,27 @@ export const imagineVariation = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    const { runningOnVps, proxyOr } = await import("@/lib/server/remote");
+    if (runningOnVps()) {
+      return { ok: false as const, error: "Imagine считается на публикации Grok, не на VPS." };
+    }
     const extras = data.extraImages?.length ? data.extraImages : data.identityDataUrl;
     const mode = data.mode || (Array.isArray(extras) ? "compose" : "identity");
     const out = await runImageEdit(data.imageDataUrl, data.prompt, extras, mode);
     if (!out.ok) return out;
-    const { runningOnVps } = await import("@/lib/server/remote");
-    if (runningOnVps()) {
-      const { assertVpsServerFn } = await import("@/lib/server/rpc-guard.server");
-      assertVpsServerFn();
-    }
-    try {
-      const { persistRemoteImage } = await import("./persist.server");
-      const stored = await persistRemoteImage(out.url);
-      if (stored) return { ok: true as const, url: stored };
-    } catch {
-      /* keep remote */
-    }
-    const embedded = await embedImage(out.url);
-    return { ok: true as const, url: embedded || out.url };
+    const { persistRemoteImage } = await import("./persist.server");
+    const stored = await persistRemoteImage(out.url);
+    const url = browserMediaUrl(stored);
+    if (!url) return { ok: false as const, error: "Не удалось положить файл на VPS." };
+    const item = await proxyOr(
+      "studio.save",
+      { url, kind: "image" as const, prompt: data.prompt, from: "imagine" },
+      async () => {
+        const { saveStudioItem } = await import("./studio.server");
+        return saveStudioItem({ url, kind: "image", prompt: data.prompt, from: "imagine" });
+      },
+    );
+    return { ok: true as const, url: browserMediaUrl(item?.url) || url, id: item?.id };
   });
 
 export const listStudio = createServerFn({ method: "POST" }).handler(async () => {
@@ -266,6 +269,23 @@ export const dropStudio = createServerFn({ method: "POST" })
       return { ok: true as const };
     });
   });
+
+function browserMediaUrl(stored: string | undefined) {
+  const raw = (stored || "").trim();
+  if (!raw || raw.startsWith("data:") || raw.startsWith("blob:")) return "";
+  if (raw.startsWith("/api/media?id=") || raw.startsWith("/api/chat-media?id=")) return raw;
+  const named = raw.match(/\/chat-media\/([^/?#]+)/);
+  if (named?.[1]) return `/api/chat-media?id=${named[1]}`;
+  try {
+    const parsed = new URL(raw, "http://shtora.local");
+    const id = parsed.searchParams.get("id");
+    if (id && parsed.pathname.includes("/api/media")) return `/api/media?id=${encodeURIComponent(id)}`;
+    if (id && parsed.pathname.includes("chat-media")) return `/api/chat-media?id=${encodeURIComponent(id)}`;
+  } catch {
+    /* not a url */
+  }
+  return raw.length > 240 ? "" : raw;
+}
 
 function trimDataUrl(url: string) {
   const clean = url.trim();

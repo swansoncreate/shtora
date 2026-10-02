@@ -1,36 +1,18 @@
+const ALLOWED_HOSTS = [
+  "cdninstagram.com",
+  "fbcdn.net",
+  "instagram.com",
+  "dropboxusercontent.com",
+  "dropbox.com",
+  "hikerapi.com",
+  "apifyusercontent.com",
+  "fal.media",
+  "x.ai",
+] as const;
+
 export function isAllowedMediaHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
-  return (
-    h === "instagram.com" ||
-    h.endsWith(".instagram.com") ||
-    h === "cdninstagram.com" ||
-    h.endsWith(".cdninstagram.com") ||
-    h.endsWith(".fbcdn.net") ||
-    h.includes(".fbcdn.") ||
-    h.endsWith(".facebook.com") ||
-    h.endsWith(".fbsbx.com") ||
-    h.endsWith(".apify.com") ||
-    h.endsWith(".apifyusercontent.com") ||
-    h.endsWith(".dropbox.com") ||
-    h.endsWith(".dropboxusercontent.com") ||
-    h === "dropbox.com" ||
-    h === "hikerapi.com" ||
-    h.endsWith(".hikerapi.com") ||
-    h === "instagrapi.com" ||
-    h.endsWith(".instagrapi.com") ||
-    h === "x.ai" ||
-    h.endsWith(".x.ai") ||
-    h === "grok.com" ||
-    h.endsWith(".grok.com") ||
-    h === "fal.ai" ||
-    h.endsWith(".fal.ai") ||
-    h === "fal.media" ||
-    h.endsWith(".fal.media") ||
-    h === "fal.run" ||
-    h.endsWith(".fal.run") ||
-    h.includes("scontent") ||
-    /^scontent[a-z0-9.-]*\.(cdninstagram\.com|xx\.fbcdn\.net|fbcdn\.net)$/.test(h)
-  );
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  return ALLOWED_HOSTS.some((suffix) => h === suffix || h.endsWith(`.${suffix}`));
 }
 
 export function isInstagramHost(hostname: string): boolean {
