@@ -127,7 +127,34 @@ function completionHtml(message: PopupMessage): string {
   // JSON is safe inside a <script type="application/json"> block; the inline
   // script only reads it. Avoids escaping pitfalls of embedding in JS source.
   const payload = JSON.stringify(message).replace(/</g, "\\u003c");
-  return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>Signing in…</title>\n<style>\n  html,body{margin:0;min-height:100%;background:#0b0b0c;color:#a1a1aa;\n    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}\n  main{min-height:100vh;display:grid;place-items:center;padding:1.5rem;text-align:center}\n</style>\n</head>\n<body>\n<main><p>Signing you in…</p></main>\n<script type="application/json" id="grok-auth-popup-msg">${payload}</script>\n<script>\n(function () {\n  var el = document.getElementById("grok-auth-popup-msg");\n  var msg = { source: "grok-auth-popup", token: null };\n  try { if (el && el.textContent) msg = JSON.parse(el.textContent); } catch (e) {}\n  try {\n    if (window.opener) window.opener.postMessage(msg, window.location.origin);\n  } catch (e) {}\n  try { window.close(); } catch (e) {}\n})();\n</script>\n</body>\n</html>`;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Signing in…</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#0b0b0c;color:#a1a1aa;
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  main{min-height:100vh;display:grid;place-items:center;padding:1.5rem;text-align:center}
+</style>
+</head>
+<body>
+<main><p>Signing you in…</p></main>
+<script type="application/json" id="grok-auth-popup-msg">${payload}</script>
+<script>
+(function () {
+  var el = document.getElementById("grok-auth-popup-msg");
+  var msg = { source: "grok-auth-popup", token: null };
+  try { if (el && el.textContent) msg = JSON.parse(el.textContent); } catch (e) {}
+  try {
+    if (window.opener) window.opener.postMessage(msg, window.location.origin);
+  } catch (e) {}
+  try { window.close(); } catch (e) {}
+})();
+</script>
+</body>
+</html>`;
 }
 
 /** Read a single cookie value from the request (handles `=` inside values). */
