@@ -8,10 +8,10 @@ import { fetchDropboxBlob } from "@/lib/dropbox/client-file";
 import { uploadMediaJob } from "@/lib/dropbox/client-upload";
 import { destFor, parentDropboxPath, personRoot, safeName, sharedFolder } from "@/lib/dropbox/paths";
 import { liveDropboxToken } from "@/lib/dropbox/token";
-import { dropStudioMedia, readStudioMedia, stashStudioMedia } from "@/lib/imagine/studio-media";
+import { dropStudioMedia, stashStudioMedia } from "@/lib/imagine/studio-media";
 import { dropStudio, imagineVariation, listStudio, saveStudio } from "@/lib/imagine/functions";
-import { mergeStudio, readStudioLocal, writeStudioLocal, type StudioItem } from "@/lib/imagine/studio";
-import { idbGetStudio, idbPutStudio, idbDropStudio } from "@/lib/shtora-idb";
+import { clearStudioLocal, mergeStudio, readStudioLocal, type StudioItem } from "@/lib/imagine/studio";
+import { idbDropStudio } from "@/lib/shtora-idb";
 import { pollImagineVideo, startImagineClip, startImagineVideo } from "@/lib/imagine/video";
 import { DEFAULT_VARIATION_PROMPT, PHONE_RAW } from "@/lib/imagine/prompt";
 import { apiUrl } from "@/lib/shtora-origin";
@@ -34,7 +34,7 @@ export function ImagineStudio({
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState<Job | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [results, setResults] = useState<Result[]>(() => readStudioLocal());
+  const [results, setResults] = useState<Result[]>([]);
   const [open, setOpen] = useState<Result | null>(null);
   const [liveSrc, setLiveSrc] = useState<Record<string, string>>({});
   const [posters, setPosters] = useState<Record<string, string>>({});
@@ -45,32 +45,15 @@ export function ImagineStudio({
   const localRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    writeStudioLocal(results);
-    if (results.length) void idbPutStudio(results).catch(() => undefined);
-  }, [results]);
-
-  useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const disk = await idbGetStudio().catch(() => []);
       const remote = await listStudio().catch(() => []);
-      const list = Array.isArray(remote) && remote.length ? remote : mergeStudio(readStudioLocal(), disk);
-      const merged = list.map((item) => ({ ...item, url: item.url }));
-      const src: Record<string, string> = {};
-      for (const item of merged) {
-        if (/^https?:\/\//.test(item.url) || item.url.includes("/chat-media")) continue;
-        const url = await readStudioMedia(item.id, item.url);
-        if (url) src[item.id] = url;
-      }
+      const list = Array.isArray(remote) ? remote : [];
+      const local = readStudioLocal();
+      const remoteIds = new Set(list.map((item) => item.id));
+      if (local.length && local.every((item) => remoteIds.has(item.id))) clearStudioLocal();
       if (cancelled) return;
-      setResults(merged);
-      setLiveSrc((prev) => {
-        const next = { ...prev };
-        for (const [id, url] of Object.entries(src)) {
-          if (url) next[id] = url;
-        }
-        return next;
-      });
+      setResults(list);
     })();
     return () => {
       cancelled = true;
