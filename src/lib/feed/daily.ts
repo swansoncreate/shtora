@@ -232,12 +232,6 @@ function stampFor(slot: FeedSlot) {
   const t = d.getTime();
   return t > Date.now() ? Date.now() - 60_000 : t;
 }
-  const d = new Date();
-  if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
-  else d.setHours(18, 12 + (hash(String(d.getDate() + 3)) % 50), 0, 0);
-  const t = d.getTime();
-  return t > Date.now() ? Date.now() - 60_000 : t;
-}
 
 export function needsToday(state: DailyState, favorites: string[]) {
   const due = dueSlots();
