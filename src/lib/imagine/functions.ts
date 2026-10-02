@@ -112,20 +112,21 @@ async function runImageEditOnce(
         ? `${bodyPrompt} <IMAGE_1> same face.`
         : bodyPrompt;
 
+  const aspect = /4:5|1080x1350/.test(bodyPrompt) ? "4:5" : "9:16";
   const payloads: Array<Record<string, unknown>> = [];
   if (refs.length > 1) {
     payloads.push({
       model: "grok-imagine-image-2.0",
       prompt: body,
       images: refs.map((url) => ({ url, type: "image_url" as const })),
-      aspect_ratio: "9:16",
+      aspect_ratio: aspect,
     });
   } else {
     payloads.push({
       model: "grok-imagine-image-2.0",
       prompt: bodyPrompt,
       image: { url: refs[0], type: "image_url" },
-      aspect_ratio: "9:16",
+      aspect_ratio: aspect,
     });
   }
 
