@@ -3,20 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/rpc")({
   server: {
     handlers: {
-      OPTIONS: async () =>
-        new Response(null, {
-          status: 204,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Shtora-Key",
-          },
-        }),
+      OPTIONS: async ({ request }) => {
+        const { corsHeaders } = await import("@/lib/server/remote");
+        return new Response(null, { status: 204, headers: corsHeaders(request, "GET, POST, OPTIONS") });
+      },
       POST: async ({ request }) => {
-        const { rpcKey } = await import("@/lib/server/remote");
-        if (request.headers.get("x-shtora-key") !== rpcKey()) {
-          return Response.json({ error: "no rpc key" }, { status: 401 });
-        }
+        const { assertRpc, withCors } = await import("@/lib/server/remote");
+        const denied = assertRpc(request);
+        if (denied) return withCors(denied, request, "GET, POST, OPTIONS");
         let body: { name?: string; data?: unknown } = {};
         try {
           body = (await request.json()) as { name?: string; data?: unknown };

@@ -15,10 +15,6 @@ export const Route = createFileRoute("/api/logs")({
       POST: async ({ request }) => {
         const { vpsOrLocal } = await import("@/lib/server/remote");
         return vpsOrLocal(request, async () => {
-          const { rpcKey } = await import("@/lib/server/remote");
-          if (request.headers.get("x-shtora-key") !== rpcKey()) {
-            return Response.json({ error: "no key" }, { status: 401 });
-          }
           let body: { area?: string; event?: string; extra?: Record<string, unknown> } = {};
           try {
             body = (await request.json()) as typeof body;

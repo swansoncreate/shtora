@@ -1,4 +1,3 @@
-import { VPS_ORIGIN } from "@/lib/shtora-origin";
 import { getShtoraSettings, patchShtoraSettings } from "@/lib/shtora-settings";
 import { refreshDropboxOauth } from "./functions";
 import { persistBackgroundPayload } from "./background";
@@ -60,5 +59,12 @@ export function dropboxAuthorizeUrl(appKey: string, redirectUri: string) {
 }
 
 export function dropboxRedirectUri() {
-  return `${VPS_ORIGIN}/dropbox-oauth`;
+  if (typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null") {
+    return `${window.location.origin}/dropbox-oauth`;
+  }
+  const origin =
+    (typeof process !== "undefined" &&
+      (process.env.SHTORA_PUBLIC_ORIGIN || process.env.SHTORA_FRONT_ORIGIN || process.env.SHTORA_VPS_ORIGIN)) ||
+    "";
+  return origin ? `${origin.replace(/\/$/, "")}/dropbox-oauth` : "/dropbox-oauth";
 }

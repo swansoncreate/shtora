@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { apiUrl, VPS_ORIGIN } from "@/lib/shtora-origin";
+import { apiUrl } from "@/lib/shtora-origin";
 import { isPlayableMediaUrl } from "@/lib/instagram/media-url";
 
 export function cn(...inputs: ClassValue[]) {
@@ -34,7 +34,10 @@ export function formatCount(n: number | null | undefined): string {
 export function mediaSrc(url: string | null | undefined, opts?: { proxy?: boolean }): string | undefined {
   if (!url) return undefined;
   if (url.startsWith("blob:") || url.startsWith("data:")) return url;
-  if (url.startsWith(VPS_ORIGIN) || /\/chat-media\//.test(url)) return apiUrl(url);
+  if (url.startsWith("/") || /\/chat-media\//.test(url) || /^https?:\/\//i.test(url)) {
+    const rewritten = apiUrl(url);
+    if (rewritten.startsWith("/api/") || rewritten.startsWith("/chat-media")) return rewritten;
+  }
   if (url.startsWith("/")) return apiUrl(url);
   try {
     const host = new URL(url).hostname.toLowerCase();
