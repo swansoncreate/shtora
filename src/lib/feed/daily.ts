@@ -232,7 +232,6 @@ function carouselCount(username: string, slot: FeedSlot) {
   if (slot === "morning") return roll === 0 ? 2 : 1;
   return roll === 0 ? 3 : roll === 1 ? 2 : 1;
 }
-
 function stampFor(slot: FeedSlot) {
   const d = new Date();
   if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
