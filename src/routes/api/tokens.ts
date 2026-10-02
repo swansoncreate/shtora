@@ -12,6 +12,7 @@ export const Route = createFileRoute("/api/tokens")({
             hiker: Boolean(config?.hikerToken && config.hikerToken.length > 8),
             tikhub: Boolean(config?.tikhubToken && config.tikhubToken.length > 8),
             apify: Boolean(config?.apifyToken),
+            dropbox: Boolean(config?.dropboxRefreshToken || config?.dropboxAppSecret),
           });
         });
       },
@@ -37,15 +38,24 @@ export const Route = createFileRoute("/api/tokens")({
           const hiker = String(body.hikerToken ?? "").trim();
           const tikhub = String(body.tikhubToken ?? "").trim();
           const apify = String(body.apifyToken ?? "").trim();
+          const dropboxKey = String(body.dropboxAppKey ?? "").trim();
+          const dropboxSecret = String(body.dropboxAppSecret ?? "").trim();
+          const dropboxRefresh = String(body.dropboxRefreshToken ?? "").trim();
+          const chatApiKey = String(body.chatApiKey ?? "").trim();
           if (hiker.length > 8) parsed.hikerToken = hiker;
           if (tikhub.length > 8) parsed.tikhubToken = tikhub;
           if (apify) parsed.apifyToken = apify;
+          if (dropboxKey) parsed.dropboxAppKey = dropboxKey;
+          if (dropboxSecret) parsed.dropboxAppSecret = dropboxSecret;
+          if (dropboxRefresh) parsed.dropboxRefreshToken = dropboxRefresh;
+          if (chatApiKey) parsed.chatApiKey = chatApiKey;
           parsed.updatedAt = new Date().toISOString();
           await writeFile(path, JSON.stringify(parsed), "utf8");
           return Response.json({
-            ok: true,
             hiker: Boolean(parsed.hikerToken && String(parsed.hikerToken).length > 8),
             tikhub: Boolean(parsed.tikhubToken && String(parsed.tikhubToken).length > 8),
+            apify: Boolean(parsed.apifyToken),
+            dropbox: Boolean(parsed.dropboxRefreshToken || parsed.dropboxAppSecret),
           });
         });
       },

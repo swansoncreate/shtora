@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const tokenField = z.string().min(8).max(8000);
+const tokenField = z.string().max(8000).optional();
+
+async function tokenOf(token: string | undefined) {
+  const { dropboxWithRefresh } = await import("./live.server");
+  return dropboxWithRefresh(token || "", async (live) => live);
+}
 
 async function via<T>(name: string, data: unknown, local: () => Promise<T>): Promise<T> {
   const { proxyOr } = await import("@/lib/server/remote");
@@ -13,7 +18,7 @@ export const checkDropbox = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.account", data, async () => {
       const { getDropboxAccount } = await import("./dropbox.server");
-      return getDropboxAccount(data.token);
+      return getDropboxAccount(await tokenOf(data.token));
     }),
   );
 
@@ -22,7 +27,7 @@ export const listFolders = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.folders", data, async () => {
       const { listDropboxFolders } = await import("./dropbox.server");
-      return listDropboxFolders(data.token, data.path ?? "");
+      return listDropboxFolders(await tokenOf(data.token), data.path ?? "");
     }),
   );
 
@@ -31,7 +36,7 @@ export const listEntries = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.entries", data, async () => {
       const { listDropboxEntries } = await import("./dropbox.server");
-      return listDropboxEntries(data.token, data.path ?? "/");
+      return listDropboxEntries(await tokenOf(data.token), data.path ?? "/");
     }),
   );
 
@@ -40,7 +45,7 @@ export const listFeedMedia = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.feed", data, async () => {
       const { listDropboxMediaDeep } = await import("./dropbox.server");
-      return { files: await listDropboxMediaDeep(data.token, data.path || "/", 80) };
+      return { files: await listDropboxMediaDeep(await tokenOf(data.token), data.path || "/", 80) };
     }),
   );
 
@@ -55,7 +60,7 @@ export const getThumbnails = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.thumbs", data, async () => {
       const { getDropboxThumbnails } = await import("./dropbox.server");
-      return getDropboxThumbnails(data.token, data.paths, data.size ?? "w256h256");
+      return getDropboxThumbnails(await tokenOf(data.token), data.paths, data.size ?? "w256h256");
     }),
   );
 
@@ -64,7 +69,7 @@ export const getTemporaryLink = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.link", data, async () => {
       const { getDropboxTemporaryLink } = await import("./dropbox.server");
-      return getDropboxTemporaryLink(data.token, data.path);
+      return getDropboxTemporaryLink(await tokenOf(data.token), data.path);
     }),
   );
 
@@ -73,7 +78,7 @@ export const ensureFolder = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.ensure", data, async () => {
       const { ensureDropboxFolder } = await import("./dropbox.server");
-      return { path: await ensureDropboxFolder(data.token, data.path) };
+      return { path: await ensureDropboxFolder(await tokenOf(data.token), data.path) };
     }),
   );
 
@@ -88,7 +93,7 @@ export const uploadFile = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.upload", data, async () => {
       const { uploadMediaToDropbox } = await import("./dropbox.server");
-      return uploadMediaToDropbox({ token: data.token, destPath: data.destPath, mediaUrl: data.mediaUrl });
+      return uploadMediaToDropbox({ token: await tokenOf(data.token), destPath: data.destPath, mediaUrl: data.mediaUrl });
     }),
   );
 
@@ -128,7 +133,7 @@ export const deleteDropboxFile = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.delete", data, async () => {
       const { deleteDropboxPath } = await import("./dropbox.server");
-      return deleteDropboxPath(data.token, data.path);
+      return deleteDropboxPath(await tokenOf(data.token), data.path);
     }),
   );
 
@@ -143,7 +148,7 @@ export const moveDropboxFile = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.move", data, async () => {
       const { moveDropboxPath } = await import("./dropbox.server");
-      return moveDropboxPath(data.token, data.from, data.toFolder);
+      return moveDropboxPath(await tokenOf(data.token), data.from, data.toFolder);
     }),
   );
 
@@ -152,7 +157,7 @@ export const deleteDropboxMany = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.deleteMany", data, async () => {
       const { deleteDropboxPaths } = await import("./dropbox.server");
-      return deleteDropboxPaths(data.token, data.paths);
+      return deleteDropboxPaths(await tokenOf(data.token), data.paths);
     }),
   );
 
@@ -167,7 +172,7 @@ export const moveDropboxMany = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.moveMany", data, async () => {
       const { moveDropboxPaths } = await import("./dropbox.server");
-      return moveDropboxPaths(data.token, data.from, data.toFolder);
+      return moveDropboxPaths(await tokenOf(data.token), data.from, data.toFolder);
     }),
   );
 
@@ -176,7 +181,7 @@ export const getShtoraMarks = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.photoMarks", data, async () => {
       const { readShtoraPhotoMarks } = await import("./dropbox.server");
-      return readShtoraPhotoMarks(data.token, data.paths);
+      return readShtoraPhotoMarks(await tokenOf(data.token), data.paths);
     }),
   );
 
@@ -191,6 +196,6 @@ export const setShtoraMarks = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     via("dbx.photoMarkSet", data, async () => {
       const { setShtoraPhotoMarks } = await import("./dropbox.server");
-      return setShtoraPhotoMarks(data.token, data.paths, data.tagged);
+      return setShtoraPhotoMarks(await tokenOf(data.token), data.paths, data.tagged);
     }),
   );
