@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0e0d0c;
+  --color-surface: #171614;
+  --color-elevated: #1f1d1b;
+  --color-fg: #f4efe6;
+  --color-muted: #9c958a;
+  --color-subtle: #6f6a62;
+  --color-accent: #d7cfc3;
+  --color-accent-fg: #0e0d0c;
+  --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
+  --color-border-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
+  --color-danger: #c45c4a;
+  --color-ring: #d7cfc3;
+
+  --font-display: "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+
+  --shadow-border: 0 0 0 1px rgba(244, 239, 230, 0.16);
+  --shadow-border-hover: 0 0 0 1px rgba(244, 239, 230, 0.28);
+
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-quick: 150ms;
+  --motion-fast: 250ms;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    overscroll-behavior-y: none;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 40%, transparent);
+    color: var(--color-fg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.shtora-range {
+  appearance: none;
+  height: 1.5rem;
+  background: transparent;
+}
+.shtora-range::-webkit-slider-runnable-track {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-fg) 18%, transparent);
+}
+.shtora-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: -0.45rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+.shtora-range::-moz-range-track {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-fg) 18%, transparent);
+}
+.shtora-range::-moz-range-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.curtain-wash {
+  background-image:
+    linear-gradient(
+      90deg,
+      #0e0d0c 0%,
+      #1c1916 9%,
+      #2a2520 16%,
+      #141210 24%,
+      #24201c 32%,
+      #0e0d0c 40%,
+      #1a1714 48%,
+      #3a342c 54%,
+      #161412 62%,
+      #221e1a 72%,
+      #121110 82%,
+      #1f1b18 92%,
+      #0e0d0c 100%
+    );
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
