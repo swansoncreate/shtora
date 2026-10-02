@@ -120,14 +120,8 @@ function Home() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      {offline ? (
-        <p className="border-b border-border px-4 py-2 text-center text-xs text-muted">
-          Офлайн — посты, сторис и чаты из кэша
-        </p>
-      ) : apiOk === false ? (
-        <p className="border-b border-border px-4 py-2 text-center text-xs text-muted">
-          Сервер не отвечает — данные не подтянуть
-        </p>
+      {offline || apiOk === false ? (
+        <p className="border-b border-border px-4 py-2 text-center text-xs text-muted">Сервер не отвечает</p>
       ) : null}
       <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 pb-3 sm:px-6">
