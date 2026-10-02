@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { getCachedProfile, getCachedStories, liveStories, notifyCache, subscribeCache } from "./cache";
 import { canonHighlightId } from "./normalize";
 import type { IgProfile, IgStories } from "./types";
@@ -131,14 +133,82 @@ export function markAccountSeen(
   writeSeen(map);
 }
 
+const storyId = z.string().min(1).max(80);
+
+const noteStorySeen = createServerFn({ method: "POST" })
+  .validator(z.object({ username: z.string().min(1).max(40), ids: z.array(storyId).min(1).max(40) }))
+  .handler(async ({ data }) => {
+    const { proxyOr, runningOnVps } = await import("@/lib/server/remote");
+    return proxyOr("story.seen", data, async () => {
+      if (!runningOnVps()) throw new Error("story.seen only on vps");
+      const { recordStorySeen } = await import("./seen.server");
+      return recordStorySeen(data.username, data.ids);
+    });
+  });
+
+const listStorySeen = createServerFn({ method: "POST" })
+  .validator(z.object({ username: z.string().min(1).max(40).optional() }))
+  .handler(async ({ data }) => {
+    const { proxyOr, runningOnVps } = await import("@/lib/server/remote");
+    return proxyOr("story.seenList", data, async () => {
+      if (!runningOnVps()) throw new Error("story.seenList only on vps");
+      const { listStorySeen: readSeenRows } = await import("./seen.server");
+      return readSeenRows(data.username);
+    });
+  });
+
+function bareStoryId(id: string) {
+  return id.trim().replace(/^s:/, "");
+}
+
+function pushStorySeen(username: string, ids: string[]) {
+  const clean = [...new Set(ids.map(bareStoryId).filter((id) => id && id.length <= 80 && !/[\r\n]/.test(id)))].slice(0, 40);
+  if (!username || !clean.length) return;
+  void noteStorySeen({ data: { username, ids: clean } }).catch(() => undefined);
+}
+
 export function markStoriesViewed(username: string, ids: string[]) {
   const clean = username.trim().toLowerCase();
-  const nextIds = ids.map((id) => String(id || "").trim()).filter(Boolean);
+  const nextIds = ids.map(bareStoryId).filter((id) => id && id.length <= 80 && !/[\r\n]/.test(id));
   if (!clean || !nextIds.length) return;
   const map = readStorySeen();
   const keep = seenStoryIds(map[clean]);
+  const fresh = nextIds.filter((id) => !keep.includes(id));
   map[clean] = [...new Set([...keep, ...nextIds])].slice(-240);
   writeStorySeen(map);
+  if (fresh.length) pushStorySeen(clean, fresh);
+}
+
+let storyHydrate: Promise<void> | null = null;
+
+export function hydrateStorySeen() {
+  if (typeof window === "undefined") return;
+  if (!storyHydrate) storyHydrate = pullStorySeen().catch(() => {
+    storyHydrate = null;
+  });
+}
+
+async function pullStorySeen() {
+  const remote = await listStorySeen({ data: {} });
+  const rows = Array.isArray(remote?.rows) ? remote.rows : [];
+  const map = readStorySeen();
+  const remoteByUser = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const user = String(row.username || "").trim().toLowerCase();
+    const id = bareStoryId(String(row.id || ""));
+    if (!user || !id) continue;
+    const bag = remoteByUser.get(user) ?? new Set<string>();
+    bag.add(id);
+    remoteByUser.set(user, bag);
+    const keep = seenStoryIds(map[user]);
+    if (!keep.includes(id)) map[user] = [...keep, id].slice(-240);
+  }
+  writeStorySeen(map);
+  for (const [user, keep] of Object.entries(map)) {
+    const known = remoteByUser.get(user) ?? new Set<string>();
+    const missing = seenStoryIds(keep).filter((id) => !known.has(id));
+    if (missing.length) pushStorySeen(user, missing.slice(0, 40));
+  }
 }
 
 export function storiesUnseen(username: string) {
@@ -195,6 +265,7 @@ export function clearSeen() {
 export function useUnseenTick() {
   const [tick, setTick] = useState(0);
   useEffect(() => {
+    hydrateStorySeen();
     return subscribeCache(() => setTick((n) => n + 1));
   }, []);
   return tick;
