@@ -37,7 +37,8 @@ function safeEqual(got: string, expected: string) {
   const bb = Buffer.alloc(len);
   a.copy(aa);
   b.copy(bb);
-  return a.length === b.length && timingSafeEqual(aa, bb);
+  const sameBytes = timingSafeEqual(aa, bb);
+  return sameBytes && a.length === b.length;
 }
 
 /** null means the request may proceed. No env key is 503, a mismatch is 401. */

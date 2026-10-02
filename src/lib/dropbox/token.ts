@@ -62,9 +62,5 @@ export function dropboxRedirectUri() {
   if (typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null") {
     return `${window.location.origin}/dropbox-oauth`;
   }
-  const origin =
-    (typeof process !== "undefined" &&
-      (process.env.SHTORA_PUBLIC_ORIGIN || process.env.SHTORA_FRONT_ORIGIN || process.env.SHTORA_VPS_ORIGIN)) ||
-    "";
-  return origin ? `${origin.replace(/\/$/, "")}/dropbox-oauth` : "/dropbox-oauth";
+  return "/dropbox-oauth";
 }
