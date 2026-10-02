@@ -47,7 +47,6 @@ export function cardAsPost(card: FeedCard): IgPost {
     slides,
   };
 }
-}
 
 const SKIP_FOLDER = new Set(["posts", "stories", "highlights", "imagine", "generated", "variations", "shtora"]);
 
