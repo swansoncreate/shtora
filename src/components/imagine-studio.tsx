@@ -8,7 +8,7 @@ import { fetchDropboxBlob } from "@/lib/dropbox/client-file";
 import { uploadMediaJob } from "@/lib/dropbox/client-upload";
 import { destFor, parentDropboxPath, personRoot, safeName, sharedFolder } from "@/lib/dropbox/paths";
 import { liveDropboxToken } from "@/lib/dropbox/token";
-import { dropStudioMedia, readStudioMedia, stashStudioMedia } from "@/lib/imagine/studio-media";
+import { dropStudioMedia, stashStudioMedia } from "@/lib/imagine/studio-media";
 import { dropStudio, imagineVariation, listStudio, saveStudio } from "@/lib/imagine/functions";
 import { clearStudioLocal, mergeStudio, readStudioLocal, type StudioItem } from "@/lib/imagine/studio";
 import { idbDropStudio } from "@/lib/shtora-idb";
