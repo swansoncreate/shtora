@@ -208,6 +208,16 @@ async function dispatch(name: string, data: unknown) {
       await dropStudioItem(String(row.id || ""));
       return { ok: true };
     }
+    case "story.seen": {
+      const { recordStorySeen } = await import("@/lib/instagram/seen.server");
+      const ids = Array.isArray(row.ids) ? row.ids.filter((id): id is string => typeof id === "string") : [];
+      return recordStorySeen(String(row.username || ""), ids);
+    }
+    case "story.seenList": {
+      const { listStorySeen } = await import("@/lib/instagram/seen.server");
+      const username = typeof row.username === "string" ? row.username : undefined;
+      return listStorySeen(username);
+    }
     default:
       throw new Error(`unknown rpc ${name}`);
   }
