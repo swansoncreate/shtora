@@ -73,7 +73,7 @@ export function diskToPost(card: {
   at: number;
   slot?: string;
   caption: string;
-  slides: { url: string }[];
+  slides: { id?: string; url: string }[];
   liked?: boolean;
 }): DailyPost | null {
   const url = card.slides[0]?.url || "";
@@ -82,7 +82,7 @@ export function diskToPost(card: {
     id: card.id,
     username: card.username,
     imageUrl: url,
-    slides: card.slides.map((slide) => ({ id: slide.id, url: slide.url })),
+    slides: card.slides.map((slide) => ({ id: slide.id || card.id, url: slide.url })),
     caption: card.caption || "",
     at: card.at,
     ...(card.liked ? { liked: true } : {}),

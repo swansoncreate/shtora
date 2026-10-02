@@ -23,7 +23,7 @@ export function cardAsPost(card: FeedCard): IgPost {
   if (card.post) return card.post;
   const url = card.thumb || "";
   const video = Boolean(card.dropbox?.video);
-  const slides = card.slides?.length
+  const slides: IgPost["slides"] = card.slides?.length
     ? card.slides.map((slide) => ({
         id: slide.id,
         type: "image" as const,
