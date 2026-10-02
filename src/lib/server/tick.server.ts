@@ -1,5 +1,5 @@
-import { chatPing, stripChatTic } from "@/lib/chat/functions";
-import { readAllDiskThreads, writeDiskThread, type DiskThread } from "@/lib/chat/disk.server";
+import { stripChatTic } from "@/lib/chat/functions";
+import { readAllDiskThreads } from "@/lib/chat/disk.server";
 import { runServerAutoSave } from "@/lib/dropbox/autosave.server";
 import { createEngine } from "@/lib/instagram/engine/runner";
 import { igCache } from "@/lib/instagram/store";
@@ -133,14 +133,20 @@ async function runTickInner(opts?: { chats?: boolean; instagram?: boolean; dropb
 
   let pinged = 0;
   let originNote = "";
-  let doChats = chats && Date.now() >= chatDeadUntil;
-  if (doChats) {
+  const localPing = process.env.SHTORA_PING_LOCAL === "1";
+  const front = (process.env.SHTORA_FRONT_ORIGIN || "").replace(/\/$/, "");
+  let doChats = Boolean(chats) && Date.now() >= chatDeadUntil;
+  if (doChats && localPing) {
     const { readGrokOriginStatus } = await import("./grok-app");
     const origin = await readGrokOriginStatus();
     if (!origin.fresh) {
       doChats = false;
       originNote = "origin протух";
     }
+  }
+  if (doChats && !localPing && !front) {
+    doChats = false;
+    originNote = "нет SHTORA_FRONT_ORIGIN";
   }
   if (doChats) {
     const threads = await readAllDiskThreads();
@@ -189,30 +195,29 @@ async function runTickInner(opts?: { chats?: boolean; instagram?: boolean; dropb
         at: item.at,
       }));
       try {
-        const out = await chatPing({
-          data: {
-            username: thread.username,
-            fullName: thread.fullName,
-            persona: thread.persona,
-            mood: thread.mood,
-            memory: thread.memory,
-            backstory: thread.backstory,
-            hour,
-            lastSnippet: recap || last.text?.slice(0, 400),
-            silentHours: Math.max(0, (now - last.at) / 3_600_000),
-            world: worldNow,
-            slot: day.slot,
-            history,
-            warmth: bond.warmth,
-            trust: bond.trust,
-            heat: bond.heat,
-            irrit: bond.irrit,
-            guilt: bond.guilt,
-            spark: bond.spark,
-            ...(thread.arc?.beat ? { arc: thread.arc } : {}),
-            chatEngine: "grok",
-          },
-        });
+        const payload = {
+          username: thread.username,
+          fullName: thread.fullName,
+          persona: thread.persona,
+          mood: thread.mood,
+          memory: thread.memory,
+          backstory: thread.backstory,
+          hour,
+          lastSnippet: recap || last.text?.slice(0, 400),
+          silentHours: Math.max(0, (now - last.at) / 3_600_000),
+          world: worldNow,
+          slot: day.slot,
+          history,
+          warmth: bond.warmth,
+          trust: bond.trust,
+          heat: bond.heat,
+          irrit: bond.irrit,
+          guilt: bond.guilt,
+          spark: bond.spark,
+          ...(thread.arc?.beat ? { arc: thread.arc } : {}),
+          chatEngine: "grok",
+        };
+        const out = localPing ? await pingLocal(payload) : await pingPublication(front, payload);
         if (!out.ok) {
           const err = "error" in out ? String(out.error || "") : "";
           if (/кредит|credits|xAI|OpenRouter/i.test(err)) chatDeadUntil = now + 6 * 60 * 60 * 1000;
@@ -243,39 +248,39 @@ async function runTickInner(opts?: { chats?: boolean; instagram?: boolean; dropb
           spark: bump(bond.spark, out.bondDelta?.spark),
           guilt: bump(bond.guilt, out.bondDelta?.guilt),
         };
-        const next: DiskThread = {
-          ...thread,
-          mood: out.mood || thread.mood,
-          memory: out.memory || thread.memory,
-          warmth: bumped.warmth,
-          bond: bumped,
-          world: nextWorld,
-          lastPingAt: stamp,
-          updatedAt: stamp,
-          messages: [
-            ...thread.messages,
-            ...parts.map((text, i) => ({
-              role: "assistant" as const,
-              text,
-              kind: "text" as const,
-              at: stamp + i * 15_000,
-              debug: {
-                warmth: bumped.warmth,
-                trust: bumped.trust,
-                heat: bumped.heat,
-                irrit: bumped.irrit,
-                spark: bumped.spark,
-                guilt: bumped.guilt,
-                place: nextWorld.placeRu || nextWorld.place,
-                clothes: nextWorld.clothesRu || nextWorld.clothes,
-                mood: out.mood || thread.mood,
-                want: out.log,
-                hour: day.hour,
-              },
-            })),
-          ].slice(-120),
-        };
-        await writeDiskThread(next);
+        const { appendMessages } = await import("@/lib/chat/disk.server");
+        await appendMessages(
+          thread.username,
+          parts.map((text, i) => ({
+            role: "assistant" as const,
+            text,
+            kind: "text",
+            at: stamp + i * 15_000,
+            debug: {
+              warmth: bumped.warmth,
+              trust: bumped.trust,
+              heat: bumped.heat,
+              irrit: bumped.irrit,
+              spark: bumped.spark,
+              guilt: bumped.guilt,
+              place: nextWorld.placeRu || nextWorld.place,
+              clothes: nextWorld.clothesRu || nextWorld.clothes,
+              mood: out.mood || thread.mood,
+              want: out.log,
+              hour: day.hour,
+            },
+          })),
+          {
+            username: thread.username,
+            mood: out.mood || thread.mood,
+            memory: out.memory || thread.memory,
+            warmth: bumped.warmth,
+            bond: bumped,
+            world: nextWorld,
+            lastPingAt: stamp,
+            updatedAt: stamp,
+          },
+        );
         pinged += 1;
       } catch {
         /* skip */
@@ -329,6 +334,48 @@ async function runTickInner(opts?: { chats?: boolean; instagram?: boolean; dropb
   const [snapshots, chatDump] = await Promise.all([listSnapshots(), readAllDiskThreads()]);
   const { slimSnapshot } = await import("./snapshots");
   return { ok: true as const, ...status, snapshots: snapshots.map((row) => slimSnapshot(row)), chats: chatDump };
+}
+
+type PingOut = {
+  ok: boolean;
+  skipped?: boolean;
+  error?: string;
+  text?: string;
+  bubbles?: string[];
+  mood?: string;
+  memory?: string;
+  place?: string;
+  clothes?: string;
+  hair?: string;
+  placeRu?: string;
+  clothesRu?: string;
+  hairRu?: string;
+  clothesNamed?: boolean;
+  memAbout?: string;
+  memOpen?: string;
+  memDodged?: string;
+  log?: string;
+  bondDelta?: { warmth?: number; trust?: number; heat?: number; irrit?: number; spark?: number; guilt?: number };
+};
+
+async function pingLocal(data: Record<string, unknown>): Promise<PingOut> {
+  const { chatPing } = await import("@/lib/chat/functions");
+  return chatPing({ data }) as Promise<PingOut>;
+}
+
+async function pingPublication(origin: string, data: Record<string, unknown>): Promise<PingOut> {
+  const { rpcKey } = await import("./remote");
+  const key = rpcKey();
+  if (!key) return { ok: false, error: "rpc key not configured" };
+  const res = await fetch(`${origin}/api/grok-chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shtora-Key": key },
+    body: JSON.stringify({ op: "ping", data }),
+    signal: AbortSignal.timeout(90_000),
+  });
+  const json = (await res.json().catch(() => null)) as PingOut | null;
+  if (!json || typeof json !== "object") return { ok: false, error: `ping ${res.status}` };
+  return json;
 }
 
 export function runTick(opts?: { chats?: boolean; instagram?: boolean; dropbox?: boolean }) {
