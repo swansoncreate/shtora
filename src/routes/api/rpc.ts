@@ -208,6 +208,19 @@ async function dispatch(name: string, data: unknown) {
       await dropStudioItem(String(row.id || ""));
       return { ok: true };
     }
+    case "feed.list": {
+      const { listFeed } = await import("@/lib/feed/disk.server");
+      const username = typeof row.username === "string" ? row.username : undefined;
+      return listFeed(username);
+    }
+    case "feed.append": {
+      const { appendFeed } = await import("@/lib/feed/disk.server");
+      return appendFeed(row.card ?? row);
+    }
+    case "feed.like": {
+      const { likeFeed } = await import("@/lib/feed/disk.server");
+      return likeFeed(String(row.id || ""), row.on === true);
+    }
     case "story.seen": {
       const { recordStorySeen } = await import("@/lib/instagram/seen.server");
       const ids = Array.isArray(row.ids) ? row.ids.filter((id): id is string => typeof id === "string") : [];

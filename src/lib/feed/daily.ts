@@ -127,6 +127,7 @@ export function saveDaily(state: DailyState) {
       KEY,
       JSON.stringify({ date: state.date || todayKey(), posts, quiet: state.quiet || {} }),
     );
+    void import("./sync").then((mod) => mod.noteSavedPosts(posts)).catch(() => undefined);
   } catch {
     /* ignore */
   }
