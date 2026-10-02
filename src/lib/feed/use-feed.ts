@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { subscribeComments } from "./comments";
 import { feedEngine, type FeedHydrateInput } from "./engine";
+import { hydrateFeedDisk } from "./sync";
 import type { FeedCard } from "./simulate";
 
 export function useFeed(input: FeedHydrateInput, enabled: boolean) {
@@ -24,6 +25,7 @@ export function useFeed(input: FeedHydrateInput, enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return;
+    hydrateFeedDisk();
     void feedEngine.fill();
     const boot = window.setTimeout(() => void feedEngine.fill(), 800);
     const timer = window.setInterval(() => feedEngine.refresh(), 20_000);
