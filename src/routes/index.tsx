@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Dices, Instagram, Settings } from "lucide-react";
+import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -120,25 +120,34 @@ function Home() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      {offline || apiOk === false ? (
-        <p className="border-b border-border px-4 py-2 text-center text-xs text-muted">Сервер не отвечает</p>
-      ) : null}
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 pb-3 sm:px-6">
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
-            <p className="mt-1 text-sm text-muted">{caption}</p>
+      <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md relative">
+        <div className="pointer-events-none absolute inset-0 opacity-25 curtain-wash" aria-hidden />
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-3 sm:px-6">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
+              <p className="mt-1 text-sm text-muted">{caption}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 shrink-0 rounded-full"
+              aria-label="Настройки"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="size-5" />
+            </Button>
           </div>
-          <nav className="flex rounded-xl bg-elevated p-1" aria-label="Разделы">
+          <nav className="mt-3 flex rounded-xl bg-elevated p-1" aria-label="Разделы">
             <AppTab
               label="Instagram"
               active={app === "instagram"}
               onClick={() => void navigate({ to: "/", search: {} })}
             >
-              <Instagram className="size-5" />
+              <Instagram className="size-4" />
             </AppTab>
             <AppTab
-              label="Dropbox"
+              label="Файлы"
               active={app === "dropbox"}
               onClick={() =>
                 void navigate({
@@ -147,7 +156,7 @@ function Home() {
                 })
               }
             >
-              <DropboxMark className="size-5" />
+              <DropboxMark className="size-4" />
             </AppTab>
             <AppTab
               label="Imagine"
@@ -159,22 +168,22 @@ function Home() {
                 })
               }
             >
-              <Dices className="size-5" />
+              <Dices className="size-4" />
             </AppTab>
           </nav>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-12 rounded-xl"
-            aria-label="Настройки"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="size-5" />
-          </Button>
         </div>
       </header>
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
+        {offline || apiOk === false ? (
+          <div
+            className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
+            role="status"
+          >
+            <AlertCircle className="size-4 shrink-0 text-danger" />
+            <p className="min-w-0 flex-1">Сервер не отвечает — данные не подтянуть</p>
+          </div>
+        ) : null}
         {app === "dropbox" ? (
           <DropboxBrowser
             settings={settings}
@@ -250,11 +259,12 @@ function AppTab({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "flex size-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--motion-quick)]",
+        "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm text-muted transition-colors duration-[var(--motion-quick)]",
         active && "bg-surface text-fg shadow-[var(--shadow-border)]",
       )}
     >
       {children}
+      <span className="truncate">{label}</span>
     </button>
   );
 }
