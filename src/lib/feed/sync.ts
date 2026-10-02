@@ -62,7 +62,7 @@ export function postToDisk(post: DailyPost) {
     ...(post.slot ? { slot: post.slot } : {}),
     source: "generated" as const,
     caption: post.caption || "",
-    slides: [{ id: post.id, url }],
+    slides: post.slides?.length ? post.slides : [{ id: post.id, url }],
     ...(post.liked ? { liked: true } : {}),
   };
 }
@@ -82,6 +82,7 @@ export function diskToPost(card: {
     id: card.id,
     username: card.username,
     imageUrl: url,
+    slides: card.slides.map((slide) => ({ id: slide.id, url: slide.url })),
     caption: card.caption || "",
     at: card.at,
     ...(card.liked ? { liked: true } : {}),

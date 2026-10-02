@@ -21,6 +21,7 @@ export type DailyPost = {
   username: string;
   imageUrl: string;
   caption: string;
+  slides?: { id: string; url: string }[];
   at: number;
   liked?: boolean;
   kind?: "post" | "story";
@@ -157,6 +158,7 @@ export function dailyToCards(posts: DailyPost[]): FeedCard[] {
       caption: post.caption,
       at: post.at,
       thumb: post.imageUrl,
+      slides: post.slides,
       liked: post.liked,
       generated: true,
       story: post.kind === "story",
@@ -225,13 +227,13 @@ async function ownCaption(username: string, slot: FeedSlot) {
   return place ? place.slice(0, 80) : "кадр";
 }
 
-function stampFor(slot: FeedSlot) {
-  const d = new Date();
-  if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
-  else d.setHours(18, 12 + (hash(String(d.getDate() + 3)) % 50), 0, 0);
-  const t = d.getTime();
-  return t > Date.now() ? Date.now() - 60_000 : t;
+function carouselCount(username: string, slot: FeedSlot) {
+  const roll = hash(`${todayKey()}:${username}:${slot}`) % 4;
+  if (slot === "morning") return roll === 0 ? 2 : 1;
+  return roll === 0 ? 3 : roll === 1 ? 2 : 1;
 }
+
+function stampFor(slot: FeedSlot) {
   const d = new Date();
   if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
   else d.setHours(18, 12 + (hash(String(d.getDate() + 3)) % 50), 0, 0);
@@ -304,6 +306,7 @@ async function generateFor(
   }
   const folder = folderForAccount(username, settings);
   const ownFolder = /\/общее$/i.test(folder) ? undefined : folder;
+  const seed = `${username}-${slot}-${todayKey()}`;
   const pic = await composeChatPhoto({
     data: {
       kind: "feed",
@@ -311,15 +314,34 @@ async function generateFor(
       noIdentity: true,
       dropboxToken: ownFolder ? dropboxToken : undefined,
       dropboxFolder: ownFolder,
-      dropboxSeed: `${username}-${slot}-${Date.now()}`,
+      dropboxSeed: seed,
     },
   });
   if (!pic.ok || !pic.url) return null;
   const id = extra ? `gen-post-${username}-${Date.now()}` : `gen-post-${username}-${slot}-${todayKey()}`;
+  const slides = [{ id, url: pic.url }];
+  const want = extra ? 1 : carouselCount(username, slot);
+  const poses = ["она села", "она встала", "она повернулась", "она смотрит в сторону"];
+  for (let i = 1; i < want; i += 1) {
+    const next = await composeChatPhoto({
+      data: {
+        kind: "feed",
+        prompt: feedPrompt(`${settings.imaginePrompt || ""} Same room, clothes, light and time. Different pose only: ${poses[i - 1]}.`),
+        noIdentity: true,
+        sourceDataUrl: pic.url.startsWith("data:") ? pic.url : undefined,
+        dropboxToken: pic.url.startsWith("data:") ? undefined : ownFolder ? dropboxToken : undefined,
+        dropboxFolder: pic.url.startsWith("data:") ? undefined : ownFolder,
+        dropboxSeed: seed,
+      },
+    }).catch(() => null);
+    if (!next?.ok || !next.url) break;
+    slides.push({ id: `${id}-${i}`, url: next.url });
+  }
   const post: DailyPost = {
     id,
     username,
     imageUrl: pic.url,
+    slides,
     caption: await ownCaption(username, slot),
     at: extra ? Date.now() : stampFor(slot),
     kind: "post",
