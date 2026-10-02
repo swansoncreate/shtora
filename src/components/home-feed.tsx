@@ -96,28 +96,16 @@ export function HomeFeed({
                 <span className="block text-xs text-subtle">{ago}</span>
               </button>
             </header>
-            <button
-              type="button"
-              className="relative block w-full overflow-hidden rounded-lg bg-elevated"
-              onClick={() => {
+            <FeedFrame
+              card={card}
+              image={image}
+              video={video}
+              onOpen={() => {
                 if (card.story && onOpenStory) onOpenStory(card);
                 else if (card.dropbox) onOpenDropbox(card);
                 else onOpenPost(card.username, posts.length ? posts : [cardAsPost(card)], index);
               }}
-              aria-label={card.story ? `Сторис @${card.username}` : `Пост @${card.username}`}
-            >
-              <MediaImg
-                src={image && !isVideoMediaUrl(image) ? image : card.post?.displayUrl && !isVideoMediaUrl(card.post.displayUrl) ? card.post.displayUrl : image}
-                alt=""
-                className={cn("w-full object-cover", card.story ? "aspect-[9/16]" : "aspect-[4/5]")}
-              />
-              {card.post?.type === "sidecar" ? (
-                <Layers className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" />
-              ) : null}
-              {video ? (
-                <Clapperboard className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" />
-              ) : null}
-            </button>
+            />
             <div className="mt-1 flex items-center gap-1">
               <Button
                 type="button"
@@ -153,6 +141,69 @@ export function HomeFeed({
           </article>
         );
       })}
+    </div>
+  );
+}
+
+function FeedFrame({
+  card,
+  image,
+  video,
+  onOpen,
+}: {
+  card: FeedCard;
+  image?: string;
+  video: boolean;
+  onOpen: () => void;
+}) {
+  const slides = card.post?.slides?.length
+    ? card.post.slides
+    : card.slides?.length
+      ? card.slides.map((slide) => ({ id: slide.id, displayUrl: slide.url, type: "image" as const }))
+      : [{ id: card.id, displayUrl: image || "", type: "image" as const }];
+  const [at, setAt] = useState(0);
+  const current = slides[Math.min(at, slides.length - 1)];
+  const src = current?.displayUrl || image || "";
+  return (
+    <div
+      className="relative"
+      onTouchStart={(e) => {
+        (e.currentTarget as HTMLDivElement).dataset.x = String(e.changedTouches[0]?.clientX || 0);
+      }}
+      onTouchEnd={(e) => {
+        const start = Number((e.currentTarget as HTMLDivElement).dataset.x || 0);
+        const dx = (e.changedTouches[0]?.clientX || 0) - start;
+        if (Math.abs(dx) < 30 || slides.length < 2) return;
+        setAt((n) => Math.max(0, Math.min(slides.length - 1, n + (dx < 0 ? 1 : -1))));
+      }}
+    >
+      <button
+        type="button"
+        className="relative block w-full overflow-hidden rounded-lg bg-elevated"
+        onClick={onOpen}
+        aria-label={card.story ? `Сторис @${card.username}` : `Пост @${card.username}`}
+      >
+        <MediaImg
+          src={src && !isVideoMediaUrl(src) ? src : image}
+          alt=""
+          className={cn("w-full object-cover", card.story ? "aspect-[9/16]" : "aspect-[4/5]")}
+        />
+        {slides.length > 1 ? <Layers className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" /> : null}
+        {video ? <Clapperboard className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" /> : null}
+      </button>
+      {slides.length > 1 ? (
+        <div className="mt-2 flex justify-center gap-1">
+          {slides.map((slide, i) => (
+            <button
+              key={slide.id}
+              type="button"
+              className={cn("h-1.5 rounded-full", i === at ? "w-4 bg-fg" : "w-1.5 bg-border")}
+              aria-label={`Слайд ${i + 1}`}
+              onClick={() => setAt(i)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

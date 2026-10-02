@@ -11,6 +11,7 @@ export type FeedCard = {
   post?: IgPost;
   dropbox?: { path: string; name: string; video: boolean };
   thumb?: string;
+  slides?: { id: string; url: string }[];
   liked?: boolean;
   generated?: boolean;
   filler?: boolean;
@@ -22,21 +23,28 @@ export function cardAsPost(card: FeedCard): IgPost {
   if (card.post) return card.post;
   const url = card.thumb || "";
   const video = Boolean(card.dropbox?.video);
+  const slides: IgPost["slides"] = card.slides?.length
+    ? card.slides.map((slide) => ({
+        id: slide.id,
+        type: "image" as const,
+        displayUrl: slide.url,
+      }))
+    : [
+        {
+          id: card.id,
+          type: video ? "video" : "image",
+          displayUrl: url,
+          videoUrl: video ? url : undefined,
+        },
+      ];
   return {
     id: card.id,
-    type: video ? "video" : "image",
+    type: slides.length > 1 ? "sidecar" : video ? "video" : "image",
     caption: card.caption || "",
     displayUrl: url,
     videoUrl: video ? url : undefined,
     timestamp: new Date(card.at || Date.now()).toISOString(),
-    slides: [
-      {
-        id: card.id,
-        type: video ? "video" : "image",
-        displayUrl: url,
-        videoUrl: video ? url : undefined,
-      },
-    ],
+    slides,
   };
 }
 
