@@ -176,6 +176,7 @@ export async function runStill(job: StillJob) {
     /боком|сбоку/.test(asked);
   const pic = await runImageEdit(job.source, prompt, extras, mode);
   if (pic.ok) return { ok: true as const, url: pic.url, prompt };
+  if (job.kind === "feed") return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
   if (cam) {
     const retryPrompt = keepPreset(
       "Same adult woman, same clothes, same room. She is facing away from the camera. Over-the-shoulder or from behind: we see her back, hair from behind, the outfit from the rear. Not a front selfie. Vertical candid phone photo.",
