@@ -429,6 +429,7 @@ export function InstagramApp({
           onClose={() => setFeedView(null)}
           onIndex={(index) => setFeedView({ ...feedView, index })}
           onNeedToken={onNeedToken}
+          frame="feed"
         />
       ) : null}
       {dbView && settings.dropboxToken ? (

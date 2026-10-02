@@ -85,8 +85,7 @@ const STALE_CAPTIONS = new Set([
 ]);
 
 function settleCaption(post: DailyPost): DailyPost {
-  if (post.caption && !STALE_CAPTIONS.has(post.caption)) return post;
-  return { ...post, caption: generatedLine(post.username, post.id, undefined, post.slot) };
+  return post;
 }
 
 export function loadDaily(): DailyState {
@@ -201,10 +200,38 @@ function isQuiet(username: string, state: DailyState) {
 
 function feedPrompt(base: string) {
   const text = (base || DEFAULT_VARIATION_PROMPT).replace(/\s+/g, " ").trim() || DEFAULT_VARIATION_PROMPT;
-  return text.slice(0, 1200);
+  return `${text} Instagram feed post, 4:5 frame, 1080x1350. Not a story, not a 9:16 phone crop.`.slice(0, 1200);
+}
+
+async function ownCaption(username: string, slot: FeedSlot) {
+  const thread = getThread(username);
+  const place = thread?.world?.placeRu || thread?.world?.place || "";
+  try {
+    const { captionFeed } = await import("./caption");
+    const out = await captionFeed({
+      data: {
+        username,
+        persona: thread?.persona || "",
+        mood: thread?.mood || "",
+        place,
+        slot,
+      },
+    });
+    const text = (out.caption || "").replace(/\s+/g, " ").trim();
+    if (text && !STALE_CAPTIONS.has(text)) return text.slice(0, 180);
+  } catch {
+    /* no list fallback */
+  }
+  return place ? place.slice(0, 80) : "кадр";
 }
 
 function stampFor(slot: FeedSlot) {
+  const d = new Date();
+  if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
+  else d.setHours(18, 12 + (hash(String(d.getDate() + 3)) % 50), 0, 0);
+  const t = d.getTime();
+  return t > Date.now() ? Date.now() - 60_000 : t;
+}
   const d = new Date();
   if (slot === "morning") d.setHours(9, 8 + (hash(String(d.getDate())) % 40), 0, 0);
   else d.setHours(18, 12 + (hash(String(d.getDate() + 3)) % 50), 0, 0);
@@ -293,7 +320,7 @@ async function generateFor(
     id,
     username,
     imageUrl: pic.url,
-    caption: generatedLine(username, id, undefined, slot),
+    caption: await ownCaption(username, slot),
     at: extra ? Date.now() : stampFor(slot),
     kind: "post",
     slot: extra ? undefined : slot,
