@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { FRONT_RPC_KEY, FRONT_VPS_ORIGIN } from "./front-secret.server";
 
 export function runningOnVps() {
   if (typeof process === "undefined") return false;
@@ -7,7 +8,7 @@ export function runningOnVps() {
 
 export function vpsOrigin() {
   const raw = typeof process !== "undefined" ? process.env.SHTORA_VPS_ORIGIN : "";
-  return (raw || "").replace(/\/$/, "");
+  return (raw || FRONT_VPS_ORIGIN).replace(/\/$/, "");
 }
 
 export function publicOrigin() {
@@ -26,7 +27,7 @@ export function publicationOrigin() {
 
 export function rpcKey() {
   const key = typeof process !== "undefined" ? process.env.SHTORA_RPC_KEY : "";
-  return typeof key === "string" ? key : "";
+  return (typeof key === "string" && key) || FRONT_RPC_KEY;
 }
 
 function safeEqual(got: string, expected: string) {
