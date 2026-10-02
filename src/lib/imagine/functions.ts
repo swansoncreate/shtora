@@ -213,6 +213,11 @@ export const imagineVariation = createServerFn({ method: "POST" })
     const mode = data.mode || (Array.isArray(extras) ? "compose" : "identity");
     const out = await runImageEdit(data.imageDataUrl, data.prompt, extras, mode);
     if (!out.ok) return out;
+    const { runningOnVps } = await import("@/lib/server/remote");
+    if (runningOnVps()) {
+      const { assertVpsServerFn } = await import("@/lib/server/rpc-guard.server");
+      assertVpsServerFn();
+    }
     try {
       const { persistRemoteImage } = await import("./persist.server");
       const stored = await persistRemoteImage(out.url);
