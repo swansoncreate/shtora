@@ -148,7 +148,11 @@ export async function vpsOrLocal(request: Request, local: () => Promise<Response
 }
 
 export async function proxyOr<T>(name: string, data: unknown, local: () => Promise<T>): Promise<T> {
-  if (runningOnVps()) return local();
+  if (runningOnVps()) {
+    const { assertVpsServerFn } = await import("./rpc-guard.server");
+    assertVpsServerFn();
+    return local();
+  }
   if (!rpcKey() || !vpsOrigin()) {
     throw new Error(!rpcKey() ? "rpc key not configured" : "vps origin not configured");
   }
