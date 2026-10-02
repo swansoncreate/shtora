@@ -224,7 +224,6 @@ function Home() {
           onClose={() => {
             setChatsOpen(false);
             setChatUser(null);
-            void import("@/lib/chat/store").then((m) => m.flushChatsToDisk()).catch(() => undefined);
           }}
         />
         <SettingsSheet

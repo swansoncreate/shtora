@@ -1,4 +1,5 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { dataSubdir } from "@/lib/server/data-dir.server";
 import type { DiskThread } from "./disk";
@@ -52,45 +53,95 @@ export async function readDiskThread(username: string): Promise<DiskThread | nul
   }
 }
 
+function messageKey(m: DiskThread["messages"][number]) {
+  return `${m.role}:${m.at}:${(m.text || "").slice(0, 40)}`;
+}
+
 function unionMessages(a: DiskThread["messages"], b: DiskThread["messages"]) {
   const out: DiskThread["messages"] = [];
   const seen = new Set<string>();
   for (const m of [...(a || []), ...(b || [])]) {
-    const key = `${m.role}:${m.at}:${(m.text || "").slice(0, 40)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const textKey = messageKey(m);
+    const idKey = m.id ? `id:${m.id}` : "";
+    if (seen.has(textKey) || (idKey && seen.has(idKey))) continue;
+    seen.add(textKey);
+    if (idKey) seen.add(idKey);
     out.push(m);
   }
   return out.sort((x, y) => (x.at || 0) - (y.at || 0)).slice(-250);
 }
 
-export async function writeDiskThread(t: DiskThread & { metricsOk?: boolean }) {
-  const dir = await chatDir();
-  const safe = safeUser(t.username);
-  if (!safe) return;
-  let row: DiskThread = t;
-  if (t.metricsOk === false) {
-    const prev = await readDiskThread(t.username);
-    if (prev) {
-      row = {
-        ...t,
-        warmth: prev.warmth,
-        bond: prev.bond,
-        world: prev.world,
-        memory: prev.memory,
-        mood: prev.mood,
-        arc: prev.arc,
-        lastPingAt: prev.lastPingAt,
-        persona: prev.persona || t.persona,
-        messages: unionMessages(prev.messages, t.messages),
-        updatedAt: Math.max(prev.updatedAt || 0, t.updatedAt || 0),
-      };
-    }
+async function writeAtomic(dir: string, name: string, body: string) {
+  const tmp = join(dir, `.${name}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`);
+  try {
+    await writeFile(tmp, body, "utf8");
+    await rename(tmp, join(dir, name));
+  } catch (err) {
+    await unlink(tmp).catch(() => undefined);
+    throw err;
   }
-  const { metricsOk: _drop, ...stored } = row as DiskThread & { metricsOk?: boolean };
-  void _drop;
-  await writeFile(join(dir, `${safe}.json`), JSON.stringify(stored, null, 2), "utf8");
-  await writeFile(join(dir, `${safe}.md`), toMarkdown(stored), "utf8");
+}
+
+const appendTails = new Map<string, Promise<unknown>>();
+
+function enqueueAppend<T>(username: string, job: () => Promise<T>): Promise<T> {
+  const key = safeUser(username);
+  const prev = appendTails.get(key) ?? Promise.resolve();
+  const run = prev.then(job, job);
+  appendTails.set(
+    key,
+    run.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return run;
+}
+
+export async function appendMessages(
+  username: string,
+  messages: DiskThread["messages"],
+  patch: Partial<DiskThread> = {},
+) {
+  const safe = safeUser(username);
+  if (!safe) return;
+  return enqueueAppend(safe, () => appendMessagesNow(username, messages, patch));
+}
+
+async function appendMessagesNow(
+  username: string,
+  messages: DiskThread["messages"],
+  patch: Partial<DiskThread> = {},
+) {
+  const dir = await chatDir();
+  const safe = safeUser(username);
+  if (!safe) return;
+  const prev = await readDiskThread(username);
+  const incomingAt = patch.updatedAt || 0;
+  const fileAt = prev?.updatedAt || 0;
+  const fresh = !prev || incomingAt >= fileAt;
+  const row: DiskThread = {
+    username: prev?.username || username.trim(),
+    fullName: fresh ? patch.fullName || prev?.fullName : prev?.fullName,
+    mood: fresh ? patch.mood ?? prev?.mood : prev?.mood,
+    memory: fresh ? patch.memory ?? prev?.memory : prev?.memory,
+    warmth: fresh ? (patch.warmth ?? prev?.warmth) : prev?.warmth,
+    persona: fresh ? patch.persona || prev?.persona : prev?.persona,
+    backstory: fresh ? patch.backstory ?? prev?.backstory : prev?.backstory,
+    world: fresh ? patch.world || prev?.world : prev?.world,
+    arc: fresh ? patch.arc || prev?.arc : prev?.arc,
+    bond: fresh ? patch.bond || prev?.bond : prev?.bond,
+    lastPingAt: Math.max(prev?.lastPingAt || 0, patch.lastPingAt || 0) || undefined,
+    updatedAt: Math.max(fileAt, incomingAt) || Date.now(),
+    messages: unionMessages(prev?.messages || [], messages || []),
+  };
+  await writeAtomic(dir, `${safe}.json`, JSON.stringify(row, null, 2));
+  await writeAtomic(dir, `${safe}.md`, toMarkdown(row));
+}
+
+export async function writeDiskThread(t: DiskThread & { metricsOk?: boolean }) {
+  if (!t?.username) return;
+  await appendMessages(t.username, t.messages || [], t);
 }
 
 export async function writeDiskThreads(threads: DiskThread[]) {
