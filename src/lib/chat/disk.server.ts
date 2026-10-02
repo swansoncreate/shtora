@@ -82,7 +82,33 @@ async function writeAtomic(dir: string, name: string, body: string) {
   }
 }
 
+const appendTails = new Map<string, Promise<unknown>>();
+
+function enqueueAppend<T>(username: string, job: () => Promise<T>): Promise<T> {
+  const key = safeUser(username);
+  const prev = appendTails.get(key) ?? Promise.resolve();
+  const run = prev.then(job, job);
+  appendTails.set(
+    key,
+    run.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return run;
+}
+
 export async function appendMessages(
+  username: string,
+  messages: DiskThread["messages"],
+  patch: Partial<DiskThread> = {},
+) {
+  const safe = safeUser(username);
+  if (!safe) return;
+  return enqueueAppend(safe, () => appendMessagesNow(username, messages, patch));
+}
+
+async function appendMessagesNow(
   username: string,
   messages: DiskThread["messages"],
   patch: Partial<DiskThread> = {},
