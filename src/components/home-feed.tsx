@@ -186,7 +186,7 @@ function FeedFrame({
         <MediaImg
           src={src && !isVideoMediaUrl(src) ? src : image}
           alt=""
-          className={cn("w-full object-cover", card.story ? "aspect-[9/16]" : "aspect-[4/5]")}
+          className={cn("w-full object-cover", card.story ? "aspect-[9/16]" : "aspect-square")}
         />
         {slides.length > 1 ? <Layers className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" /> : null}
         {video ? <Clapperboard className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" /> : null}

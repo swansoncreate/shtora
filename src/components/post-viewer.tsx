@@ -64,7 +64,7 @@ export function PostViewer({
     (isVideoMediaUrl(current?.displayUrl) ? current?.displayUrl : undefined);
   const video = videoRaw ? mediaSrc(videoRaw) : undefined;
   const src = !video ? mediaSrc(current?.displayUrl || post.displayUrl) : undefined;
-  const fit = frame === "feed" ? "aspect-[4/5] w-full max-w-md object-cover" : "max-h-full max-w-full rounded-md object-contain";
+  const fit = frame === "feed" ? "aspect-square w-full max-w-md object-cover" : "max-h-full max-w-full rounded-md object-contain";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg/95" role="dialog" aria-modal="true">
