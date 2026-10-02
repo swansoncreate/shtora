@@ -215,7 +215,7 @@ async function runTickInner(opts?: { chats?: boolean; instagram?: boolean; dropb
           guilt: bond.guilt,
           spark: bond.spark,
           ...(thread.arc?.beat ? { arc: thread.arc } : {}),
-          chatEngine: "grok",
+          chatEngine: "grok" as const,
         };
         const out = localPing ? await pingLocal(payload) : await pingPublication(front, payload);
         if (!out.ok) {
