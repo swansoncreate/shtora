@@ -117,7 +117,11 @@ export const Route = createFileRoute("/api/media")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const { runningOnVps, vpsOrLocal } = await import("@/lib/server/remote");
+        const { runningOnVps, vpsOrLocal, assertRpc } = await import("@/lib/server/remote");
+        if (runningOnVps()) {
+          const denied = assertRpc(request);
+          if (denied) return denied;
+        }
         const byId = new URL(request.url).searchParams.get("id") || "";
         if (byId && /^[a-f0-9]{40}$/i.test(byId)) {
           return vpsOrLocal(request, () => serveById(byId, request));
@@ -141,7 +145,11 @@ export const Route = createFileRoute("/api/media")({
         return vpsOrLocal(request, async () => local);
       },
       POST: async ({ request }) => {
-        const { runningOnVps, vpsOrLocal } = await import("@/lib/server/remote");
+        const { runningOnVps, vpsOrLocal, assertRpc } = await import("@/lib/server/remote");
+        if (runningOnVps()) {
+          const denied = assertRpc(request);
+          if (denied) return denied;
+        }
         if (!runningOnVps()) return vpsOrLocal(request, async () => new Response("not vps", { status: 400 }));
         const raw = new URL(request.url).searchParams.get("u") || "";
         if (!raw) return Response.json({ error: "missing url" }, { status: 400 });

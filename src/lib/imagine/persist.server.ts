@@ -2,11 +2,11 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { dataSubdir } from "@/lib/server/data-dir.server";
-import { VPS_ORIGIN } from "@/lib/shtora-origin";
 
 function publicAbs(path = "") {
-  const origin = (typeof process !== "undefined" && process.env.SHTORA_PUBLIC_ORIGIN) || VPS_ORIGIN;
-  return `${origin}${path}`;
+  const origin =
+    (typeof process !== "undefined" && (process.env.SHTORA_PUBLIC_ORIGIN || process.env.SHTORA_VPS_ORIGIN)) || "";
+  return origin ? `${origin.replace(/\/$/, "")}${path}` : path;
 }
 
 function extOf(mime: string) {
