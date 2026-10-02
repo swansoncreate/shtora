@@ -1,4 +1,4 @@
-import { stripChatTic } from "@/lib/chat/functions";
+import { chatPing, stripChatTic } from "@/lib/chat/functions";
 import { readAllDiskThreads } from "@/lib/chat/disk.server";
 import { runServerAutoSave } from "@/lib/dropbox/autosave.server";
 import { createEngine } from "@/lib/instagram/engine/runner";
@@ -358,12 +358,13 @@ type PingOut = {
   bondDelta?: { warmth?: number; trust?: number; heat?: number; irrit?: number; spark?: number; guilt?: number };
 };
 
-async function pingLocal(data: Record<string, unknown>): Promise<PingOut> {
-  const { chatPing } = await import("@/lib/chat/functions");
-  return chatPing({ data }) as Promise<PingOut>;
+type PingData = Parameters<typeof chatPing>[0]["data"];
+
+async function pingLocal(data: PingData): Promise<PingOut> {
+  return chatPing({ data });
 }
 
-async function pingPublication(origin: string, data: Record<string, unknown>): Promise<PingOut> {
+async function pingPublication(origin: string, data: PingData): Promise<PingOut> {
   const { rpcKey } = await import("./remote");
   const key = rpcKey();
   if (!key) return { ok: false, error: "rpc key not configured" };
