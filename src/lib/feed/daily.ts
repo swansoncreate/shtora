@@ -202,7 +202,7 @@ function isQuiet(username: string, state: DailyState) {
 
 function feedPrompt(base: string) {
   const text = (base || DEFAULT_VARIATION_PROMPT).replace(/\s+/g, " ").trim() || DEFAULT_VARIATION_PROMPT;
-  return `${text} Instagram feed post, 4:5 frame, 1080x1350. Not a story, not a 9:16 phone crop.`.slice(0, 1200);
+  return `${text} Instagram feed post, 1:1 frame. Not a story, not a 9:16 phone crop.`.slice(0, 1200);
 }
 
 async function ownCaption(username: string, slot: FeedSlot) {

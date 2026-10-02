@@ -1,8 +1,3 @@
-import { spawn } from "node:child_process";
-import { randomBytes } from "node:crypto";
-import { readFile, unlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { isAllowedMediaHost, mediaFetchHeaders } from "@/lib/media-host";
@@ -117,7 +112,7 @@ async function runImageEditOnce(
         ? `${bodyPrompt} <IMAGE_1> same face.`
         : bodyPrompt;
 
-  const aspect = /4:5|1080x1350/.test(bodyPrompt) ? "4:5" : "9:16";
+  const aspect = /1:1|1080x1080/.test(bodyPrompt) ? "1:1" : "9:16";
   const payloads: Array<Record<string, unknown>> = [];
   if (refs.length > 1) {
     payloads.push({
@@ -141,50 +136,8 @@ async function runImageEditOnce(
     if (hit.ok) return hit;
     last = hit.error;
     if (/подождать|слишком часто|credit|spend|quota|Нет доступа/i.test(last)) return hit;
-    if (aspect === "4:5" && /422|aspect|не принял|фильтр|unprocessable/i.test(last)) {
-      const bare = { ...payload };
-      delete bare.aspect_ratio;
-      const retry = await postEdit(apiKey, bare);
-      if (retry.ok) return { ok: true as const, url: await cropFourFive(retry.url) };
-      last = retry.error || last;
-    }
   }
   return { ok: false as const, error: last };
-}
-
-async function cropFourFive(url: string) {
-  const id = randomBytes(4).toString("hex");
-  const input = join(tmpdir(), `shtora-feed-${id}.img`);
-  const output = join(tmpdir(), `shtora-feed-${id}.jpg`);
-  try {
-    if (url.startsWith("data:")) {
-      const body = url.slice(url.indexOf(",") + 1);
-      await writeFile(input, Buffer.from(body, "base64"));
-    } else {
-      const res = await fetch(url);
-      if (!res.ok) return url;
-      await writeFile(input, Buffer.from(await res.arrayBuffer()));
-    }
-    await new Promise<void>((resolve, reject) => {
-      const proc = spawn("ffmpeg", [
-        "-y",
-        "-i",
-        input,
-        "-vf",
-        "crop='if(gte(iw*5,ih*4),ih*4/5,iw)':'if(gte(iw*5,ih*4),ih,iw*5/4)':(iw-ow)/2:(ih-oh)/2",
-        output,
-      ]);
-      proc.on("error", reject);
-      proc.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("crop"))));
-    });
-    const bytes = await readFile(output);
-    return `data:image/jpeg;base64,${bytes.toString("base64")}`;
-  } catch {
-    return url;
-  } finally {
-    await unlink(input).catch(() => undefined);
-    await unlink(output).catch(() => undefined);
-  }
 }
 
 type EditHit = { ok: true; url: string } | { ok: false; error: string };
