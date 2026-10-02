@@ -173,7 +173,7 @@ export function SettingsSheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/70" />
         <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-lg max-h-[min(92dvh,44rem)] flex-col rounded-t-2xl bg-surface shadow-[var(--shadow-border)] outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-[min(92vw,30rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[min(92dvh,44rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-border)] outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-[min(92vw,30rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
           aria-describedby="settings-desc"
         >
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-3">
@@ -189,6 +189,33 @@ export function SettingsSheet({
               </Button>
             </Dialog.Close>
           </div>
+
+          {picker ? null : (
+            <div className="grid shrink-0 grid-cols-4 gap-1 px-6 pb-3">
+              <div className="col-span-4 grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">
+                {(
+                  [
+                    ["insta", "Инста"],
+                    ["dropbox", "Диск"],
+                    ["chat", "Чат"],
+                    ["more", "Ещё"],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTab(id)}
+                    className={cn(
+                      "h-10 rounded-lg text-sm font-medium",
+                      tab === id ? "bg-surface text-fg shadow-[var(--shadow-border)]" : "text-muted",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
             {picker ? (
@@ -212,26 +239,6 @@ export function SettingsSheet({
               />
             ) : (
               <>
-                <div className="mb-4 grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">
-                  {(
-                    [
-                      ["insta", "Инста"],
-                      ["dropbox", "Диск"],
-                      ["chat", "Чат"],
-                      ["more", "Ещё"],
-                    ] as const
-                  ).map(([id, label]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setTab(id)}
-                      className={cn("h-9 rounded-lg text-xs font-medium", tab === id ? "bg-surface text-fg" : "text-muted")}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
                 {tab === "insta" ? (
                   <>
                     <Section title="Apify">

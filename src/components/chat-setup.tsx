@@ -22,11 +22,11 @@ import { cn } from "@/lib/utils";
 
 type Tab = "story" | "events" | "metrics" | "docs";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "story", label: "Предыстория" },
-  { id: "events", label: "События" },
-  { id: "metrics", label: "Метрики" },
-  { id: "docs", label: "Как устроено" },
+const TABS: { id: Tab; label: string; title: string }[] = [
+  { id: "story", label: "Канон", title: "Предыстория" },
+  { id: "events", label: "События", title: "События" },
+  { id: "metrics", label: "Метрики", title: "Метрики" },
+  { id: "docs", label: "Справка", title: "Как устроено" },
 ];
 
 export function ChatSetup({ username, onClose }: { username: string; onClose: () => void }) {
@@ -105,14 +105,17 @@ export function ChatSetup({ username, onClose }: { username: string; onClose: ()
   }
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col bg-bg">
-      <header className="flex items-center gap-2 px-3 py-2 sm:px-4">
-        <p className="min-w-0 flex-1 truncate text-sm font-medium">Настройки чата</p>
+    <div className="absolute inset-0 z-10 flex flex-col bg-surface">
+      <header className="flex shrink-0 items-start justify-between gap-3 px-5 pt-5 pb-3">
+        <div className="min-w-0">
+          <p className="font-display text-2xl font-medium tracking-tight text-fg">Настройки чата</p>
+          <p className="mt-1 truncate text-sm text-muted">@{username}</p>
+        </div>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-10"
+          className="size-10 shrink-0 rounded-md"
           onClick={() => {
             saveAll();
             onClose();
@@ -122,26 +125,31 @@ export function ChatSetup({ username, onClose }: { username: string; onClose: ()
           <X className="size-5" />
         </Button>
       </header>
-      <div className="flex gap-1 overflow-x-auto px-3 pb-2 sm:px-4">
-        {TABS.map((row) => (
-          <button
-            key={row.id}
-            type="button"
-            className={cn(
-              "shrink-0 rounded-full px-3 py-2 text-xs",
-              tab === row.id ? "bg-elevated text-fg" : "text-muted",
-            )}
-            onClick={() => setTab(row.id)}
-          >
-            {row.label}
-          </button>
-        ))}
+      <div className="grid shrink-0 grid-cols-4 gap-1 px-5 pb-3">
+        <div className="col-span-4 grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">
+          {TABS.map((row) => (
+            <button
+              key={row.id}
+              type="button"
+              title={row.title}
+              aria-label={row.title}
+              className={cn(
+                "h-10 rounded-lg text-sm font-medium",
+                tab === row.id ? "bg-surface text-fg shadow-[var(--shadow-border)]" : "text-muted",
+              )}
+              onClick={() => setTab(row.id)}
+            >
+              {row.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
         {!ready ? <p className="py-8 text-center text-sm text-muted">Загружаю настройки…</p> : null}
         {tab === "story" ? (
           <div className="flex min-h-full flex-col">
-            <p className="text-xs text-muted">Канон. Пустое поле — вы не знакомы. На метрики само не давит, пока не нажмёшь «подогнать».</p>
+            <p className="mb-3 text-xs font-medium tracking-wide text-subtle uppercase">Канон</p>
+            <p className="text-xs text-muted">Пустое поле — вы не знакомы. На метрики само не давит, пока не нажмёшь «подогнать».</p>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -302,6 +310,19 @@ export function ChatSetup({ username, onClose }: { username: string; onClose: ()
             ))}
           </div>
         ) : null}
+      </div>
+      <div className="shrink-0 px-5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Button
+          type="button"
+          className="h-11 w-full rounded-lg"
+          disabled={!ready}
+          onClick={() => {
+            saveAll();
+            onClose();
+          }}
+        >
+          Готово
+        </Button>
       </div>
     </div>
   );
