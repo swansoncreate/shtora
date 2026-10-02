@@ -218,11 +218,18 @@ export function InstagramApp({
             autoCorrect="off"
             spellCheck={false}
             aria-label="Ник Instagram"
+            className="pr-12"
           />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            className="absolute top-1 right-1 size-10 rounded-md text-muted"
+            aria-label="Искать"
+          >
+            <Search className="size-5" />
+          </Button>
         </div>
-        <Button type="submit" variant="subtle" size="icon" className="size-12 shrink-0 rounded-lg" aria-label="Искать">
-          <Search className="size-5" />
-        </Button>
         <Button
           type="button"
           variant="subtle"
@@ -284,6 +291,12 @@ export function InstagramApp({
         >
           <HomeFeed
             items={feed.cards}
+            refreshing={feed.busy}
+            onRefresh={() => {
+              void feed.regenerate().then((n) =>
+                toast.success(n ? "Новые посты в ленте" : "Новых пока нет — старые на месте"),
+              );
+            }}
             onOpenPost={(name, posts, index) => setFeedView({ username: name, posts, index })}
             onOpenDropbox={(card) => {
               if (card.dropbox) setDbView(card.dropbox);

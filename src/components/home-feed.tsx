@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useState } from "react";
 import { BadgeCheck, Clapperboard, Heart, Layers, MessageCircle } from "lucide-react";
 import { MediaImg } from "@/components/media-img";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ export function HomeFeed({
   onLike,
   onOpenStory,
   onComments,
+  onRefresh,
+  refreshing,
 }: {
   items: FeedCard[];
   onOpenPost: (username: string, posts: IgPost[], index: number) => void;
@@ -26,10 +29,22 @@ export function HomeFeed({
   onLike: (card: FeedCard) => void;
   onOpenStory?: (card: FeedCard) => void;
   onComments: (card: FeedCard) => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   if (items.length === 0) {
     return (
-      <p className="mt-20 text-center text-sm text-muted">Потяни вниз — появятся посты. Старые остаются в ленте.</p>
+      <div className="mt-16 flex flex-col items-center px-2 text-center">
+        <p className="font-display text-3xl font-medium tracking-tight text-fg">Пока тихо</p>
+        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
+          Потяни вниз или обнови — старые посты останутся.
+        </p>
+        {onRefresh ? (
+          <Button className="mt-5" type="button" disabled={refreshing} onClick={onRefresh}>
+            Обновить
+          </Button>
+        ) : null}
+      </div>
     );
   }
 
@@ -44,7 +59,7 @@ export function HomeFeed({
   }
 
   return (
-    <div className="mt-5 flex flex-col gap-8">
+    <div className="mt-5 flex flex-col gap-4">
       {items.map((card) => {
         const posts = byUser.get(card.username) ?? (card.dropbox ? [] : [cardAsPost(card)]);
         const self = card.dropbox ? undefined : cardAsPost(card);
@@ -54,18 +69,18 @@ export function HomeFeed({
         const video = Boolean(card.dropbox?.video || card.post?.type === "video" || isVideoMediaUrl(card.post?.videoUrl || image));
         const hasStory = storiesUnseen(card.username);
         return (
-          <article key={card.id} className="min-w-0">
+          <article key={card.id} className="min-w-0 rounded-xl bg-surface p-3 shadow-[var(--shadow-border)]">
             <header className="mb-3 flex items-center gap-3">
               <button
                 type="button"
                 className={cn(
                   "size-10 shrink-0 rounded-full p-[2px]",
-                  hasStory ? "bg-danger" : "bg-transparent",
+                  hasStory ? "bg-danger" : "bg-border",
                 )}
                 onClick={() => onOpenProfile(card.username)}
                 aria-label={`@${card.username}`}
               >
-                <span className="block size-full overflow-hidden rounded-full border-2 border-bg bg-elevated">
+                <span className="block size-full overflow-hidden rounded-full border-2 border-surface bg-elevated">
                   <MediaImg src={card.avatar} alt="" className="size-full object-cover" />
                 </span>
               </button>
@@ -83,7 +98,7 @@ export function HomeFeed({
             </header>
             <button
               type="button"
-              className="relative block w-full overflow-hidden rounded-xl bg-elevated"
+              className="relative block w-full overflow-hidden rounded-lg bg-elevated"
               onClick={() => {
                 if (card.story && onOpenStory) onOpenStory(card);
                 else if (card.dropbox) onOpenDropbox(card);
@@ -103,7 +118,7 @@ export function HomeFeed({
                 <Clapperboard className="pointer-events-none absolute top-3 right-3 size-4 text-fg drop-shadow" />
               ) : null}
             </button>
-            <div className="mt-2 flex items-center gap-1">
+            <div className="mt-1 flex items-center gap-1">
               <Button
                 type="button"
                 variant="ghost"
@@ -124,34 +139,48 @@ export function HomeFeed({
               >
                 <MessageCircle className="size-5" />
               </Button>
-              {(card.comments ?? 0) > 0 ? (
-                <button type="button" className="px-1 text-xs text-subtle" onClick={() => onComments(card)}>
-                  {card.comments}
-                </button>
-              ) : null}
+              <button type="button" className="px-1 text-xs text-subtle" onClick={() => onComments(card)}>
+                {(card.comments ?? 0) > 0 ? card.comments : "Комментарий"}
+              </button>
             </div>
             {card.caption ? (
-              <p className="mt-1 text-sm leading-relaxed text-fg">
-                <button
-                  type="button"
-                  className="mr-1.5 font-medium"
-                  onClick={() => onOpenProfile(card.username)}
-                >
-                  {card.username}
-                </button>
-                <span className="text-muted">{card.caption}</span>
-              </p>
+              <FeedCaption
+                username={card.username}
+                caption={card.caption}
+                onOpenProfile={() => onOpenProfile(card.username)}
+              />
             ) : null}
-            <button
-              type="button"
-              className="mt-1 text-xs text-subtle"
-              onClick={() => onComments(card)}
-            >
-              {(card.comments ?? 0) > 0 ? `Комментарии ${card.comments}` : "Оставить комментарий"}
-            </button>
           </article>
         );
       })}
+    </div>
+  );
+}
+
+function FeedCaption({
+  username,
+  caption,
+  onOpenProfile,
+}: {
+  username: string;
+  caption: string;
+  onOpenProfile: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const long = caption.length > 90;
+  return (
+    <div className="mt-1">
+      <p className={cn("text-sm leading-relaxed text-fg", !open && long && "line-clamp-2")}>
+        <button type="button" className="mr-1.5 font-medium" onClick={onOpenProfile}>
+          {username}
+        </button>
+        <span className="text-muted">{caption}</span>
+      </p>
+      {long ? (
+        <button type="button" className="mt-1 text-xs text-subtle" onClick={() => setOpen((value) => !value)}>
+          {open ? "свернуть" : "ещё"}
+        </button>
+      ) : null}
     </div>
   );
 }
