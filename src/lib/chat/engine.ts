@@ -251,6 +251,27 @@ async function reply(username: string, lastId: string, stamp?: number) {
   const profile = getCachedProfile(username)?.data;
   setTyping(username, true);
   try {
+    const { runOneTurn } = await import("./turn");
+    const bond = asBond(live.bond, asWarmth(live.warmth));
+    const turned = await runOneTurn({
+      data: {
+        username,
+        text: (last.text || "").slice(0, 2000),
+        canon: (characterCanon(username) || "").slice(0, 1200),
+        bond: `тепло ${bond.warmth > 60 ? "есть" : "ещё нет"}, доверие ${bond.trust > 50 ? "есть" : "осторожно"}`.slice(0, 240),
+        history: live.messages.slice(-16).map((item) => ({
+          role: item.role === "assistant" ? "assistant" as const : "user" as const,
+          text: stripChatMeta(item.text || "").slice(0, 2000),
+        })),
+      },
+    });
+    if (!turned.legacy) {
+      if (turned.reply) {
+        await appendMessage(username, { role: "assistant", text: turned.reply, kind: "text" }, { incrementUnread: activeUser !== username });
+      }
+      if (activeUser === username) await markThreadRead(username);
+      return;
+    }
     let userImageDataUrl: string | undefined;
     if (last.imageUrl) {
       try {
