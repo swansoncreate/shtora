@@ -221,6 +221,16 @@ async function dispatch(name: string, data: unknown) {
       const { likeFeed } = await import("@/lib/feed/disk.server");
       return likeFeed(String(row.id || ""), row.on === true);
     }
+    case "world.get": {
+      const { getWorld } = await import("@/lib/world/disk.server");
+      return getWorld(String(row.username || ""));
+    }
+    case "world.commit": {
+      const { commitWorld } = await import("@/lib/world/disk.server");
+      const patch = row.patch && typeof row.patch === "object" ? (row.patch as Record<string, unknown>) : {};
+      const event = row.event && typeof row.event === "object" ? (row.event as Record<string, unknown>) : undefined;
+      return commitWorld(String(row.username || ""), patch, event as never);
+    }
     case "story.seen": {
       const { recordStorySeen } = await import("@/lib/instagram/seen.server");
       const ids = Array.isArray(row.ids) ? row.ids.filter((id): id is string => typeof id === "string") : [];
