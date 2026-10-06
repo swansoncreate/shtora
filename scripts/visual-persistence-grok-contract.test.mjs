@@ -8,6 +8,7 @@ import { register } from "node:module";
 
 process.env.SHTORA_DATA_DIR = await mkdtemp(join(tmpdir(), "shtora-visual-e2e-"));
 process.env.SHTORA_GROK_ORIGIN = "https://shtora-test.grok.me";
+process.env.SHTORA_RPC_KEY = "mock-rpc-key";
 
 await register(pathToFileURL(new URL("./src-alias-hook.mjs", import.meta.url).pathname));
 
