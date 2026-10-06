@@ -130,13 +130,13 @@ function pick<T>(items: T[], seed: string, salt: string) {
   return items[hash(seed + ":" + salt) % items.length] as T;
 }
 
-function distinct<T>(items: T[], recent: T[] | undefined, seed: string, salt: string) {
-  const blocked = new Set((recent || []).map((value) => String(value).toLowerCase()));
+function distinctPlace(items: Array<[string, string]>, recent: string[] | undefined, seed: string, salt: string): [string, string] {
+  const blocked = new Set((recent || []).map((value) => value.toLowerCase()));
   const first = pick(items, seed, salt);
-  if (!blocked.has(String(first).toLowerCase())) return first;
+  if (!blocked.has(first[0].toLowerCase())) return first;
   for (let i = 1; i < items.length; i += 1) {
     const next = items[hash(seed + ":" + salt + ":" + i) % items.length];
-    if (next != null && !blocked.has(String(next).toLowerCase())) return next;
+    if (next && !blocked.has(next[0].toLowerCase())) return next;
   }
   return first;
 }
@@ -152,7 +152,7 @@ export function planLifeScene(input: {
   const hour = moscowHour(now);
   const slot = hour < 11 ? "morning" : hour < 17 ? "daytime" : hour < 23 ? "evening" : "late night";
   const seed = input.username + ":" + now.toString(36);
-  const entry = distinct(PLACES, input.recentPlaces, seed, "place");
+  const entry = distinctPlace(PLACES, input.recentPlaces, seed, "place");
   const outfit = makeOutfit(seed, input.recentOutfits);
   const pose = pick(POSES, seed, "pose");
   const weather = pick(WEATHER, seed, "weather");
