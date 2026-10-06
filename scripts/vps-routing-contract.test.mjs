@@ -10,7 +10,7 @@ process.env.SHTORA_RPC_KEY = "routing-test-key";
 const { generateImage } = await import("../src/lib/imagine/gateway.ts");
 
 function fakeImageResponse(url = "https://img.test/generated.jpg") {
-  return new Response(JSON.stringify({ url }), {
+  return new Response(JSON.stringify({ ok: true, url }), {
     status: 200,
     headers: { "content-type": "application/json" },
   });
