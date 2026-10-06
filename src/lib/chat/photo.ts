@@ -38,6 +38,36 @@ export async function makePhoto(
   });
 }
 
+async function sourceReferenceJpeg(raw?: string) {
+  const value = (raw || "").trim();
+  const direct = trimDataImage(value);
+  if (direct) return direct;
+  if (!value) return "";
+  try {
+    const { readPersistedImage } = await import("@/lib/imagine/persist.server");
+    if (value.startsWith("/chat-media/")) {
+      const name = decodeURIComponent(value.split("/").pop() || "");
+      const hit = await readPersistedImage(name);
+      if (hit) return "data:" + hit.mime + ";base64," + hit.buf.toString("base64");
+    }
+    const parsed = new URL(value);
+    if (parsed.pathname.startsWith("/chat-media/")) {
+      const name = decodeURIComponent(parsed.pathname.split("/").pop() || "");
+      const hit = await readPersistedImage(name);
+      if (hit) return "data:" + hit.mime + ";base64," + hit.buf.toString("base64");
+    }
+  } catch {
+    /* continue with network fetch */
+  }
+  try {
+    const { fetchSourceImage } = await import("@/lib/imagine/functions");
+    const hit = await fetchSourceImage(value);
+    return hit.ok ? hit.url : "";
+  } catch {
+    return "";
+  }
+}
+
 async function identityJpeg(data: {
   dropboxToken?: string;
   dropboxFolder?: string;
@@ -56,7 +86,7 @@ async function identityJpeg(data: {
   const portrait = data.noIdentity
     ? { image: "", error: "" }
     : await firstInstagram([data.identityUrl, ...(data.instagramUrls ?? [])].filter(Boolean) as string[], 0);
-  const reuse = trimDataImage(data.sourceDataUrl);
+  const reuse = await sourceReferenceJpeg(data.sourceDataUrl);
   if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "", sourcePath: "" };
   if (data.dropboxToken && data.dropboxFolder) {
     try {
@@ -227,7 +257,9 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           imageUrl: url,
           createdAt: Date.now(),
           scene: { ...current, sceneId },
-          camera: { mode: (data.visualIntent?.camera || plan?.camera || data.kind || "selfie") as import("@/lib/visual/types").CameraMode },
+          camera: {
+            mode: cameraModeFromKind(data.visualIntent?.camera || plan?.camera || data.kind || "selfie"),
+          },
           source: "generated",
           parentId: data.parentId || previous?.id,
           sceneId,
@@ -253,3 +285,15 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       return { ok: false as const, url: undefined, error: clean, prompt: "", kind: data.kind };
     }
   });
+
+function cameraModeFromKind(raw: string): import("@/lib/visual/types").CameraMode {
+  const value = raw.toLowerCase();
+  if (value === "mirror") return "mirror";
+  if (value === "side") return "side";
+  if (value === "back") return "back";
+  if (value === "full") return "full";
+  if (value === "pov") return "pov";
+  if (value === "candid") return "candid";
+  if (value === "gallery") return "gallery";
+  return "selfie";
+}
