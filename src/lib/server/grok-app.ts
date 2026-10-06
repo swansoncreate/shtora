@@ -49,7 +49,7 @@ export async function writeGrokOrigin(origin: string) {
   return true;
 }
 
-export async function callGrokApp<T>(op: "reply" | "ping", data: unknown): Promise<T> {
+export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unknown): Promise<T> {
   const origin = await readGrokOrigin();
   if (!origin) {
     return {
