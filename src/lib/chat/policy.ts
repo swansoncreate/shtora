@@ -8,8 +8,8 @@ import {
   looksLikeGalleryAsk,
   looksLikeLookPoseAsk,
   looksLikePhotoAsk,
-} from "./functions";
-import { cameraKindFromText } from "./world";
+} from "./functions.ts";
+import { cameraKindFromText } from "./world.ts";
 
 export type ChatMove = "catalog" | "camera" | "look" | "gallery" | "circle" | "talk";
 export type ChatTone = "snap" | "ice" | "dry" | "warm" | "flirt" | "hot";
