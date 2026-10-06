@@ -218,6 +218,7 @@ async function deliverDm(
       dropboxSeed: `${username}-${Date.now()}`,
       instagramUrls: identityUrls(username),
       lastPhotoUrl: angle ? lastPic?.imageUrl : undefined,
+      username,
     });
     if (media.ok) {
       await appendMessage(
