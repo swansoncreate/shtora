@@ -231,6 +231,26 @@ async function dispatch(name: string, data: unknown) {
       const event = row.event && typeof row.event === "object" ? (row.event as Record<string, unknown>) : undefined;
       return commitWorld(String(row.username || ""), patch, event as never);
     }
+    case "visual.memory.save": {
+      const { saveVisualMemory } = await import("@/lib/visual/memory.server");
+      return saveVisualMemory(row as import("@/lib/visual/types").VisualMemory);
+    }
+    case "visual.memory.list": {
+      const { listVisualMemory } = await import("@/lib/visual/memory.server");
+      return { memories: await listVisualMemory(String(row.username || ""), String(row.query || "")) };
+    }
+    case "visual.job.create": {
+      const { createGenerationJob } = await import("@/lib/visual/jobs.server");
+      return createGenerationJob(row.job as Parameters<typeof createGenerationJob>[0]);
+    }
+    case "visual.job.update": {
+      const { updateGenerationJob } = await import("@/lib/visual/jobs.server");
+      return updateGenerationJob(String(row.username || ""), String(row.id || ""), (row.patch || {}) as Parameters<typeof updateGenerationJob>[2]);
+    }
+    case "visual.job.list": {
+      const { listGenerationJobs } = await import("@/lib/visual/jobs.server");
+      return { jobs: await listGenerationJobs(String(row.username || "")) };
+    }
     case "story.seen": {
       const { recordStorySeen } = await import("@/lib/instagram/seen.server");
       const ids = Array.isArray(row.ids) ? row.ids.filter((id): id is string => typeof id === "string") : [];
