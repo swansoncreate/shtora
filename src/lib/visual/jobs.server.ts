@@ -79,11 +79,12 @@ export async function updateGenerationJob(username: string, id: string, patch: P
   if (!user) throw new Error("bad username");
   return enqueue(user, async () => {
     const prev = await readJobs(user);
-    const next = prev.map((job) =>
-      job.id === id ? { ...job, ...patch, id: job.id, username: user, updatedAt: Date.now() } : job,
-    );
+    const index = prev.findIndex((job) => job.id === id);
+    if (index < 0) return undefined;
+    const next = [...prev];
+    next[index] = { ...next[index], ...patch, id: next[index].id, username: user, updatedAt: Date.now() };
     await writeJobs(user, next);
-    return next.find((job) => job.id === id);
+    return next[index];
   });
 }
 
