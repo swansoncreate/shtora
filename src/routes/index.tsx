@@ -6,6 +6,7 @@ import { ImagineStudio } from "@/components/imagine-studio";
 import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats";
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
+import { PreviewHome } from "@/components/preview-home";
 import { Button } from "@/components/ui/button";
 import { CHAT_OPEN_EVENT } from "@/lib/chat/send";
 import { useChatEngine } from "@/lib/chat/engine";
@@ -26,6 +27,7 @@ type SearchParams = {
   u?: string;
   tab?: Tab;
   p?: string;
+  preview?: string;
 };
 
 export const Route = createFileRoute("/")({
@@ -37,7 +39,8 @@ export const Route = createFileRoute("/")({
         : undefined;
     const app = search.app === "dropbox" || search.app === "imagine" ? search.app : undefined;
     const p = typeof search.p === "string" && search.p.trim() ? search.p : undefined;
-    return { app, u, tab, p };
+    const preview = search.preview === "1" ? "1" : undefined;
+    return { app, u, tab, p, preview };
   },
   component: Home,
 });
@@ -47,6 +50,7 @@ function Home() {
   const username = search.u ? cleanUsername(search.u) : "";
   const tab: Tab = search.tab ?? "posts";
   const app: AppView = search.app === "dropbox" || search.app === "imagine" ? search.app : "instagram";
+  const preview = search.preview === "1";
   const navigate = useNavigate({ from: "/" });
   const { settings, patch, setAccountFolder, hydrated } = useShtoraSettings();
   const dropboxPath = search.p || settings.defaultFolder || "/Штора";
@@ -59,8 +63,8 @@ function Home() {
       void caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith("shtora-")).map((k) => caches.delete(k))));
     }
   }, []);
-  useAutoSave(settings, ready && hydrated);
-  useServerState(ready && hydrated);
+  useAutoSave(settings, !preview && ready && hydrated);
+  useServerState(!preview && ready && hydrated);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [offline, setOffline] = useState(false);
@@ -96,9 +100,9 @@ function Home() {
   const [chatUser, setChatUser] = useState<string | null>(null);
   const chatUnread = useChatUnread();
   const chatUnreadMap = useChatUnreadMap();
-  useChatPings(settings.favorites, ready && hydrated, chatsOpen ? chatUser : null);
-  useChatEngine(ready && hydrated, chatsOpen ? chatUser : null);
-  useChatDiskSync(ready && hydrated);
+  useChatPings(settings.favorites, !preview && ready && hydrated, chatsOpen ? chatUser : null);
+  useChatEngine(!preview && ready && hydrated, chatsOpen ? chatUser : null);
+  useChatDiskSync(!preview && ready && hydrated);
 
   useEffect(() => {
     const onOpen = (e: Event) => {
@@ -175,7 +179,8 @@ function Home() {
       </header>
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
-        {offline || apiOk === false ? (
+        {preview ? <PreviewHome /> : null}
+        {!preview && (offline || apiOk === false) ? (
           <div
             className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
             role="status"
@@ -184,7 +189,7 @@ function Home() {
             <p className="min-w-0 flex-1">Сервер не отвечает — данные не подтянуть</p>
           </div>
         ) : null}
-        {app === "dropbox" ? (
+        {!preview && app === "dropbox" ? (
           <DropboxBrowser
             settings={settings}
             path={dropboxPath}
