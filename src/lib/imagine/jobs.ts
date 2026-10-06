@@ -1,5 +1,5 @@
 import { runImageEdit } from "./functions.ts";
-import { PHONE_RAW, keepPreset, withPhoneRaw } from "./prompt";
+import { PHONE_RAW, keepPreset, withPhoneRaw } from "./prompt.ts";
 
 function lookFromAsk(raw: string) {
   const t = (raw || "").toLowerCase();
