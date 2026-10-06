@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { pathToFileURL } from "node:url";
+import { register } from "node:module";
+
+await register(pathToFileURL(new URL("./src-alias-hook.mjs", import.meta.url).pathname));
 
 process.env.SHTORA_RPC_KEY = "routing-test-key";
 
