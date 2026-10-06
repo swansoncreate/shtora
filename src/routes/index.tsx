@@ -189,42 +189,44 @@ function Home() {
             <p className="min-w-0 flex-1">Сервер не отвечает — данные не подтянуть</p>
           </div>
         ) : null}
-        {!preview && app === "dropbox" ? (
-          <DropboxBrowser
-            settings={settings}
-            path={dropboxPath}
-            onPath={(next) =>
-              void navigate({
-                to: "/",
-                search: { app: "dropbox", p: next, u: username || undefined },
-              })
-            }
-            onNeedToken={() => setSettingsOpen(true)}
-          />
-        ) : app === "imagine" ? (
-          <ImagineStudio settings={settings} onNeedToken={() => setSettingsOpen(true)} />
-        ) : (
-          <InstagramApp
-            username={username}
-            tab={tab}
-            settings={settings}
-            ready={ready}
-            hydrated={hydrated}
-            chatUnread={chatUnread}
-            chatUnreadMap={chatUnreadMap}
-            onOpenUser={(name, nextTab) =>
-              void navigate({
-                to: "/",
-                search: { u: cleanUsername(name) || undefined, tab: nextTab === "stories" ? "stories" : undefined },
-              })
-            }
-            onOpenChats={(name) => {
-              setChatUser(name ?? null);
-              setChatsOpen(true);
-            }}
-            onNeedToken={() => setSettingsOpen(true)}
-          />
-        )}
+        {!preview ? (
+          app === "dropbox" ? (
+            <DropboxBrowser
+              settings={settings}
+              path={dropboxPath}
+              onPath={(next) =>
+                void navigate({
+                  to: "/",
+                  search: { app: "dropbox", p: next, u: username || undefined },
+                })
+              }
+              onNeedToken={() => setSettingsOpen(true)}
+            />
+          ) : app === "imagine" ? (
+            <ImagineStudio settings={settings} onNeedToken={() => setSettingsOpen(true)} />
+          ) : (
+            <InstagramApp
+              username={username}
+              tab={tab}
+              settings={settings}
+              ready={ready}
+              hydrated={hydrated}
+              chatUnread={chatUnread}
+              chatUnreadMap={chatUnreadMap}
+              onOpenUser={(name, nextTab) =>
+                void navigate({
+                  to: "/",
+                  search: { u: cleanUsername(name) || undefined, tab: nextTab === "stories" ? "stories" : undefined },
+                })
+              }
+              onOpenChats={(name) => {
+                setChatUser(name ?? null);
+                setChatsOpen(true);
+              }}
+              onNeedToken={() => setSettingsOpen(true)}
+            />
+          )
+        ) : null}
 
         <ChatsSheet
           open={chatsOpen}
