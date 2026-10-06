@@ -9,6 +9,7 @@ import { classifierSystem, dmSystem, eventLine } from "./prompt";
 import { scoreDm } from "./score";
 import { dmHint, settleMove } from "./settle";
 import { consumeVoice } from "./voice-walk";
+import { z } from "zod";
 import { fitDmWorld } from "./world";
 
 export type DmResult = {
@@ -253,17 +254,24 @@ export class DmChat {
   }
 }
 
+const dmMoveSchema = z.object({
+  move: z.enum(["camera", "catalog", "gallery", "circle", "look", "talk"]),
+  nude_ask: z.boolean().optional().default(false),
+  confidence: z.number().min(0).max(1),
+});
+
 function parseMove(raw: string): { move: DmMove; nude: boolean; confidence: number } | null {
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
   if (start < 0 || end <= start) return null;
   try {
-    const json = JSON.parse(raw.slice(start, end + 1)) as { move?: string; nude_ask?: boolean; confidence?: number };
-    const move = json.move;
-    const ok = move === "camera" || move === "catalog" || move === "gallery" || move === "circle" || move === "look" || move === "talk";
-    if (!ok) return null;
-    const confidence = Number(json.confidence);
-    return { move, nude: Boolean(json.nude_ask), confidence: Number.isFinite(confidence) ? confidence : 0 };
+    const parsed = dmMoveSchema.safeParse(JSON.parse(raw.slice(start, end + 1)));
+    if (!parsed.success) return null;
+    return {
+      move: parsed.data.move,
+      nude: Boolean(parsed.data.nude_ask),
+      confidence: parsed.data.confidence,
+    };
   } catch {
     return null;
   }
