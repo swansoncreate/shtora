@@ -305,7 +305,7 @@ async function generateFor(
   }
   const folder = folderForAccount(username, settings);
   const ownFolder = /\/общее$/i.test(folder) ? undefined : folder;
-  const seed = `${username}-${slot}-${todayKey()}`;
+  const seed = username + "-" + slot + "-" + todayKey();
   const pic = await composeChatPhoto({
     data: {
       kind: "feed",
@@ -315,24 +315,24 @@ async function generateFor(
       dropboxFolder: ownFolder,
       dropboxSeed: seed,
       username,
+      visualIntent: { mode: "new_scene", camera: "candid", reference: "identity" },
     },
   });
   if (!pic.ok || !pic.url) return null;
   const id = extra ? `gen-post-${username}-${Date.now()}` : `gen-post-${username}-${slot}-${todayKey()}`;
   const slides = [{ id, url: pic.url }];
   const want = extra ? 1 : carouselCount(username, slot);
-  const poses = ["она села", "она встала", "она повернулась", "она смотрит в сторону"];
   for (let i = 1; i < want; i += 1) {
     const next = await composeChatPhoto({
       data: {
         kind: "feed",
-        prompt: feedPrompt(`${settings.imaginePrompt || ""} Same room, clothes, light and time. Different pose only: ${poses[i - 1]}.`),
+        prompt: feedPrompt((settings.imaginePrompt || "") + " Same exact scene, person, outfit, light and time. Use a different natural pose and framing only."),
         noIdentity: true,
-        sourceDataUrl: pic.url.startsWith("data:") ? pic.url : undefined,
-        dropboxToken: pic.url.startsWith("data:") ? undefined : ownFolder ? dropboxToken : undefined,
-        dropboxFolder: pic.url.startsWith("data:") ? undefined : ownFolder,
-        dropboxSeed: seed,
+        sourceDataUrl: pic.url,
         username,
+        visualIntent: { mode: "continue", camera: "candid", reference: "last_photo", changes: ["different natural pose and framing"] },
+        sceneId: pic.sceneId,
+        parentId: pic.jobId,
       },
     }).catch(() => null);
     if (!next?.ok || !next.url) break;
