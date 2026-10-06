@@ -54,31 +54,5 @@ export function resolveScene(input: {
 }
 
 export function intentFromMessage(text: string, hasPreviousPhoto: boolean) {
-  return deterministicIntent(text, hasPreviousPhoto);
-}
-
-function deterministicIntent(text: string, hasPreviousPhoto: boolean): PhotoIntent {
-  const t = (text || "").trim().toLowerCase();
-  if (!t) return { mode: "none" };
-  return requireDeterministic(t, hasPreviousPhoto);
-}
-
-function requireDeterministic(text: string, hasPreviousPhoto: boolean): PhotoIntent {
-  // Kept as a tiny indirection so future semantic resolution can sit here without changing callers.
-  const raw = text;
-  if (/из галере|вчерашн|та фот|как на той|то фото/.test(raw)) {
-    return { mode: "gallery", query: raw, reference: "visual_memory" };
-  }
-  if (/от первого лица|\bpov\b/.test(raw)) {
-    return { mode: "pov", camera: "pov", scene: raw.slice(0, 160), reference: hasPreviousPhoto ? "last_photo" : "world" };
-  }
-  if (/боком|сбоку|со спины|сзади|зеркал|во весь рост|полный рост|селфи/.test(raw)) {
-    let camera: "selfie" | "mirror" | "side" | "back" | "full" = "selfie";
-    if (/зеркал/.test(raw)) camera = "mirror";
-    else if (/боком|сбоку/.test(raw)) camera = "side";
-    else if (/со спины|сзади/.test(raw)) camera = "back";
-    else if (/во весь рост|полный рост/.test(raw)) camera = "full";
-    return { mode: "continue", camera, reference: "last_photo" };
-  }
-  return deterministicPhotoIntent(raw, hasPreviousPhoto);
+  return deterministicPhotoIntent(text, hasPreviousPhoto);
 }
