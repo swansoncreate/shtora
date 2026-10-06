@@ -135,6 +135,10 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       userText: z.string().max(400).optional(),
       context: z.string().max(500).optional(),
       scene: z.string().max(300).optional(),
+      hair: z.string().max(120).optional(),
+      activity: z.string().max(160).optional(),
+      timeContext: z.string().max(80).optional(),
+      weather: z.string().max(120).optional(),
       dropboxToken: z.string().min(8).max(8000).optional(),
       dropboxFolder: z.string().max(1000).optional(),
       dropboxSkip: z.number().min(0).max(400).optional(),
@@ -186,6 +190,10 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       const baseContext: VisualContext = {
         place: data.scene || intentScene || previous?.scene?.place,
         clothes: intentClothes || previous?.scene?.clothes,
+        hair: data.hair || previous?.scene?.hair,
+        activity: data.activity || previous?.scene?.activity,
+        timeContext: data.timeContext || previous?.scene?.timeContext,
+        weather: data.weather || previous?.scene?.weather,
         sceneId: data.sceneId || previous?.sceneId || undefined,
       };
 
@@ -273,11 +281,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       if (username) {
         const current: VisualContext = {
           ...baseContext,
-          place: plan?.place || data.scene || previous?.scene?.place,
-          clothes: plan?.outfit || previous?.scene?.clothes,
-          activity: plan?.activity || previous?.scene?.activity,
-          timeContext: plan?.timeContext || previous?.scene?.timeContext,
-          weather: plan?.weather,
+            place: plan?.place || baseContext.place || previous?.scene?.place,
+          clothes: plan?.outfit || baseContext.clothes || previous?.scene?.clothes,
+          hair: baseContext.hair || previous?.scene?.hair,
+          activity: plan?.activity || baseContext.activity || previous?.scene?.activity,
+          timeContext: plan?.timeContext || baseContext.timeContext || previous?.scene?.timeContext,
+          weather: plan?.weather || baseContext.weather || previous?.scene?.weather,
           sceneId,
         };
         const scene = resolveScene({
@@ -313,7 +322,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             sourcePath: found.sourcePath || undefined,
             tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
           });
-          if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: "image-gateway" });
+          if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: out.provider || "image-gateway" });
           try {
             const { commitWorld } = await import("@/lib/world/disk.server");
             const at = Date.now();
