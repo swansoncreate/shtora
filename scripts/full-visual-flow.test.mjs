@@ -16,6 +16,7 @@ const { createGenerationJob, updateGenerationJob, listGenerationJobs } =
   await import("../src/lib/visual/jobs.server.ts");
 const { rememberSourcePath, recentSourcePaths } =
   await import("../src/lib/visual/source-history.server.ts");
+const { commitWorld, getWorld } = await import("../src/lib/world/disk.server.ts");
 
 test("full simulated Instagram → DM → visual memory → scene change → feed → Dropbox flow", async () => {
   const username = "full-flow";
@@ -122,6 +123,16 @@ test("full simulated Instagram → DM → visual memory → scene change → fee
     sceneId: "scene-2",
     tags: ["afternoon", "cafe", "lunch", "full"],
   });
+
+  await commitWorld(username, {
+    place: { value: secondScene.place, at: Date.now() },
+    activity: { value: secondScene.activity, at: Date.now() },
+    clothes: { value: secondScene.clothes, at: Date.now() },
+    sceneId: { value: "scene-2", at: Date.now() },
+  }, { type: "visual", source: "her", text: "visual scene committed" });
+  const worldBeforeRestart = await getWorld(username);
+  assert.equal(worldBeforeRestart.snap?.place?.value, "cafe");
+  assert.equal(worldBeforeRestart.snap?.sceneId?.value, "scene-2");
 
   // 4. Feed/save path uses the same durable visual memory, not a disconnected image.
   const memory = await listVisualMemory(username);
