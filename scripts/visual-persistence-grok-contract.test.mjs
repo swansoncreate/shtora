@@ -120,3 +120,38 @@ test("published Grok Build contract is sent for reply, ping, and imagine", async
     assert.equal(JSON.parse(String(call.init?.body)).engine, "grok");
   }
 });
+
+test("published Grok Build contract rejects non-2xx and malformed JSON safely", async () => {
+  const previousFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response("upstream failure", { status: 502 });
+    const failed = await callGrokApp("reply", { test: true });
+    assert.equal(failed.ok, false);
+    assert.match(failed.error, /upstream failure|Grok app HTTP 502/);
+
+    globalThis.fetch = async () => new Response("{not-json", { status: 200 });
+    const malformed = await callGrokApp("imagine", { test: true });
+    assert.equal(malformed.ok, false);
+    assert.equal(malformed.error, "пустой ответ Grok");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("published Grok Build contract preserves the 90 second request timeout", async () => {
+  const previousFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (_url, init) => {
+      assert.ok(init?.signal);
+      assert.equal(typeof init.signal.aborted, "boolean");
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const out = await callGrokApp("ping", { test: true });
+    assert.deepEqual(out, { ok: true });
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
