@@ -474,6 +474,7 @@ async function reply(username: string, lastId: string, stamp?: number) {
         dropboxSeed: `${username}-${Date.now()}-${sentPhotos}`,
         instagramUrls: identityUrls(username),
         lastPhotoUrl: cameraAsk ? lastPic?.imageUrl : undefined,
+        username,
       });
       if (media.ok) {
         const lastOnce = getThread(username)?.onceSentAt || 0;
