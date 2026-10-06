@@ -22,6 +22,15 @@ async function readJobs(username: string): Promise<GenerationJob[]> {
   }
 }
 
+const tails = new Map<string, Promise<unknown>>();
+
+function enqueue<T>(username: string, job: () => Promise<T>): Promise<T> {
+  const prev = tails.get(username) ?? Promise.resolve();
+  const run = prev.then(job, job);
+  tails.set(username, run.then(() => undefined, () => undefined));
+  return run;
+}
+
 async function writeJobs(username: string, rows: GenerationJob[]) {
   const dst = await indexPath(username);
   const tmp = dst + ".tmp";
