@@ -4,6 +4,14 @@ import { dataSubdir } from "@/lib/server/data-dir.server";
 
 const MAX_RECENT = 12;
 const TTL = 7 * 24 * 60 * 60 * 1000;
+const tails = new Map<string, Promise<unknown>>();
+
+function enqueue<T>(username: string, job: () => Promise<T>) {
+  const prev = tails.get(username) || Promise.resolve();
+  const run = prev.then(job, job);
+  tails.set(username, run.then(() => undefined, () => undefined));
+  return run;
+}
 
 type Row = { path: string; at: number };
 type State = Record<string, Row[]>;
@@ -53,9 +61,11 @@ export async function rememberSourcePath(username: string, sourcePath: string) {
   const key = cleanUser(username);
   const clean = sourcePath.trim();
   if (!key || !clean) return;
-  const state = await readState();
-  const now = Date.now();
-  const next = [{ path: clean, at: now }, ...(state[key] || []).filter((row) => row.path !== clean)];
-  state[key] = next.filter((row) => now - row.at < TTL).slice(0, MAX_RECENT);
-  await writeState(state);
+  return enqueue(key, async () => {
+    const state = await readState();
+    const now = Date.now();
+    const next = [{ path: clean, at: now }, ...(state[key] || []).filter((row) => row.path !== clean)];
+    state[key] = next.filter((row) => now - row.at < TTL).slice(0, MAX_RECENT);
+    await writeState(state);
+  });
 }
