@@ -48,7 +48,7 @@ test("imagine stays on the publication and the browser does not get a data url",
   const start = text.indexOf("export const imagineVariation");
   const handler = text.slice(start, text.indexOf("export const listStudio", start));
   assert.match(text, /generateImage\(/);
-  assert.match(text, /from "\.\/gateway"/);
+  assert.match(text, /from "\.\/gateway\.ts"/);
   assert.equal(handler.includes("embedImage("), false);
   assert.match(text, /if \(!raw \|\| raw.startsWith\("data:"\) \|\| raw.startsWith\("blob:"\)\) return ""/);
   const studio = readFileSync(new URL("../src/components/imagine-studio.tsx", import.meta.url), "utf8");
