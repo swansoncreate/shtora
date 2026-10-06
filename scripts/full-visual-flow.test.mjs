@@ -183,6 +183,9 @@ test("full simulated Instagram → DM → visual memory → scene change → fee
 
   // 6. Generation records remain inspectable after the whole flow.
   const jobs = await listGenerationJobs(username);
+  const beforeUnknownUpdate = JSON.stringify(jobs);
+  assert.equal(await updateGenerationJob(username, "missing-job", { status: "failed" }), undefined);
+  assert.equal(JSON.stringify(await listGenerationJobs(username)), beforeUnknownUpdate);
   assert.equal(jobs.length, 4);
   assert.equal(jobs.filter((x) => x.status === "persisted").length, 4);
   assert.equal(jobs.find((x) => x.id === thirdJob.id)?.sceneId, "scene-2");
