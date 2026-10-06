@@ -3,7 +3,6 @@ import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { dataSubdir } from "@/lib/server/data-dir.server";
 import type { DiskThread } from "./disk";
-import { dumpBond } from "./bond";
 
 export type { DiskThread };
 
@@ -189,13 +188,21 @@ export async function eraseDiskUsers(usernames: string[]) {
 }
 
 function toMarkdown(t: DiskThread) {
-  const dump = dumpBond(t.bond, t.warmth ?? 40);
+  const b = {
+    warmth: Math.max(0, Math.min(100, t.bond?.warmth ?? t.warmth ?? 40)),
+    trust: Math.max(0, Math.min(100, t.bond?.trust ?? Math.round((t.warmth ?? 40) * 0.45))),
+    heat: Math.max(0, Math.min(100, t.bond?.heat ?? Math.round((t.warmth ?? 40) * 0.12))),
+    irrit: Math.max(0, Math.min(100, t.bond?.irrit ?? 8)),
+    guilt: Math.max(0, Math.min(100, t.bond?.guilt ?? 8)),
+    spark: Math.max(0, Math.min(100, t.bond?.spark ?? Math.round((t.warmth ?? 40) * 0.3))),
+  };
+  const pull = Math.round(Math.max(0, Math.min(100, b.warmth * 0.5 + b.trust * 0.22 + b.spark * 0.18 + b.heat * 0.12 - b.irrit * 0.12)));
   const lines = [
     `# @${t.username}${t.fullName && t.fullName !== t.username ? ` — ${t.fullName}` : ""}`,
     "",
     `- updated: ${new Date(t.updatedAt).toISOString()}`,
-    `- ${dump.head}`,
-    `- ${dump.pullLine}`,
+    `- близость ${b.warmth} · доверие ${b.trust} · искра ${b.spark} · накал ${b.heat} · раздражение ${b.irrit} · вина ${b.guilt}`,
+    `- тяга ${pull}/100`,
     `- mood: ${t.mood || "—"}`,
     `- memory: ${t.memory || "—"}`,
     `- place: ${t.world?.place || "—"}`,
