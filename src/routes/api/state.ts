@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { AccountSnapshot } from "@/lib/server/snapshots";
 
 export const Route = createFileRoute("/api/state")({
   server: {
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/api/state")({
         for (const row of snapshots) byName.set(row.username.toLowerCase(), row);
         return Response.json({
           snapshots: [...byName.values()].map((row) =>
-            "at" in row && "profile" in row && "stories" in row ? slimSnapshot(row) : row,
+            "at" in row && typeof row.at === "number" ? slimSnapshot(row as AccountSnapshot) : row,
           ),
           chats,
           tickAt: status?.at ?? 0,
