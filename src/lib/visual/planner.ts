@@ -92,6 +92,16 @@ const POSES = [
 
 const WEATHER = ["clear", "bright overcast", "soft evening light", "cool cloudy weather", "warm daylight", "light rain outside"];
 
+function moscowHour(at: number) {
+  const raw = new Date(at).toLocaleString("en-GB", {
+    hour: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Moscow",
+  });
+  const hour = Number.parseInt(raw, 10);
+  return Number.isFinite(hour) ? hour : new Date(at).getHours();
+}
+
 function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i += 1) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
@@ -139,7 +149,7 @@ export function planLifeScene(input: {
   recentOutfits?: string[];
 }): ScenePlan {
   const now = input.now || Date.now();
-  const hour = new Date(now).getHours();
+  const hour = moscowHour(now);
   const slot = hour < 11 ? "morning" : hour < 17 ? "daytime" : hour < 23 ? "evening" : "late night";
   const seed = input.username + ":" + now.toString(36);
   const entry = distinct(PLACES, input.recentPlaces, seed, "place");
