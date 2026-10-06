@@ -148,6 +148,10 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       sourceDataUrl: z.string().min(32).max(8_000_000).optional(),
       prompt: z.string().max(1200).optional(),
       noIdentity: z.boolean().optional(),
+       username: z.string().min(1).max(40).optional(),
+       visualIntent: photoIntentSchema.optional(),
+       sceneId: z.string().max(120).optional(),
+       parentId: z.string().max(120).optional(),
     }),
   )
   .handler(async ({ data }) => {
