@@ -23,7 +23,7 @@ function thread(username) {
     fullName: "Inna",
     warmth: 80,
     bond: { warmth: 80, trust: 70, heat: 20, irrit: 5, spark: 40 },
-    world: { place: "home" },
+    world: { place: "home", memOpen: "open thread" },
     updatedAt: now - 60_000,
     messages: [
       { role: "user", text: "ты тут", at: now - 10 * 60_000 },
