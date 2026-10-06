@@ -4,12 +4,11 @@ import { dataSubdir } from "@/lib/server/data-dir.server";
 
 const MAX_RECENT = 12;
 const TTL = 7 * 24 * 60 * 60 * 1000;
-const tails = new Map<string, Promise<unknown>>();
+let fileTail: Promise<unknown> = Promise.resolve();
 
-function enqueue<T>(username: string, job: () => Promise<T>) {
-  const prev = tails.get(username) || Promise.resolve();
-  const run = prev.then(job, job);
-  tails.set(username, run.then(() => undefined, () => undefined));
+function enqueue<T>(job: () => Promise<T>) {
+  const run = fileTail.then(job, job);
+  fileTail = run.then(() => undefined, () => undefined);
   return run;
 }
 
@@ -61,7 +60,7 @@ export async function rememberSourcePath(username: string, sourcePath: string) {
   const key = cleanUser(username);
   const clean = sourcePath.trim();
   if (!key || !clean) return;
-  return enqueue(key, async () => {
+  return enqueue(async () => {
     const state = await readState();
     const now = Date.now();
     const next = [{ path: clean, at: now }, ...(state[key] || []).filter((row) => row.path !== clean)];
