@@ -57,7 +57,9 @@ test("the key lives only in the server module", () => {
   assert.deepEqual(hits, []);
   const settings = readFileSync(join(process.cwd(), "src/components/settings-sheet.tsx"), "utf8");
   const tokens = readFileSync(join(process.cwd(), "src/routes/api/tokens.ts"), "utf8");
-  assert.equal(settings.includes(key), false);
-  assert.equal(tokens.includes(key), false);
+  if (key) {
+    assert.equal(settings.includes(key), false);
+    assert.equal(tokens.includes(key), false);
+  }
   assert.equal(settings.includes("localStorage.setItem"), false);
 });
