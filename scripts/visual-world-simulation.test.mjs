@@ -52,7 +52,7 @@ test("simulated new-scene flow creates a new scene without mutating the old one"
     now: 2000,
   });
 
-  const newIntent = deterministicPhotoIntent("теперь в кафе, переоденься в зелёное платье", true);
+  const newIntent = deterministicPhotoIntent("скинь фото теперь в кафе, переоденься в зелёное платье", true);
   assert.equal(newIntent.mode, "new_scene");
 
   const newWorld = { place: "cafe", clothes: "green dress", activity: "having coffee" };
