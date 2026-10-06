@@ -1,3 +1,5 @@
+> This file is the test checklist. Architecture lives in [VPS_GROK_IMAGINE.md](./VPS_GROK_IMAGINE.md).
+
 # Test: VPS → published Grok → Imagine
 
 This branch tests the architecture where the phone talks only to the Shtora VPS, and the VPS delegates Imagine generation to the user's published Grok Build.
