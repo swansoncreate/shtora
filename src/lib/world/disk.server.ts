@@ -132,10 +132,18 @@ async function migrateFromThread(username: string): Promise<WorldSnap> {
   const place = world?.placeRu || world?.place || "";
   const clothes = world?.clothesRu || world?.clothes || "";
   const mood = thread?.mood || "";
+  const activity = world?.activity || "";
+  const timeContext = world?.timeContext || "";
+  const weather = world?.weather || "";
+  const sceneId = world?.sceneId || "";
   const snap: WorldSnap = { username };
   if (place) snap.place = { value: place.slice(0, 80), at };
   if (clothes) snap.clothes = { value: clothes.slice(0, 80), at };
   if (mood) snap.mood = { value: mood.slice(0, 40), at };
+  if (activity) snap.activity = { value: activity.slice(0, 80), at };
+  if (timeContext) snap.time = { value: timeContext.slice(0, 40), at };
+  if (weather) snap.energy = { value: weather.slice(0, 80), at };
+  if (sceneId) snap.sceneId = { value: sceneId.slice(0, 120), at };
   await writeJson(await worldPath(username), snap);
   if (place || clothes || mood) {
     const events = await readEvents(username);
