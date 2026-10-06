@@ -51,7 +51,7 @@ function cameraFromText(text: string): CameraMode | undefined {
 }
 
 function explicitSceneChange(text: string) {
-  return /теперь|потом|пошли в|идём в|идем в|переод|другой наряд|другая одеж|на улице|в кафе|в ресторан|в бар|на пляж|в парк|в аэропорт|на вокзал/.test(
+  return /пошли в|идём в|идем в|переод|другой наряд|другая одеж|на улице|в кафе|в ресторан|в бар|на пляж|в парк|в аэропорт|на вокзал/.test(
     text.toLowerCase(),
   );
 }
