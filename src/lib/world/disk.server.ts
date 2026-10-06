@@ -14,6 +14,7 @@ export type WorldSnap = {
   mood?: WorldField;
   clothes?: WorldField;
   with?: WorldField;
+  sceneId?: WorldField;
 };
 export type WorldEvent = {
   id: string;
@@ -77,7 +78,7 @@ function fresh(key: keyof Omit<WorldSnap, "username">, row: WorldField | undefin
 
 export function expireSnap(snap: WorldSnap, now = Date.now()): WorldSnap {
   const next: WorldSnap = { username: snap.username };
-  for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with"] as const) {
+  for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with", "sceneId"] as const) {
     const kept = fresh(key, snap[key], now);
     if (kept) next[key] = kept;
   }
@@ -168,7 +169,7 @@ export async function commitWorld(username: string, patch: Partial<WorldSnap>, e
     withFile(async () => {
       const prev = (await readSnap(user)) || { username: user };
       const next: WorldSnap = { ...prev, username: user };
-      for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with"] as const) {
+      for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with", "sceneId"] as const) {
         const incoming = field(patch[key]);
         if (incoming) next[key] = incoming;
       }
