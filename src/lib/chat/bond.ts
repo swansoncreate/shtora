@@ -1,4 +1,4 @@
-import { looksLikeCatalogAsk, looksLikeDirtyTalk, looksLikePhotoAsk, storyFacts, type StoryRelation } from "./functions.ts";
+import { looksLikeCatalogAsk, looksLikeDirtyTalk, looksLikePhotoAsk, storyFacts, type StoryRelation } from "./functions";
 
 export type ChatBond = {
   warmth: number;
