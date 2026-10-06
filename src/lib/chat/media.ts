@@ -142,11 +142,6 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
     }
-    const inferredIntent: PhotoIntent =
-      ask.visualIntent ||
-      (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
-        ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
-        : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl || sourceDataUrl)));
     const pic = await composeChatPhoto({
       data: {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
