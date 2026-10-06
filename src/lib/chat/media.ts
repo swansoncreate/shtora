@@ -22,6 +22,9 @@ export type MediaAsk = MediaPlan & {
   clothes?: string;
   place?: string;
   hair?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
   userText?: string;
   dropboxToken?: string;
   dropboxFolder?: string;
@@ -147,7 +150,9 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
         userText: (ask.userText || "").slice(0, 400),
         scene: ask.gallery ? "" : (ask.place || "").slice(0, 80),
-        world: ask.gallery ? "" : worldPrompt({ clothes: ask.clothes, place: ask.place, hair: ask.hair }),
+        world: ask.gallery
+          ? ""
+          : worldPrompt({ clothes: ask.clothes, place: ask.place, hair: ask.hair }),
         dropboxToken: sourceDataUrl ? undefined : ask.dropboxToken,
         dropboxFolder: sourceDataUrl ? undefined : ask.dropboxFolder,
         dropboxSkip: sourceDataUrl ? 0 : ask.dropboxSkip,
@@ -156,6 +161,10 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         sourceDataUrl,
         username: ask.username,
         visualIntent: inferredIntent.mode === "none" ? undefined : inferredIntent,
+        hair: ask.hair,
+        activity: ask.activity,
+        timeContext: ask.timeContext,
+        weather: ask.weather,
       },
     });
     prompt = pic.prompt || "";
