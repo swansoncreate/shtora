@@ -115,7 +115,7 @@ test("platform chrome overwrites share-card metas and always sets og:title", () 
 
 test("does not duplicate twitter:card or og:title", () => {
   const once = injectGrokPwaHead("<html><head><title>Hello World</title></head></html>", { site: {} });
-  const twice = injectGrokPwaHead(once);
+  const twice = injectGrokPwaHead(once, { site: {} });
   assert.equal(once, twice);
   assert.equal(twice.split('name="twitter:card"').length - 1, 1);
   assert.equal(twice.split('property="og:title"').length - 1, 1);
@@ -204,6 +204,7 @@ test("site title Grok App is a real name, not a sentinel", () => {
 test("published grok.me slug is still a title fallback", () => {
   const out = injectGrokPwaHead("<html><head></head></html>", {
     host: "wild-race.grok.me",
+    site: {},
   });
   assert.match(out, /property="og:title" content="Wild Race"/);
 });
