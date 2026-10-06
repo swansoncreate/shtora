@@ -11,6 +11,7 @@ const { resolveScene } = await import("../src/lib/visual/scene.ts");
 test("simulated Instagram chat photo flow keeps camera continuity", () => {
   let previousPhoto = false;
   let scene;
+  let firstSceneId;
   const world = {
     place: "bathroom",
     clothes: "black shirt",
@@ -32,11 +33,12 @@ test("simulated Instagram chat photo flow keeps camera continuity", () => {
       current: world,
       now: 1000 + i,
     });
+    firstSceneId ??= scene.id;
+    assert.equal(scene.id, firstSceneId);
     previousPhoto = true;
   }
 
   assert.ok(scene);
-  assert.equal(scene.id, scene.id);
   assert.equal(scene.parentSceneId, undefined);
 });
 
