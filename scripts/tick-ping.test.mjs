@@ -76,6 +76,8 @@ test("with front origin the ping is appended from publication, not api.x.ai", as
       { status: 200, headers: { "content-type": "application/json" } },
     );
   };
+  const realDateNow = Date.now;
+  Date.now = () => Date.parse("2026-10-07T17:00:00Z"); // 20:00 Moscow: deterministic evening slot.
   try {
     await writeDiskThread(thread("front"));
     const out = await runTick({ chats: true, instagram: false, dropbox: false });
@@ -92,6 +94,7 @@ test("with front origin the ping is appended from publication, not api.x.ai", as
     assert.ok(row.lastPingAt > 0);
   } finally {
     globalThis.fetch = prev;
+    Date.now = realDateNow;
     delete process.env.SHTORA_FRONT_ORIGIN;
   }
 });
