@@ -2,13 +2,13 @@
 
 ## Branch
 
-All work from this specification starts on:
+This branch is the active implementation/test line:
 
 ~~~text
-feat/world-engine-tz
+test/vps-grok-imagine
 ~~~
 
-Do not implement directly on main.
+The repository `main` is the source used by the published Grok Build. Promote the tested commits there only after end-to-end publication verification.
 
 ## P0 — contracts and persistence
 
@@ -201,6 +201,16 @@ Grok publication Imagine
  ↓
 cross-product world
 ~~~
+
+## Current implementation status
+
+P0 is implemented: shared visual types, VisualMemory persistence, GenerationJob state and the image provider gateway exist.
+
+P1 is implemented: deterministic camera intent, last-frame continuation, scene lifecycle, Dropbox recent-source exclusion and a life-mode scene planner are wired into chat/feed photo generation.
+
+P2 is implemented on the Shtora side: Zod-validated DM classification, POV/memory/gallery contracts and published `/api/grok-chat` Imagine routing are present. The public Build runtime still needs real end-to-end image access verification.
+
+P3 is implemented for the shared world boundary: successful generated photos commit scene/place/activity/clothes/scene id as world events. The durable owner is the VPS; publication storage is best-effort.
 
 ## Definition of done
 
