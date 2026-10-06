@@ -186,7 +186,7 @@ export async function runStill(job: StillJob) {
     return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
   }
   if (/422|не принял|unprocessable|фильтр/i.test(pic.error || "")) {
-    return { ok: true as const, url: job.source, prompt };
+    return { ok: true as const, url: job.source, prompt, provider: pic.provider };
   }
   return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
 }
