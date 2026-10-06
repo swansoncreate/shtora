@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { isAllowedMediaHost, mediaFetchHeaders } from "@/lib/media-host";
-import { DEFAULT_VARIATION_PROMPT } from "./prompt";
-import { generateImage } from "./gateway";
+import { isAllowedMediaHost, mediaFetchHeaders } from "../media-host.ts";
+import { DEFAULT_VARIATION_PROMPT } from "./prompt.ts";
+import { generateImage } from "./gateway.ts";
 
 export { DEFAULT_VARIATION_PROMPT };
 
