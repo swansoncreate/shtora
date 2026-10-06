@@ -132,7 +132,7 @@ async function runImageEditOnce(
   let last = "Imagine не ответил";
   for (const payload of payloads) {
     const hit = await generateImage(payload as Parameters<typeof generateImage>[0]);
-    if (hit.ok) return { ok: true as const, url: hit.url };
+    if (hit.ok) return { ok: true as const, url: hit.url, provider: hit.provider };
     last = hit.error;
     if (/подождать|слишком часто|credit|spend|quota|нет доступа/i.test(last)) return { ok: false as const, error: last };
   }
