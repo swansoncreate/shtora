@@ -6,6 +6,10 @@ export type ChatWorld = {
   clothesRu?: string;
   clothesNamed?: boolean;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   memAbout?: string;
   memOpen?: string;
   memDodged?: string;
@@ -379,7 +383,7 @@ export function rebuildWorld(lines: ChatLine[] | undefined, now = Date.now(), pr
   const clothes = preferClothes(out.clothes, prev?.clothes) || out.clothes;
   const place = out.place || prev?.place;
   const hair = out.hair || prev?.hair;
-  return clockWorld({ place, clothes, hair }, now, lastAt, fit.namedAt);
+  return clockWorld({ place, clothes, hair, sceneId: prev?.sceneId }, now, lastAt, fit.namedAt);
 }
 
 export type WorldAdvance = {
@@ -421,7 +425,7 @@ function mergeNamed(world: ChatWorld, model?: ChatWorld, herText?: string, now =
   const clothes = preferClothes(fromHer, preferClothes(model?.clothes, world.clothes));
   const place = clean(model?.place) && !staleWork(model?.place, now, world.place) ? clean(model?.place) : world.place;
   const hair = clean(model?.hair) || world.hair;
-  return { place, clothes: clothes || world.clothes, hair };
+  return { ...world, place, clothes: clothes || world.clothes, hair };
 }
 
 function staleWork(place: string | undefined, now: number, current?: string) {
@@ -495,7 +499,7 @@ function clockWorld(world: ChatWorld, now: number, lastAt: number, namedAt = 0):
   if (!place) place = def.place || "at home, apartment";
   if (!clothes) clothes = clothesFor(place, def.clothes);
   if (!hair) hair = def.hair || "as usual";
-  return { place, clothes, hair };
+  return { ...world, place, clothes, hair };
 }
 
 function slotFromHour(hour: number, at = Date.now()): DaySlot {
