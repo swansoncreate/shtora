@@ -282,6 +282,30 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
           });
           if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: "image-gateway" });
+          try {
+            const { commitWorld } = await import("@/lib/world/disk.server");
+            const at = Date.now();
+            const wf = (value?: string) => {
+              const clean = (value || "").trim();
+              return clean ? { value: clean.slice(0, 80), at } : undefined;
+            };
+            await commitWorld(
+              username,
+              {
+                place: wf(current.place),
+                activity: wf(current.activity),
+                clothes: wf(current.clothes),
+                sceneId: wf(sceneId),
+              },
+              {
+                type: "visual-photo",
+                source: data.kind === "feed" ? "feed" : "her",
+                text: "визуальный кадр: " + (current.place || "текущая сцена"),
+              },
+            );
+          } catch {
+            /* world disk can be unavailable on ephemeral publication runtimes */
+          }
         } catch {
           /* persistence is best-effort; the generated image remains usable */
         }
