@@ -54,7 +54,7 @@ test("the key lives only in the server module", () => {
   }
   walk(join(process.cwd(), "src"));
   walk(join(process.cwd(), "public"));
-  assert.deepEqual(hits, [join(process.cwd(), "src/lib/server/front-secret.server.ts")]);
+  assert.deepEqual(hits, []);
   const settings = readFileSync(join(process.cwd(), "src/components/settings-sheet.tsx"), "utf8");
   const tokens = readFileSync(join(process.cwd(), "src/routes/api/tokens.ts"), "utf8");
   assert.equal(settings.includes(key), false);
