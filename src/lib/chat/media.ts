@@ -210,7 +210,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
             if (poll.status === "done" && poll.url) {
               const id = crypto.randomUUID();
               const media = await stashChatPhoto(id, poll.url);
-              return { ok: true, kind: "circle", url: media, prompt };
+              return { ok: true, kind: "circle", url: media, prompt, sceneId, jobId };
             }
           }
         }
@@ -218,7 +218,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     } catch {
       /* still falls through — never silent-skip a promised circle */
     }
-    return persistStill(imageUrl, prompt, "photo");
+    return persistStill(imageUrl, prompt, "photo", sceneId, jobId);
   }
   return persistStill(imageUrl, prompt, "photo", sceneId, jobId);
 }
