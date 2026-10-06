@@ -55,7 +55,7 @@ test("VPS Imagine routes through published Grok Build, not xAI directly", async 
     const body = JSON.parse(String(calls[0].init.body));
     assert.equal(body.op, "imagine");
     assert.equal(body.engine, "grok");
-    assert.equal(body.source, "shtora-vps");
+    assert.equal(body.data?.source, "shtora-vps");
     assert.deepEqual(body.payload, payload);
   } finally {
     globalThis.fetch = previousFetch;
