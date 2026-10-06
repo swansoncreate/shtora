@@ -129,10 +129,15 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   }
   try {
     let sourceDataUrl: string | undefined;
+    const inferredIntent: PhotoIntent =
+      ask.visualIntent ||
+      (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
+        ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
+        : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl)));
     const reuse =
       Boolean(ask.lastPhotoUrl) &&
       !ask.gallery &&
-      (/back|side|full/.test(ask.kind || "") || looksLikeCameraAsk(ask.userText || ""));
+      (inferredIntent.mode === "continue" || inferredIntent.reference === "last_photo");
     if (reuse && ask.lastPhotoUrl) {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
