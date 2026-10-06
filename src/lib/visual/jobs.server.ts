@@ -50,28 +50,32 @@ export async function createGenerationJob(input: {
   const username = userOf(input.username);
   if (!username) throw new Error("bad username");
   const now = Date.now();
-  const job: GenerationJob = {
-    ...input,
-    username,
-    id: randomUUID(),
-    status: input.status || "queued",
-    createdAt: now,
-    updatedAt: now,
-  };
-  const prev = await readJobs(username);
-  await writeJobs(username, [job, ...prev]);
-  return job;
+  return enqueue(username, async () => {
+    const job: GenerationJob = {
+      ...input,
+      username,
+      id: randomUUID(),
+      status: input.status || "queued",
+      createdAt: now,
+      updatedAt: now,
+    };
+    const prev = await readJobs(username);
+    await writeJobs(username, [job, ...prev]);
+    return job;
+  });
 }
 
 export async function updateGenerationJob(username: string, id: string, patch: Partial<GenerationJob>) {
   const user = userOf(username);
   if (!user) throw new Error("bad username");
-  const prev = await readJobs(user);
-  const next = prev.map((job) =>
-    job.id === id ? { ...job, ...patch, id: job.id, username: user, updatedAt: Date.now() } : job,
-  );
-  await writeJobs(user, next);
-  return next.find((job) => job.id === id);
+  return enqueue(user, async () => {
+    const prev = await readJobs(user);
+    const next = prev.map((job) =>
+      job.id === id ? { ...job, ...patch, id: job.id, username: user, updatedAt: Date.now() } : job,
+    );
+    await writeJobs(user, next);
+    return next.find((job) => job.id === id);
+  });
 }
 
 export async function listGenerationJobs(username: string) {
