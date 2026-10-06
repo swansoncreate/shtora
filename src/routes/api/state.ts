@@ -22,7 +22,9 @@ export const Route = createFileRoute("/api/state")({
         const byName = new Map(seedSnaps.map((s) => [s.username.toLowerCase(), s]));
         for (const row of snapshots) byName.set(row.username.toLowerCase(), row);
         return Response.json({
-          snapshots: [...byName.values()].map((row) => slimSnapshot(row)),
+          snapshots: [...byName.values()].map((row) =>
+            "at" in row && "profile" in row && "stories" in row ? slimSnapshot(row) : row,
+          ),
           chats,
           tickAt: status?.at ?? 0,
           saved: status?.saved ?? 0,
