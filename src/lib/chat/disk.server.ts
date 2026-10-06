@@ -231,10 +231,7 @@ function toMarkdown(t: DiskThread) {
     const d = item.debug;
     const snap = d
       ? d.spark != null
-        ? dumpBond(
-            { warmth: d.warmth, trust: d.trust, heat: d.heat, irrit: d.irrit, spark: d.spark, guilt: d.guilt ?? 0 },
-            d.warmth,
-          ).short
+        ? `б${d.warmth} д${d.trust} и${d.spark} н${d.heat} р${d.irrit} в${d.guilt ?? 0}`
         : `${d.warmth}/${d.trust}/${d.heat}/${d.irrit}`
       : "";
     const meta = d
