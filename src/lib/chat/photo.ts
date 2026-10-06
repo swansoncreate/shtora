@@ -159,17 +159,49 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       const { recentSourcePaths, rememberSourcePath } = await import("@/lib/visual/source-history.server");
       const username = data.username?.trim().toLowerCase();
       const previous = username ? await latestVisualMemory(username) : undefined;
-      const baseContext: VisualContext = {
-        place: data.scene || undefined,
-        sceneId: data.sceneId || previous?.sceneId || undefined,
-      };
       const intent =
         data.visualIntent ||
         (data.kind === "feed"
           ? { mode: "new_scene" as const, camera: "candid" as const, reference: "identity" as const }
           : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
+
+      if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
+        const query = intent.mode === "memory" ? intent.memoryQuery : intent.query;
+        const memories = await listVisualMemory(username, query || "");
+        const first = memories[0];
+        if (first?.imageUrl) {
+          return {
+            ok: true as const,
+            url: first.imageUrl,
+            prompt: first.prompt || "",
+            kind: data.kind,
+            sceneId: first.sceneId,
+          };
+        }
+      }
+
+      const intentScene =
+        intent.mode === "new_scene" || intent.mode === "pov" ? intent.scene : undefined;
+      const intentClothes = intent.mode === "new_scene" ? intent.clothes : undefined;
+      const baseContext: VisualContext = {
+        place: data.scene || intentScene || previous?.scene?.place,
+        clothes: intentClothes || previous?.scene?.clothes,
+        sceneId: data.sceneId || previous?.sceneId || undefined,
+      };
+
       let plan = undefined;
       let finalPrompt = data.prompt;
+      if (intent.mode === "new_scene") {
+        const extras = [
+          intent.scene ? "New scene: " + intent.scene : "",
+          intent.clothes ? "Outfit: " + intent.clothes : "",
+          ...(intent.changes || []).map((value) => "Change: " + value),
+        ].filter(Boolean);
+        if (extras.length) {
+          finalPrompt = [data.prompt || "", ...extras].filter(Boolean).join(" ").slice(0, 1800);
+        }
+      }
+
       if (data.kind === "feed" && username && !data.sourceDataUrl) {
         const memories = await listVisualMemory(username);
         plan = planLifeScene({
