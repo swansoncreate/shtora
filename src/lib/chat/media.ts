@@ -112,6 +112,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   if (!ask.ready || ask.kind === "none") return { ok: false, skipped: true, reason: ask.reason || "not-ready" };
   let imageUrl = "";
   let prompt = "";
+  let sceneId: string | undefined;
+  let jobId: string | undefined;
   if (ask.gallery && ask.username) {
     try {
       const query = (ask.userText || "").trim();
@@ -135,6 +137,11 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
     }
+    const inferredIntent: PhotoIntent =
+      ask.visualIntent ||
+      (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
+        ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
+        : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl || sourceDataUrl)));
     const pic = await composeChatPhoto({
       data: {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
@@ -154,6 +161,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     prompt = pic.prompt || "";
     if (pic.ok && pic.url) {
       imageUrl = pic.url;
+      sceneId = pic.sceneId;
+      jobId = pic.jobId;
       if (ask.username && pic.sceneId) {
         const live = getThread(ask.username);
         if (live) {
@@ -211,12 +220,12 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     }
     return persistStill(imageUrl, prompt, "photo");
   }
-  return persistStill(imageUrl, prompt, "photo");
+  return persistStill(imageUrl, prompt, "photo", sceneId, jobId);
 }
 
-async function persistStill(imageUrl: string, prompt: string, kind: "photo" | "circle"): Promise<MediaOut> {
+async function persistStill(imageUrl: string, prompt: string, kind: "photo" | "circle", sceneId?: string, jobId?: string): Promise<MediaOut> {
   const id = crypto.randomUUID();
   const stable = await persistChatImage(imageUrl);
   const cached = await stashChatPhoto(id, stable);
-  return { ok: true, kind, url: cached.startsWith("/") || cached.startsWith("blob:") ? cached : stable, prompt };
+  return { ok: true, kind, url: cached.startsWith("/") || cached.startsWith("blob:") ? cached : stable, prompt, sceneId, jobId };
 }
