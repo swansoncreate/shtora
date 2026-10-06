@@ -7,9 +7,17 @@ export function makeSceneId(username: string, at = Date.now()) {
 }
 
 export function sceneChanged(text: string, prev: VisualContext | undefined, next: VisualContext | undefined) {
-  const a = [prev?.place || "", prev?.clothes || "", prev?.activity || ""].join("|").toLowerCase();
-  const b = [next?.place || "", next?.clothes || "", next?.activity || ""].join("|").toLowerCase();
-  if (a && b && a !== b) return true;
+  if (prev && next) {
+    const pairs: Array<[string | undefined, string | undefined]> = [
+      [prev.place, next.place],
+      [prev.clothes, next.clothes],
+      [prev.activity, next.activity],
+      [prev.timeContext, next.timeContext],
+    ];
+    for (const [before, after] of pairs) {
+      if (before && after && before.trim().toLowerCase() !== after.trim().toLowerCase()) return true;
+    }
+  }
   return WORLD_CHANGE_RE.test(text);
 }
 
