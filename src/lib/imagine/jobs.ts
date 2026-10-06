@@ -1,4 +1,4 @@
-import { runImageEdit } from "./functions";
+import { runImageEdit } from "./functions.ts";
 import { PHONE_RAW, keepPreset, withPhoneRaw } from "./prompt";
 
 function lookFromAsk(raw: string) {
