@@ -89,6 +89,7 @@ export function fitDmWorld(prev: ChatWorld | undefined, slot: DaySlot): ChatWorl
     clothesRu = clothesRu.replace(/\b[a-z][a-z-]*\b/gi, " ").replace(/\s+/g, " ").trim();
   }
   return {
+    ...(prev || {}),
     place,
     placeRu,
     clothes: clothes || undefined,
