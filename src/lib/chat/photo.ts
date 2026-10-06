@@ -182,17 +182,21 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       }
 
       if (username) {
-        job = await createGenerationJob({
-          username,
-          status: "queued",
-          intent,
-          sceneId: data.sceneId,
-          scenePlan: plan,
-          worldSnapshot: baseContext,
-          parentId: data.parentId || previous?.id,
-          provider: "pending",
-        });
-        await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
+        try {
+          job = await createGenerationJob({
+            username,
+            status: "queued",
+            intent,
+            sceneId: data.sceneId,
+            scenePlan: plan,
+            worldSnapshot: baseContext,
+            parentId: data.parentId || previous?.id,
+            provider: "pending",
+          });
+          await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
+        } catch {
+          job = undefined;
+        }
       }
 
       const found = await identityJpeg({ ...data, username });
@@ -202,12 +206,16 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       }
 
       if (username && job) {
-        await updateGenerationJob(username, job.id, {
-          status: "source_selected",
-          sourcePath: found.sourcePath || undefined,
-          sourceImageUrl: found.image,
-        });
-        await updateGenerationJob(username, job.id, { status: "generating", finalPrompt: finalPrompt || undefined });
+        try {
+          await updateGenerationJob(username, job.id, {
+            status: "source_selected",
+            sourcePath: found.sourcePath || undefined,
+            sourceImageUrl: found.image,
+          });
+          await updateGenerationJob(username, job.id, { status: "generating", finalPrompt: finalPrompt || undefined });
+        } catch {
+          /* image generation must not fail because job bookkeeping is unavailable */
+        }
       }
 
       const out = await makePhoto(
@@ -254,25 +262,29 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           current,
         });
         sceneId = scene.id;
-        if (job) await updateGenerationJob(username, job.id, { sceneId, worldSnapshot: current });
-        await saveVisualMemory({
-          id: (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function" ? globalThis.crypto.randomUUID() : makeSceneId(username, Date.now())),
-          username,
-          imageUrl: url,
-          createdAt: Date.now(),
-          scene: { ...current, sceneId },
-          camera: {
-            mode: cameraModeFromKind(data.visualIntent?.camera || plan?.camera || data.kind || "selfie"),
-          },
-          source: "generated",
-          parentId: data.parentId || previous?.id,
-          sceneId,
-          prompt: out.prompt || finalPrompt,
-          worldSnapshot: current,
-          sourcePath: found.sourcePath || undefined,
-          tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
-        });
-        if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: "image-gateway" });
+        try {
+          if (job) await updateGenerationJob(username, job.id, { sceneId, worldSnapshot: current });
+          await saveVisualMemory({
+            id: (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function" ? globalThis.crypto.randomUUID() : makeSceneId(username, Date.now())),
+            username,
+            imageUrl: url,
+            createdAt: Date.now(),
+            scene: { ...current, sceneId },
+            camera: {
+              mode: cameraModeFromKind(data.visualIntent?.camera || plan?.camera || data.kind || "selfie"),
+            },
+            source: "generated",
+            parentId: data.parentId || previous?.id,
+            sceneId,
+            prompt: out.prompt || finalPrompt,
+            worldSnapshot: current,
+            sourcePath: found.sourcePath || undefined,
+            tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
+          });
+          if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: "image-gateway" });
+        } catch {
+          /* persistence is best-effort; the generated image remains usable */
+        }
       }
 
       return { ok: true as const, url, prompt: out.prompt || finalPrompt || "", kind: data.kind, jobId: job?.id, sceneId };
