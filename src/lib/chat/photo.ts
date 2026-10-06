@@ -1,5 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { deterministicPhotoIntent, photoIntentSchema } from "@/lib/visual/intent";
+import type { VisualContext } from "@/lib/visual/types";
+import { latestVisualMemory, listVisualMemory, saveVisualMemory } from "@/lib/visual/memory.server";
+import { createGenerationJob, updateGenerationJob } from "@/lib/visual/jobs.server";
+import { planLifeScene, planPrompt } from "@/lib/visual/planner";
+import { makeSceneId, resolveScene } from "@/lib/visual/scene";
+import { recentSourcePaths, rememberSourcePath } from "@/lib/visual/source-history.server";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -36,6 +43,10 @@ async function identityJpeg(data: {
   dropboxFolder?: string;
   dropboxSkip?: number;
   dropboxSeed?: string;
+  username?: string;
+  visualIntent?: import("@/lib/visual/types").PhotoIntent;
+  sceneId?: string;
+  parentId?: string;
   instagramUrls?: string[];
   identityUrl?: string;
   sourceDataUrl?: string;
@@ -46,26 +57,32 @@ async function identityJpeg(data: {
     ? { image: "", error: "" }
     : await firstInstagram([data.identityUrl, ...(data.instagramUrls ?? [])].filter(Boolean) as string[], 0);
   const reuse = trimDataImage(data.sourceDataUrl);
-  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "" };
+  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "", sourcePath: "" };
   if (data.dropboxToken && data.dropboxFolder) {
     try {
-      const { latestDropboxImageDataUrl } = await import("@/lib/dropbox/dropbox.server");
-      const dbx = await latestDropboxImageDataUrl(data.dropboxToken, data.dropboxFolder, skip, data.dropboxSeed);
-      if (dbx) return { image: dbx, identity: portrait.image, error: "" };
+      const { pickDropboxImageSource } = await import("@/lib/dropbox/dropbox.server");
+      const excluded = data.username ? await recentSourcePaths(data.username) : [];
+      const dbx = await pickDropboxImageSource(data.dropboxToken, data.dropboxFolder, {
+        skip,
+        seed: data.dropboxSeed,
+        excludePaths: excluded,
+      });
+      if (dbx) return { image: dbx.image, identity: portrait.image, error: "", sourcePath: dbx.path };
       return {
         image: "",
         identity: portrait.image,
         error: "Нет фото с меткой shtora. В Dropbox отметь кадры для ленты и лички.",
+        sourcePath: "",
       };
     } catch (err) {
       const error = err instanceof Error ? err.message : "Dropbox не отдал кадр.";
-      return { image: "", identity: portrait.image, error };
+      return { image: "", identity: portrait.image, error, sourcePath: "" };
     }
   }
   const ig = await firstInstagram(data.instagramUrls, skip);
-  if (ig.image) return { image: ig.image, identity: portrait.image || ig.image, error: "" };
-  if (portrait.image) return { image: portrait.image, identity: portrait.image, error: "" };
-  return { image: "", identity: "", error: ig.error || portrait.error || "Нет исходного кадра." };
+  if (ig.image) return { image: ig.image, identity: portrait.image || ig.image, error: "", sourcePath: "" };
+  if (portrait.image) return { image: portrait.image, identity: portrait.image, error: "", sourcePath: "" };
+  return { image: "", identity: "", error: ig.error || portrait.error || "Нет исходного кадра.", sourcePath: "" };
 }
 
 async function firstInstagram(urls: string[] | undefined, skip: number) {
@@ -104,9 +121,61 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    let job: { id: string } | undefined;
     try {
-      const found = await identityJpeg(data);
-      if (!found.image) return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
+      const username = data.username?.trim().toLowerCase();
+      const previous = username ? await latestVisualMemory(username) : undefined;
+      const baseContext: VisualContext = {
+        place: data.scene || undefined,
+        sceneId: data.sceneId || previous?.sceneId || undefined,
+      };
+      const intent =
+        data.visualIntent ||
+        (data.kind === "feed"
+          ? { mode: "new_scene" as const, camera: "candid" as const, reference: "identity" as const }
+          : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
+      let plan = undefined;
+      let finalPrompt = data.prompt;
+      if (data.kind === "feed" && username) {
+        const memories = await listVisualMemory(username);
+        plan = planLifeScene({
+          username,
+          world: baseContext,
+          recentPlaces: memories.map((m) => m.scene.place).filter((v): v is string => Boolean(v)).slice(0, 10),
+          recentOutfits: memories.map((m) => m.scene.clothes).filter((v): v is string => Boolean(v)).slice(0, 10),
+        });
+        finalPrompt = planPrompt(data.prompt || "", plan);
+      }
+
+      if (username) {
+        job = await createGenerationJob({
+          username,
+          status: "queued",
+          intent,
+          sceneId: data.sceneId,
+          scenePlan: plan,
+          worldSnapshot: baseContext,
+          parentId: data.parentId || previous?.id,
+          provider: "pending",
+        });
+        await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
+      }
+
+      const found = await identityJpeg({ ...data, username });
+      if (!found.image) {
+        if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: found.error || "Нет кадра.", retryable: true });
+        return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
+      }
+
+      if (username && job) {
+        await updateGenerationJob(username, job.id, {
+          status: "source_selected",
+          sourcePath: found.sourcePath || undefined,
+          sourceImageUrl: found.image,
+        });
+        await updateGenerationJob(username, job.id, { status: "generating", finalPrompt: finalPrompt || undefined });
+      }
+
       const out = await makePhoto(
         found.image,
         data.kind,
@@ -115,22 +184,72 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         data.scene || "",
         data.world || "",
         data.noIdentity ? undefined : found.identity || undefined,
-        data.prompt,
+        finalPrompt,
       );
-      if (out.ok && out.url) {
-        let url = out.url;
-        if (data.kind === "feed") {
-          const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
-          url = (await persistRemoteImage(out.url)) || out.url;
-        }
-        return { ok: true as const, url, prompt: out.prompt, kind: data.kind };
+      if (!out.ok || !out.url) {
+        if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: out.error || "Imagine не собрал кадр.", retryable: true });
+        return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
       }
-      return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
+
+      const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
+      const url = (await persistRemoteImage(out.url)) || out.url;
+      if (found.sourcePath && username) await rememberSourcePath(username, found.sourcePath);
+
+      let sceneId = data.sceneId || previous?.sceneId;
+      if (username) {
+        const current: VisualContext = {
+          ...baseContext,
+          place: plan?.place || data.scene || previous?.scene?.place,
+          clothes: plan?.outfit || previous?.scene?.clothes,
+          activity: plan?.activity || previous?.scene?.activity,
+          timeContext: plan?.timeContext || previous?.scene?.timeContext,
+          weather: plan?.weather,
+          sceneId,
+        };
+        const scene = resolveScene({
+          username,
+          intent,
+          previous: previous
+            ? {
+                id: previous.sceneId || makeSceneId(username, previous.createdAt),
+                username,
+                createdAt: previous.createdAt,
+                ...previous.scene,
+              }
+            : undefined,
+          current,
+        });
+        sceneId = scene.id;
+        if (job) await updateGenerationJob(username, job.id, { sceneId, worldSnapshot: current });
+        await saveVisualMemory({
+          id: (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function" ? globalThis.crypto.randomUUID() : makeSceneId(username, Date.now())),
+          username,
+          imageUrl: url,
+          createdAt: Date.now(),
+          scene: { ...current, sceneId },
+          camera: { mode: (data.visualIntent?.camera || plan?.camera || data.kind || "selfie") as import("@/lib/visual/types").CameraMode },
+          source: "generated",
+          parentId: data.parentId || previous?.id,
+          sceneId,
+          prompt: out.prompt || finalPrompt,
+          worldSnapshot: current,
+          sourcePath: found.sourcePath || undefined,
+          tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
+        });
+        if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: "image-gateway" });
+      }
+
+      return { ok: true as const, url, prompt: out.prompt || finalPrompt || "", kind: data.kind, jobId: job?.id, sceneId };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Imagine не собрал кадр.";
       const clean = /var\/task|EACCES|EROFS|ENOENT|permission/i.test(msg)
         ? "Не удалось сохранить кадр. Попробуй ещё раз."
         : msg;
+      try {
+        if (data.username && job) await updateGenerationJob(data.username, job.id, { status: "failed", error: clean, retryable: true });
+      } catch {
+        /* best effort */
+      }
       return { ok: false as const, url: undefined, error: clean, prompt: "", kind: data.kind };
     }
   });
