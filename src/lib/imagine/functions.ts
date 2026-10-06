@@ -86,11 +86,8 @@ async function runImageEditOnce(
   aspectRatio?: string,
 ) {
   if (imagineCooling()) return { ok: false as const, error: imagineRateMessage() };
-  const apiKey = typeof process === "undefined" ? "" : process.env.XAI_API_KEY;
-  if (!apiKey) {
-    return { ok: false as const, error: "Imagine сейчас недоступен в этой среде." };
-  }
 
+  const { runningOnVps } = await import("@/lib/server/remote");
   const image = trimDataUrl(imageDataUrl);
   if (!image) return { ok: false as const, error: "Кадр слишком тяжёлый для Imagine." };
   const extras = (Array.isArray(extra) ? extra : extra ? [extra] : [])
@@ -130,6 +127,24 @@ async function runImageEditOnce(
       image: { url: refs[0], type: "image_url" },
       aspect_ratio: aspect,
     });
+  }
+
+  if (runningOnVps()) {
+    const { callGrokApp } = await import("@/lib/server/grok-app");
+    const remote = await callGrokApp<{ ok?: boolean; url?: string; error?: string }>("imagine", {
+      payload: payloads[0],
+      source: "shtora-vps",
+    });
+    if (remote?.ok && remote.url) return { ok: true as const, url: remote.url };
+    return {
+      ok: false as const,
+      error: remote?.error || "Публикация Grok не вернула картинку.",
+    };
+  }
+
+  const apiKey = typeof process === "undefined" ? "" : process.env.XAI_API_KEY;
+  if (!apiKey) {
+    return { ok: false as const, error: "Imagine сейчас недоступен в этой среде." };
   }
 
   let last = "Imagine не ответил";
@@ -212,10 +227,7 @@ export const imagineVariation = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const { runningOnVps, proxyOr } = await import("@/lib/server/remote");
-    if (runningOnVps()) {
-      return { ok: false as const, error: "Imagine считается на публикации Grok, не на VPS." };
-    }
+    const { proxyOr } = await import("@/lib/server/remote");
     const extras = data.extraImages?.length ? data.extraImages : data.identityDataUrl;
     const mode = data.mode || (Array.isArray(extras) ? "compose" : "identity");
     const out = await runImageEdit(data.imageDataUrl, data.prompt, extras, mode);
