@@ -34,7 +34,7 @@ export type MediaAsk = MediaPlan & {
 };
 
 export type MediaOut =
-  | { ok: true; kind: "photo" | "circle"; url: string; prompt: string }
+  | { ok: true; kind: "photo" | "circle"; url: string; prompt: string; sceneId?: string; jobId?: string }
   | { ok: false; skipped: true; reason: string }
   | { ok: false; skipped: false; error: string };
 
@@ -147,6 +147,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         dropboxSeed: ask.dropboxSeed,
         instagramUrls: ask.instagramUrls,
         sourceDataUrl,
+        username: ask.username,
+        visualIntent: inferredIntent.mode === "none" ? undefined : inferredIntent,
       },
     });
     prompt = pic.prompt || "";
