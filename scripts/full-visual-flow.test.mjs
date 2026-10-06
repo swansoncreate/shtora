@@ -142,10 +142,42 @@ test("full simulated Instagram → DM → visual memory → scene change → fee
   assert.ok(sources.includes("/identity/b.jpg"));
   assert.ok(sources.includes("/identity/c.jpg"));
 
+
+  // 7. A failed provider attempt can be retried without losing the original job history.
+  const retryJob = await createGenerationJob({
+    username,
+    intent: { mode: "continue", camera: "selfie", reference: "last_photo" },
+    provider: "grok-imagine",
+    sceneId: "scene-2",
+    parentId: thirdJob.id,
+    finalPrompt: "retry after provider failure",
+  });
+  await updateGenerationJob(username, retryJob.id, {
+    status: "failed",
+    error: "mock provider timeout",
+  });
+  await updateGenerationJob(username, retryJob.id, {
+    status: "queued",
+    error: undefined,
+  });
+  await updateGenerationJob(username, retryJob.id, {
+    status: "persisted",
+    imageUrl: "https://img.test/retry.jpg",
+    worldSnapshot: secondScene,
+  });
+
+  const retryRows = await listGenerationJobs(username);
+  const retryRecord = retryRows.find((x) => x.id === retryJob.id);
+  assert.equal(retryRecord?.status, "persisted");
+  assert.equal(retryRecord?.provider, "grok-imagine");
+  assert.equal(retryRecord?.sceneId, "scene-2");
+  assert.equal(retryRecord?.parentId, thirdJob.id);
+  assert.equal(retryRecord?.imageUrl, "https://img.test/retry.jpg");
+
   // 6. Generation records remain inspectable after the whole flow.
   const jobs = await listGenerationJobs(username);
-  assert.equal(jobs.length, 3);
-  assert.equal(jobs.filter((x) => x.status === "persisted").length, 3);
+  assert.equal(jobs.length, 4);
+  assert.equal(jobs.filter((x) => x.status === "persisted").length, 4);
   assert.equal(jobs.find((x) => x.id === thirdJob.id)?.sceneId, "scene-2");
   assert.equal(jobs.find((x) => x.id === secondJob.id)?.parentId, firstJob.id);
 });
