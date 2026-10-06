@@ -2,11 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { deterministicPhotoIntent, photoIntentSchema } from "@/lib/visual/intent";
 import type { VisualContext } from "@/lib/visual/types";
-import { latestVisualMemory, listVisualMemory, saveVisualMemory } from "@/lib/visual/memory.server";
-import { createGenerationJob, updateGenerationJob } from "@/lib/visual/jobs.server";
 import { planLifeScene, planPrompt } from "@/lib/visual/planner";
 import { makeSceneId, resolveScene } from "@/lib/visual/scene";
-import { recentSourcePaths, rememberSourcePath } from "@/lib/visual/source-history.server";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -157,6 +154,9 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     let job: { id: string } | undefined;
     try {
+      const { latestVisualMemory, listVisualMemory, saveVisualMemory } = await import("@/lib/visual/memory.server");
+      const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
+      const { recentSourcePaths, rememberSourcePath } = await import("@/lib/visual/source-history.server");
       const username = data.username?.trim().toLowerCase();
       const previous = username ? await latestVisualMemory(username) : undefined;
       const baseContext: VisualContext = {
