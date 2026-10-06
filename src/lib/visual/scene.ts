@@ -1,3 +1,4 @@
+import { deterministicPhotoIntent } from "./intent";
 import type { PhotoIntent, Scene, VisualContext } from "./types";
 
 const WORLD_CHANGE_RE = /теперь|потом|друг(?:ое|ой)|переод|сменил|в кафе|в ресторан|в бар|на улице|на пляж|дома|в офис|на работе|уехал|пришла|ушла/i;
