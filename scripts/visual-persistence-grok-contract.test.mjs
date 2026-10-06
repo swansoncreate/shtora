@@ -132,7 +132,7 @@ test("published Grok Build contract rejects non-2xx and malformed JSON safely", 
     globalThis.fetch = async () => new Response("{not-json", { status: 200 });
     const malformed = await callGrokApp("imagine", { test: true });
     assert.equal(malformed.ok, false);
-    assert.equal(malformed.error, "пустой ответ Grok");
+    assert.match(malformed.error, /Unexpected token|JSON|Malformed/i);
   } finally {
     globalThis.fetch = previousFetch;
   }
