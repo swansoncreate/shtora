@@ -237,7 +237,7 @@ export function stripChatMeta(raw: string) {
     .replace(/\b(PHOTO|MOOD|MEM|REACT|PERSONA|WARM|PLACE|CLOTHES|HAIR|SCENE|ONCE)\s*:?\s*[^\n]*/gi, "")
     .replace(/^\s*(PHOTO|MOOD|MEM|REACT|PERSONA)\b.*$/gim, "")
     .replace(/\b(лайк от него|он лайкнул твою сторис|он лайкнул твой пост)\b/gi, "")
-    .replace(/^[{\[][\s\S]*$/g, "")
+    .replace(/^(?:\{|\[)[\s\S]*$/g, "")
     .replace(/[ \t]+\n/g, "\n")
     .split(/\n+/)
     .map((line) => stripChatTic(line))
