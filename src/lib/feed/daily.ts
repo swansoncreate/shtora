@@ -314,6 +314,7 @@ async function generateFor(
       dropboxToken: ownFolder ? dropboxToken : undefined,
       dropboxFolder: ownFolder,
       dropboxSeed: seed,
+      username,
     },
   });
   if (!pic.ok || !pic.url) return null;
@@ -331,6 +332,7 @@ async function generateFor(
         dropboxToken: pic.url.startsWith("data:") ? undefined : ownFolder ? dropboxToken : undefined,
         dropboxFolder: pic.url.startsWith("data:") ? undefined : ownFolder,
         dropboxSeed: seed,
+        username,
       },
     }).catch(() => null);
     if (!next?.ok || !next.url) break;
