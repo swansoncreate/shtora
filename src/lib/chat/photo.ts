@@ -166,7 +166,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
       let plan = undefined;
       let finalPrompt = data.prompt;
-      if (data.kind === "feed" && username) {
+      if (data.kind === "feed" && username && !data.sourceDataUrl) {
         const memories = await listVisualMemory(username);
         plan = planLifeScene({
           username,
