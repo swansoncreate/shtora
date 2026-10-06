@@ -174,6 +174,13 @@ test("full simulated Instagram → DM → visual memory → scene change → fee
   assert.equal(retryRecord?.parentId, thirdJob.id);
   assert.equal(retryRecord?.imageUrl, "https://img.test/retry.jpg");
 
+  // 6. Restart boundary: a fresh Node process must recover visual memory, jobs and source history from disk.
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const run = promisify(execFile);
+  const probe = await run(process.execPath, ["--input-type=module", "-e", "import { createJiti } from \"jiti\"; import { join } from \"node:path\"; process.env.SHTORA_DATA_DIR = process.env.SHTORA_DATA_DIR; const j = createJiti(import.meta.url, { alias: { \"@\": join(process.cwd(), \"src\") } }); const m = await j.import(\"./src/lib/visual/memory.server.ts\"); const g = await j.import(\"./src/lib/visual/jobs.server.ts\"); const h = await j.import(\"./src/lib/visual/source-history.server.ts\"); const mem = await m.latestVisualMemory(\"full-flow\"); const jobs = await g.listGenerationJobs(\"full-flow\"); const src = await h.recentSourcePaths(\"full-flow\"); if (mem?.imageUrl !== \"https://img.test/frame-3.jpg\") throw new Error(\"visual memory did not survive restart\"); if (jobs.length !== 4 || jobs.filter((x) => x.status === \"persisted\").length !== 4) throw new Error(\"generation jobs did not survive restart\"); if (!src.includes(\"/identity/a.jpg\") || !src.includes(\"/identity/c.jpg\")) throw new Error(\"source history did not survive restart\");"], { cwd: process.cwd(), env: { ...process.env, SHTORA_DATA_DIR: process.env.SHTORA_DATA_DIR } });
+  assert.equal(probe.stderr, "");
+
   // 6. Generation records remain inspectable after the whole flow.
   const jobs = await listGenerationJobs(username);
   assert.equal(jobs.length, 4);
