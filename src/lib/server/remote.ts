@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { FRONT_RPC_KEY, FRONT_VPS_ORIGIN } from "./front-secret.server";
+import { FRONT_RPC_KEY, FRONT_VPS_ORIGIN } from "./front-secret.server.ts";
 
 export function runningOnVps() {
   if (typeof process === "undefined") return false;
