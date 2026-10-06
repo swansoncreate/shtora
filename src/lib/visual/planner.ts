@@ -18,22 +18,67 @@ const PLACES: Array<[string, string]> = [
   ["office lobby", "leaving work"],
 ];
 
-const OUTFITS = [
-  "fitted knit top with straight-leg jeans and a small shoulder bag",
-  "ribbed midi dress with simple sneakers and a light jacket",
-  "oversized shirt half-tucked into tailored trousers",
-  "cropped cardigan with wide-leg trousers and minimal jewelry",
-  "soft hoodie with relaxed shorts and sneakers",
-  "satin camisole under an open blazer with dark jeans",
-  "simple tank top with a denim skirt and canvas sneakers",
-  "fine sweater with a pleated skirt and ankle boots",
-  "light blouse with straight jeans and a tote bag",
-  "leather jacket over a fitted tee with relaxed jeans",
-  "striped knit polo with loose trousers and flats",
-  "linen shirt over a fitted tank with relaxed jeans",
-  "soft cardigan with a long skirt and low-profile sneakers",
-  "simple black top with cargo trousers and a crossbody bag",
+const TOPS = [
+  "fitted knit top",
+  "cropped cardigan",
+  "light blouse",
+  "oversized shirt",
+  "soft hoodie",
+  "fine sweater",
+  "ribbed tank top",
+  "striped knit polo",
+  "fitted tee",
+  "linen shirt over a tank",
+  "simple bodysuit",
+  "lightweight crewneck",
 ];
+
+const BOTTOMS = [
+  "straight-leg jeans",
+  "wide-leg trousers",
+  "tailored trousers",
+  "denim skirt",
+  "pleated skirt",
+  "relaxed cargo trousers",
+  "ankle-length pants",
+  "lounge shorts",
+  "tailored shorts",
+];
+
+const LAYERS = [
+  "",
+  "light jacket",
+  "open blazer",
+  "leather jacket",
+  "long cardigan",
+  "denim overshirt",
+];
+
+const SHOES = [
+  "simple sneakers",
+  "ankle boots",
+  "canvas sneakers",
+  "low-profile trainers",
+  "flat shoes",
+  "simple sandals",
+];
+
+const ACCESSORIES = [
+  "",
+  "small shoulder bag",
+  "canvas tote",
+  "crossbody bag",
+  "minimal jewelry",
+  "small hoop earrings",
+];
+
+const DRESSES = [
+  "ribbed midi dress with simple sneakers",
+  "soft wrap dress with flat shoes",
+  "simple slip dress under a light cardigan",
+  "casual shirt dress with low-profile trainers",
+];
+
 
 const POSES = [
   "casual standing snapshot, mid-step",
@@ -51,6 +96,24 @@ function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i += 1) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
   return h >>> 0;
+}
+
+function makeOutfit(seed: string, recent?: string[]) {
+  const recentLow = new Set((recent || []).map((value) => value.toLowerCase()));
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const dress = pick(DRESSES, seed + ":" + attempt, "dress");
+    const top = pick(TOPS, seed + ":" + attempt, "top");
+    const bottom = pick(BOTTOMS, seed + ":" + attempt, "bottom");
+    const layer = pick(LAYERS, seed + ":" + attempt, "layer");
+    const shoes = pick(SHOES, seed + ":" + attempt, "shoes");
+    const accessory = pick(ACCESSORIES, seed + ":" + attempt, "accessory");
+    const useDress = hash(seed + ":" + attempt + ":dress-switch") % 5 === 0;
+    const result = useDress
+      ? dress + (layer ? ", " + layer : "") + (accessory ? ", " + accessory : "")
+      : [top, bottom, layer, shoes, accessory].filter(Boolean).join(", ");
+    if (!recentLow.has(result.toLowerCase())) return result;
+  }
+  return pick(DRESSES, seed, "fallback-dress");
 }
 
 function pick<T>(items: T[], seed: string, salt: string) {
@@ -80,7 +143,7 @@ export function planLifeScene(input: {
   const slot = hour < 11 ? "morning" : hour < 17 ? "daytime" : hour < 23 ? "evening" : "late night";
   const seed = input.username + ":" + now.toString(36);
   const entry = distinct(PLACES, input.recentPlaces, seed, "place");
-  const outfit = distinct(OUTFITS, input.recentOutfits, seed, "outfit");
+  const outfit = makeOutfit(seed, input.recentOutfits);
   const pose = pick(POSES, seed, "pose");
   const weather = pick(WEATHER, seed, "weather");
   const camera: CameraMode = pose.startsWith("small mirror") ? "mirror" : (pick(["selfie", "full", "candid"], seed, "camera") as CameraMode);
