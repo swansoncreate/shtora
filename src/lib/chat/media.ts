@@ -5,6 +5,9 @@ import { pollImagineVideo, startImagineVideo } from "@/lib/imagine/video";
 import { videoPrompt } from "@/lib/imagine/prompt";
 import { worldPrompt } from "./world";
 import { looksLikeCameraAsk } from "./functions";
+import type { PhotoIntent, CameraMode } from "@/lib/visual/types";
+import { deterministicPhotoIntent } from "@/lib/visual/intent";
+import { listVisualMemory } from "@/lib/visual/memory.server";
 
 export type MediaPlan = {
   ready: boolean;
@@ -25,6 +28,8 @@ export type MediaAsk = MediaPlan & {
   dropboxSeed?: string;
   instagramUrls?: string[];
   lastPhotoUrl?: string;
+  username?: string;
+  visualIntent?: PhotoIntent;
 };
 
 export type MediaOut =
@@ -106,6 +111,18 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   if (!ask.ready || ask.kind === "none") return { ok: false, skipped: true, reason: ask.reason || "not-ready" };
   let imageUrl = "";
   let prompt = "";
+  if (ask.gallery && ask.username) {
+    try {
+      const query = (ask.userText || "").trim();
+      const rows = await listVisualMemory(ask.username, query);
+      const first = rows[0];
+      if (first?.imageUrl) {
+        return { ok: true, kind: "photo", url: first.imageUrl, prompt: first.prompt || "" };
+      }
+    } catch {
+      /* fall through to legacy generation if memory is unavailable */
+    }
+  }
   try {
     let sourceDataUrl: string | undefined;
     const reuse =
