@@ -1,4 +1,4 @@
-import { runningOnVps } from "@/lib/server/remote";
+import { runningOnVps } from "../server/remote.ts";
 
 export type ImageGatewayResult =
   | { ok: true; url: string; provider: "grok-publication" | "xai-api" }
