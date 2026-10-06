@@ -88,6 +88,7 @@ async function identityJpeg(data: {
   if (data.dropboxToken && data.dropboxFolder) {
     try {
       const { pickDropboxImageSource } = await import("@/lib/dropbox/dropbox.server");
+      const { recentSourcePaths } = await import("@/lib/visual/source-history.server");
       const excluded = data.username ? await recentSourcePaths(data.username) : [];
       const dbx = await pickDropboxImageSource(data.dropboxToken, data.dropboxFolder, {
         skip,
@@ -312,7 +313,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             createdAt: Date.now(),
             scene: { ...current, sceneId },
             camera: {
-              mode: cameraModeFromKind(data.visualIntent?.camera || plan?.camera || data.kind || "selfie"),
+              mode: cameraModeFromKind(
+                (data.visualIntent && "camera" in data.visualIntent ? data.visualIntent.camera : undefined) ||
+                  plan?.camera ||
+                  data.kind ||
+                  "selfie",
+              ),
             },
             source: "generated",
             parentId: data.parentId || previous?.id,
@@ -359,7 +365,10 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         ? "Не удалось сохранить кадр. Попробуй ещё раз."
         : msg;
       try {
-        if (data.username && job) await updateGenerationJob(data.username, job.id, { status: "failed", error: clean, retryable: true });
+        if (data.username && job) {
+          const { updateGenerationJob } = await import("@/lib/visual/jobs.server");
+          await updateGenerationJob(data.username, job.id, { status: "failed", error: clean, retryable: true });
+        }
       } catch {
         /* best effort */
       }
