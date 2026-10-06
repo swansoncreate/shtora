@@ -158,11 +158,11 @@ export function planLifeScene(input: {
   const weather = pick(WEATHER, seed, "weather");
   const camera: CameraMode = pose.startsWith("small mirror") ? "mirror" : (pick(["selfie", "full", "candid"], seed, "camera") as CameraMode);
   return {
-    place: input.world?.place || entry[0],
-    activity: input.world?.activity || entry[1],
-    timeContext: input.world?.timeContext || slot,
+    place: entry[0],
+    activity: entry[1],
+    timeContext: slot,
     weather,
-    outfit: input.world?.clothes || outfit,
+    outfit,
     pose,
     camera,
   };
