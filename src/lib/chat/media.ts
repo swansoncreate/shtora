@@ -140,7 +140,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     const reuse =
       Boolean(ask.lastPhotoUrl) &&
       !ask.gallery &&
-      (inferredIntent.mode === "continue" || inferredIntent.reference === "last_photo");
+      inferredIntent.mode === "continue" ||
+      ("reference" in inferredIntent && inferredIntent.reference === "last_photo");
     if (reuse && ask.lastPhotoUrl) {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
