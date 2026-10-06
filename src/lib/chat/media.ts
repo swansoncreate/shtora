@@ -8,6 +8,7 @@ import { looksLikeCameraAsk } from "./functions";
 import type { PhotoIntent, CameraMode } from "@/lib/visual/types";
 import { deterministicPhotoIntent } from "@/lib/visual/intent";
 import { listVisualMemoryFn } from "@/lib/visual/functions";
+import { getThread, patchThread } from "./store";
 
 export type MediaPlan = {
   ready: boolean;
@@ -118,7 +119,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       const rows = result.memories || [];
       const first = rows[0];
       if (first?.imageUrl) {
-        return { ok: true, kind: "photo", url: first.imageUrl, prompt: first.prompt || "" };
+        return { ok: true, kind: "photo", url: first.imageUrl, prompt: first.prompt || "", sceneId: first.sceneId };
       }
     } catch {
       /* fall through to legacy generation if memory is unavailable */
@@ -149,8 +150,20 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       },
     });
     prompt = pic.prompt || "";
-    if (pic.ok && pic.url) imageUrl = pic.url;
-    else {
+    if (pic.ok && pic.url) {
+      imageUrl = pic.url;
+      if (ask.username && pic.sceneId) {
+        const live = getThread(ask.username);
+        if (live) {
+          await patchThread(ask.username, {
+            world: {
+              ...(live.world || {}),
+              sceneId: pic.sceneId,
+            },
+          });
+        }
+      }
+    } else {
       const raw = pic.error || "Imagine не собрал кадр";
       return {
         ok: false,
