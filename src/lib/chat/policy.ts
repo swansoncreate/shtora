@@ -1,4 +1,4 @@
-import { asBond, photoTier, pullOf, stageFrom, type AffairStage, type ChatBond } from "./bond";
+import { asBond, photoTier, pullOf, stageFrom, type AffairStage, type ChatBond } from "./bond.ts";
 import {
   looksLikeCameraAsk,
   looksLikeCatalogAsk,
