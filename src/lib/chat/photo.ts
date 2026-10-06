@@ -161,7 +161,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
     try {
       const { latestVisualMemory, listVisualMemory, saveVisualMemory } = await import("@/lib/visual/memory.server");
       const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
-      const { recentSourcePaths, rememberSourcePath } = await import("@/lib/visual/source-history.server");
+      const { rememberSourcePath } = await import("@/lib/visual/source-history.server");
       const username = data.username?.trim().toLowerCase();
       const previous = username ? await latestVisualMemory(username) : undefined;
       const intent =
