@@ -7,7 +7,7 @@ import { worldPrompt } from "./world";
 import { looksLikeCameraAsk } from "./functions";
 import type { PhotoIntent, CameraMode } from "@/lib/visual/types";
 import { deterministicPhotoIntent } from "@/lib/visual/intent";
-import { listVisualMemory } from "@/lib/visual/memory.server";
+import { listVisualMemoryFn } from "@/lib/visual/functions";
 
 export type MediaPlan = {
   ready: boolean;
@@ -114,7 +114,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   if (ask.gallery && ask.username) {
     try {
       const query = (ask.userText || "").trim();
-      const rows = await listVisualMemory(ask.username, query);
+      const result = await listVisualMemoryFn({ data: { username: ask.username, query } });
+      const rows = result.memories || [];
       const first = rows[0];
       if (first?.imageUrl) {
         return { ok: true, kind: "photo", url: first.imageUrl, prompt: first.prompt || "" };
