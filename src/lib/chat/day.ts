@@ -1,4 +1,4 @@
-import { moscowHour, moscowHourAt, moscowWhen, advanceWorld, type ChatWorld, type DaySlot } from "./world.ts";
+import { moscowHour, moscowHourAt, moscowWhen, advanceWorld, type ChatWorld, type DaySlot } from "./world";
 
 export type { DaySlot };
 
