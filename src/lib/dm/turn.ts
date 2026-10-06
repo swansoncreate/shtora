@@ -129,6 +129,7 @@ async function commitPhoto(
     dropboxSeed: `${username}-${Date.now()}`,
     instagramUrls: identityUrls(username),
     lastPhotoUrl: angle ? lastPic?.imageUrl : undefined,
+    username,
   });
   if (!media.ok) {
     if (!media.skipped) toast.error(media.error);
