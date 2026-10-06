@@ -173,6 +173,10 @@ function wireWorld(world: { place?: string; clothes?: string; hair?: string; pla
     memAbout: cut(world.memAbout, 160),
     memOpen: cut(world.memOpen, 160),
     memDodged: cut(world.memDodged, 140),
+    activity: cut(world.activity, 160),
+    timeContext: cut(world.timeContext, 80),
+    weather: cut(world.weather, 80),
+    sceneId: cut(world.sceneId, 120),
   };
 }
 
