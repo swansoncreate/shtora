@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0b0a09;
-  --color-surface: #151311;
-  --color-elevated: #201b18;
-  --color-fg: #f3ede3;
-  --color-muted: #a59b90;
-  --color-subtle: #736a61;
-  --color-accent: #b97970;
-  --color-accent-fg: #170f0e;
+  --color-bg: #0a0908;
+  --color-surface: #12110f;
+  --color-elevated: #191613;
+  --color-fg: #f1eae1;
+  --color-muted: #a39a90;
+  --color-subtle: #716960;
+  --color-accent: #a96868;
+  --color-accent-fg: #160d0e;
   --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
   --color-border-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
-  --color-danger: #c45c4a;
-  --color-ring: #b97970;
+  --color-danger: #b76666;
+  --color-ring: #a96868;\n  --color-warm: #c8b8a5;
 
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -26,8 +26,8 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  --shadow-border: 0 0 0 1px rgba(243, 237, 227, 0.16);
-  --shadow-border-hover: 0 0 0 1px rgba(243, 237, 227, 0.28);
+  --shadow-border: 0 0 0 1px rgba(241, 234, 225, 0.09);
+  --shadow-border-hover: 0 0 0 1px rgba(241, 234, 225, 0.16);
 
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
