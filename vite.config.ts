@@ -145,7 +145,10 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
-export default defineConfig(({ command, isPreview }) => ({
+export default defineConfig(({ command, isPreview }) => {
+  const pagesPreview = process.env.SHTORA_PAGES_PREVIEW === "1";
+  return {
+  base: pagesPreview ? "/shtora/" : "/",
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -166,7 +169,20 @@ export default defineConfig(({ command, isPreview }) => ({
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
     grokPwaPlugin(),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart(
+      pagesPreview
+        ? {
+            spa: {
+              enabled: true,
+              prerender: {
+                outputPath: "/_shell.html",
+                crawlLinks: false,
+                retryCount: 1,
+              },
+            },
+          }
+        : undefined,
+    ),
     ...(command === "build" || isPreview
       ? [
           nitro({
@@ -180,4 +196,5 @@ export default defineConfig(({ command, isPreview }) => ({
       : []),
     viteReact(),
   ],
-}));
+  };
+});
