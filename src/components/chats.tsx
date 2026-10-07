@@ -288,51 +288,41 @@ function ThreadView({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center gap-1 border-b border-border/70 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 sm:px-5">
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onBack} aria-label="К чатам">
-          <ChevronLeft className="size-5" />
-        </Button>
-        <span className="size-9 overflow-hidden rounded-full bg-elevated">
-          {thread?.avatar ? <MediaImg src={thread.avatar} alt="" className="size-full object-cover" /> : null}
-        </span>
-        <div className="min-w-0 flex-1 px-2">
-          <p className="truncate text-sm font-medium">{thread?.fullName || username}</p>
-          <p className="truncate text-xs text-muted">
-            {metrics
-              ? `${thread?.mood || `@${username}`} · ${metrics.head} · ${metrics.pullLine}`
-              : thread?.mood || `@${username}`}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-10"
-          aria-label="Настройки чата"
-          onClick={() => setNotesOpen(true)}
-        >
-          <NotebookPen className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-10"
-          aria-label="Удалить чат"
-          onClick={() => {
-            void deleteThread(username).then(() => {
-              resetChatEngine(username);
-              toast.message("Переписка стёрта. Предыстория и метрики на месте");
-              onBack();
-            });
-          }}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-          <X className="size-5" />
-        </Button>
-      </header>
+      <ShtoraPageHeader
+        eyebrow={
+          metrics
+            ? `${thread?.mood || `@${username}`} · ${metrics.head}`
+            : thread?.mood || `@${username}`
+        }
+        title={thread?.fullName || `@${username}`}
+        onBack={onBack}
+        actions={
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Настройки чата" onClick={() => setNotesOpen(true)}>
+              <NotebookPen className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-10 rounded-full"
+              aria-label="Удалить чат"
+              onClick={() => {
+                void deleteThread(username).then(() => {
+                  resetChatEngine(username);
+                  toast.message("Переписка стёрта. Предыстория и метрики на месте");
+                  onBack();
+                });
+              }}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={onClose} aria-label="Закрыть">
+              <X className="size-4" />
+            </Button>
+          </div>
+        }
+      />
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted">Напиши первым. Может прислать фото.</p>
