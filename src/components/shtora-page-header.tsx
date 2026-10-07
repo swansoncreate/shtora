@@ -15,6 +15,7 @@ export function ShtoraPageHeader({
   onBack?: () => void;
   onClose?: () => void;
   onSettings?: () => void;
+  actions?: ReactNode;
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border/55 bg-bg/88 pt-[max(0.55rem,env(safe-area-inset-top))] backdrop-blur-xl">
