@@ -18,14 +18,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build real app shell
+        run: npm run build:dev
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          VITE_STATIC_PREVIEW: "1"
+
+      - name: Prepare Pages artifact
+        run: |
+          set -euo pipefail
+          rm -rf site
+          mkdir -p site
+          if [ -d ".output/public" ]; then
+            cp -R .output/public/. site/
+          elif [ -d "dist" ]; then
+            cp -R dist/. site/
+          else
+            echo "No static build directory found"
+            find . -maxdepth 3 -type f \( -name 'index.html' -o -name '_shell.html' \) -print
+            exit 1
+          fi
+          if [ -f "site/_shell.html" ]; then
+            cp "site/_shell.html" "site/index.html"
+            cp "site/_shell.html" "site/404.html"
+          fi
+          touch site/.nojekyll
+          echo "Pages artifact:"
+          find site -maxdepth 2 -type f | sort | head -80
 
       - name: Upload preview artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./preview
+          path: ./site
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
