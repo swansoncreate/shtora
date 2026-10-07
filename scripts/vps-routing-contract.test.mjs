@@ -56,7 +56,7 @@ test("VPS Imagine routes through published Grok Build, not xAI directly", async 
     assert.equal(body.op, "imagine");
     assert.equal(body.engine, "grok");
     assert.equal(body.data?.source, "shtora-vps");
-    assert.deepEqual(body.payload, payload);
+    assert.deepEqual(body.data?.payload, payload);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousSelf === undefined) delete process.env.SHTORA_SELF;
