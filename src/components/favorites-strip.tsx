@@ -35,7 +35,7 @@ export function FavoritesStrip({
     })
     .sort((a, b) => Number(b.freshStory) - Number(a.freshStory));
   return (
-    <div className="mt-3 flex gap-3 overflow-x-auto px-0.5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="mt-3 flex gap-4 overflow-x-auto px-0.5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {rows.map(({ name, count, pic, selected, stories, freshStory, freshCount, hasStory }) => (
           <Link
             key={name}
@@ -54,7 +54,7 @@ export function FavoritesStrip({
           >
             <span
               className={cn(
-                "relative size-[64px] rounded-full border p-[2px]",
+                "relative size-[66px] rounded-full p-[2px] transition-transform",
                 hasStory ? (freshStory ? "border-accent" : "border-fg/35") : count > 0 ? "border-accent/80" : selected ? "border-fg/45" : "border-border",
               )}
             >
