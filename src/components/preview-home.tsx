@@ -5,6 +5,7 @@ import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
 import { PostViewer } from "@/components/post-viewer";
 import { PullRefresh } from "@/components/pull-refresh";
+import { ShtoraPageHeader } from "@/components/shtora-page-header";
 import { FavoritesStrip } from "@/components/favorites-strip";
 import { Button } from "@/components/ui/button";
 import {
@@ -231,13 +232,14 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
     const stories = storySet(profile);
     const hls = highlights(profile);
     return (
-      <section>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="size-10 rounded-lg" aria-label="Назад" onClick={() => setView(null)}>
-            <span aria-hidden>←</span>
-          </Button>
-          <p className="truncate text-sm text-muted">Профиль · @{profile.username}</p>
-        </div>
+      <section className="-mx-4 sm:-mx-6">
+        <ShtoraPageHeader
+          eyebrow="Профиль"
+          title={`@${profile.username}`}
+          onBack={() => setView(null)}
+          onSettings={onNeedSettings}
+        />
+        <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 sm:pt-8">
         <div className="mt-4">
           <ProfileHeader
             profile={profile}
@@ -281,7 +283,9 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
   }
 
   return (
-    <section>
+    <section className="-mx-4 sm:-mx-6">
+      <ShtoraPageHeader eyebrow="Лента" title="Штора" onSettings={onNeedSettings} />
+      <div className="mx-auto max-w-4xl px-4 pt-3 sm:px-6 sm:pt-4">
       <FavoritesStrip
         names={profiles.map((item) => item.username)}
         active=""
