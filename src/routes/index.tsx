@@ -303,9 +303,9 @@ function BottomNav({
 }) {
   const itemClass = (active: boolean) =>
     cn(
-      "group relative flex h-12 items-center justify-center rounded-2xl text-muted transition-colors duration-[var(--motion-quick)]",
+      "group relative flex h-12 items-center justify-center rounded-2xl text-muted transition-all duration-[var(--motion-quick)]",
       "hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-      active && "text-fg after:absolute after:bottom-1.5 after:size-1 after:rounded-full after:bg-accent",
+      active && "text-fg",
     );
 
   return (
@@ -313,21 +313,43 @@ function BottomNav({
       className="fixed inset-x-0 bottom-0 z-[65] px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
       aria-label="Основная навигация"
     >
-      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 rounded-[24px] border border-border/70 bg-surface/72 px-3 py-2.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
+      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-[1fr_1fr_auto_1fr_1fr] items-end rounded-[28px] border border-border/70 bg-surface/88 px-2 py-2 shadow-[0_20px_70px_rgba(0,0,0,0.48)] backdrop-blur-2xl">
         <button type="button" className={itemClass(app === "instagram" && !searchOpen && !chatsOpen)} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
-          <House className={cn("size-6", app === "instagram" && "fill-current")} />
+          <span className="flex flex-col items-center gap-1">
+            <House className={cn("size-5", app === "instagram" && "fill-current")} />
+            <span className="text-[8px] uppercase tracking-[0.14em]">Лента</span>
+          </span>
         </button>
         <button type="button" className={itemClass(searchOpen)} aria-label="Поиск" aria-current={searchOpen ? "page" : undefined} onClick={onSearch}>
-          <Search className={cn("size-6", searchOpen && "stroke-[2.4]")} />
+          <span className="flex flex-col items-center gap-1">
+            <Search className={cn("size-5", searchOpen && "stroke-[2.4]")} />
+            <span className="text-[8px] uppercase tracking-[0.14em]">Поиск</span>
+          </span>
         </button>
+
+        <button
+          type="button"
+          className="relative -mt-7 flex size-14 items-center justify-center rounded-full border border-white/10 text-white shadow-[0_12px_35px_rgba(124,107,255,0.34)]"
+          style={{ background: "linear-gradient(135deg,#7c6bff,#f36b9a)" }}
+          aria-label="Imagine"
+          aria-current={app === "imagine" ? "page" : undefined}
+          onClick={onImagine}
+        >
+          <Sparkles className="size-6" />
+          <span className="absolute -bottom-5 rounded-full bg-surface px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-accent shadow-[0_4px_16px_rgba(0,0,0,0.25)]">Imagine</span>
+        </button>
+
         <button type="button" className={itemClass(chatsOpen)} aria-label="Сообщения" aria-current={chatsOpen ? "page" : undefined} onClick={onChats}>
-          <MessageCircle className={cn("size-6", chatsOpen && "fill-current")} />
+          <span className="flex flex-col items-center gap-1">
+            <MessageCircle className={cn("size-5", chatsOpen && "fill-current")} />
+            <span className="text-[8px] uppercase tracking-[0.14em]">Чаты</span>
+          </span>
         </button>
-        <button type="button" className={itemClass(app === "dropbox")} aria-label="Dropbox" aria-current={app === "dropbox" ? "page" : undefined} onClick={onDropbox}>
-          <DropboxMark className={cn("size-6", app === "dropbox" && "fill-current")} />
-        </button>
-        <button type="button" className={itemClass(app === "imagine")} aria-label="Imagine" aria-current={app === "imagine" ? "page" : undefined} onClick={onImagine}>
-          <Sparkles className={cn("size-6", app === "imagine" && "fill-current")} />
+        <button type="button" className={itemClass(app === "dropbox")} aria-label="Архив" aria-current={app === "dropbox" ? "page" : undefined} onClick={onDropbox}>
+          <span className="flex flex-col items-center gap-1">
+            <DropboxMark className={cn("size-5", app === "dropbox" && "fill-current")} />
+            <span className="text-[8px] uppercase tracking-[0.14em]">Архив</span>
+          </span>
         </button>
       </div>
     </nav>
