@@ -55,7 +55,7 @@ export function FavoritesStrip({
             <span
               className={cn(
                 "relative size-[66px] rounded-full p-[2px] transition-transform",
-                hasStory ? (freshStory ? "border-accent" : "border-fg/35") : count > 0 ? "border-accent/80" : selected ? "border-fg/45" : "border-border",
+                hasStory ? (freshStory ? "bg-[conic-gradient(from_180deg,#7c6bff,#f36b9a,#7c6bff)] shadow-[0_6px_24px_rgba(124,107,255,0.26)]" : "bg-white/10") : count > 0 ? "bg-danger" : selected ? "bg-gradient-to-r from-accent to-danger" : "bg-white/8",
               )}
             >
               <span className="block size-full overflow-hidden rounded-full border-2 border-bg bg-elevated">
