@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, House, MessageCircle, Search, Settings, Sparkles } from "lucide-react";
+import { AlertCircle, House, MessageCircle, Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
