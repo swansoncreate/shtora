@@ -3,121 +3,120 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Штора — UI preview</title>
+<title>Штора</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{bg:"#0e0d0c",surface:"#171614",elevated:"#1f1d1b",fg:"#f4efe6",muted:"#9c958a",subtle:"#6f6a62",accent:"#d7cfc3","accent-fg":"#0e0d0c",border:"rgba(244,239,230,.12)",danger:"#c45c4a"},fontFamily:{display:["Cormorant Garamond","serif"],sans:["Manrope","system-ui","sans-serif"]},boxShadow:{"border":"0 0 0 1px rgba(244,239,230,.16)"}}}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0e0d0c;--surface:#171513;--elev:#211e1b;--border:rgba(244,239,230,.12);--text:#f4efe6;--muted:#a8a098;--subtle:#716b64;--accent:#d5b67a;--danger:#d66b6b}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.42 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100dvh}
-button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}.app{width:min(100%,760px);margin:0 auto;min-height:100dvh}
-header{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);background:rgba(14,13,12,.93);backdrop-filter:blur(18px);padding:12px 16px}
-.brand{font:600 40px/1 "Georgia",serif;letter-spacing:-.04em}.sub{color:var(--muted);font-size:12px;margin-top:5px}
-.headrow{display:flex;gap:12px;align-items:flex-start}.grow{flex:1}
-.icon{width:44px;height:44px;border:0;border-radius:12px;background:transparent;display:grid;place-items:center}.icon:hover{background:var(--elev)}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--elev);padding:4px;border-radius:12px;margin-top:12px}.tab{height:40px;border:0;border-radius:9px;background:none;color:var(--muted)}.tab.active{background:var(--surface);color:var(--text)}
-main{padding:18px 16px 50px}.row{display:flex;gap:8px}.input,.textarea{width:100%;border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:12px 13px;outline:none}.input{height:46px}.textarea{min-height:120px;resize:vertical}.input:focus,.textarea:focus{border-color:rgba(213,182,122,.55)}
-.btn{height:44px;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:0 15px}.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}.btn.subtle{background:var(--elev)}.btn.ghost{background:transparent;border-color:transparent}
-.stories{display:flex;gap:14px;overflow:auto;padding:15px 2px 10px}.story{width:72px;flex:none;text-align:center;border:0;background:none}.avatar{width:64px;height:64px;margin:auto;border-radius:50%;padding:3px;background:var(--border)}.story.active .avatar{background:linear-gradient(135deg,var(--danger),var(--accent))}.avatar>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--elev);font:500 24px Georgia,serif}.story small{display:block;margin-top:6px;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card,.panel{border:1px solid var(--border);background:var(--surface);border-radius:16px;overflow:hidden}.card{margin-top:10px}.cardhead{display:flex;align-items:center;gap:10px;padding:12px 14px}.mini{width:40px;height:40px;border-radius:50%;background:var(--elev);display:grid;place-items:center;font:500 18px Georgia,serif}.meta b{display:block;font-size:14px}.meta span{display:block;color:var(--subtle);font-size:12px;margin-top:2px}.media{width:100%;aspect-ratio:4/5;background:linear-gradient(145deg,#5a554f,#d1b08a 55%,#ebe0cc);position:relative}.media.alt{background:linear-gradient(145deg,#3c4038,#727b61 55%,#b7b29c)}.media.night{background:linear-gradient(145deg,#111419,#28313c 60%,#55606f)}.media.rose{background:linear-gradient(145deg,#645355,#c5a2a0)}.media.gold{background:linear-gradient(145deg,#5c4a3c,#bb8d52 55%,#dfc18f)}.media:after{content:"preview frame";position:absolute;left:14px;bottom:14px;color:rgba(255,255,255,.7);font-size:10px;letter-spacing:.18em;text-transform:uppercase}.actions{display:flex;gap:2px;padding:7px 9px}.likes{padding:0 14px 5px;font-size:13px}.caption{padding:0 14px 14px;font-size:14px}.muted{color:var(--muted)}
-.profile{padding:16px}.profiletop{display:flex;gap:15px}.big{width:86px;height:86px;border-radius:50%;background:var(--elev);display:grid;place-items:center;flex:none;font:500 30px Georgia,serif}.name{font:500 28px/1 Georgia,serif}.stats{display:flex;gap:18px;margin-top:12px;font-size:12px}.stats b{font-size:16px}.pills{display:flex;gap:8px;overflow:auto;margin-top:14px}.pill{border:1px solid var(--border);background:var(--elev);border-radius:999px;padding:8px 12px;font-size:12px;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:14px}.grid .tile{aspect-ratio:1}.tile{position:relative;overflow:hidden}
-.filehead{display:flex;gap:8px;align-items:center}.path{flex:1;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chips{display:flex;gap:8px;overflow:auto;padding:12px 0}.chip{border:0;background:var(--elev);border-radius:999px;padding:8px 13px;color:var(--muted);white-space:nowrap}.chip.active{background:var(--text);color:var(--bg)}.filegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}.file{aspect-ratio:1;border:0;padding:0;background:var(--elev);position:relative;overflow:hidden;border-radius:8px}.check{position:absolute;top:7px;right:7px;width:24px;height:24px;border-radius:50%;background:var(--text);color:var(--bg);display:none;place-items:center;font-size:12px}.file.selected .check{display:grid}.tag{position:absolute;left:6px;top:6px;border-radius:999px;background:rgba(14,13,12,.72);padding:5px 7px;font-size:9px}
-.studio{padding:16px}.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--elev);padding:4px;border-radius:12px}.seg button{height:38px;border:0;border-radius:9px;background:transparent;color:var(--muted)}.seg button.active{background:var(--surface);color:var(--text)}.sources{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.source{aspect-ratio:1;border-radius:12px;background:var(--elev);padding:8px}.source>div{width:100%;height:100%;border-radius:9px;background:linear-gradient(145deg,#474039,#a28d75);display:flex;align-items:flex-end;padding:8px;font-size:9px;letter-spacing:.14em;color:rgba(255,255,255,.72)}.resultgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);display:none;align-items:flex-end;backdrop-filter:blur(8px)}.modal.open{display:flex}.sheet{width:min(100%,760px);max-height:92dvh;overflow:auto;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-bottom:0;border-radius:20px 20px 0 0;padding:16px 16px max(20px,env(safe-area-inset-bottom))}.sheet.center{align-self:center;border-bottom:1px solid var(--border);border-radius:20px;margin:18px}.sheethead{display:flex;align-items:center;gap:10px}.sheettitle{font:500 28px Georgia,serif}.close{margin-left:auto}.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}.listrow{width:100%;display:flex;align-items:center;gap:12px;border:1px solid var(--border);background:var(--elev);border-radius:14px;padding:11px;text-align:left}.listrow .grow{min-width:0}.listrow small{color:var(--muted);display:block;margin-top:3px}.section{margin-top:18px}.section h4{margin:0 0 8px;font-size:13px}.field{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px}.toggle{width:48px;height:28px;border:0;border-radius:999px;background:var(--elev);position:relative}.toggle.on{background:var(--text)}.toggle i{position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--bg);transition:.15s}.toggle.on i{left:24px}.chathead{display:flex;gap:9px;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px}.messages{display:flex;flex-direction:column;gap:8px;padding:16px 0;min-height:45dvh}.bubble{max-width:78%;padding:9px 12px;border-radius:16px;background:var(--elev);font-size:14px}.bubble.me{margin-left:auto;background:var(--accent);color:#17120c}.composer{display:flex;gap:8px;border-top:1px solid var(--border);padding-top:12px}
-@media(min-width:760px){main{padding-left:0;padding-right:0}}
+html,body{margin:0;background:#0e0d0c;color:#f4efe6;font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.curtain-wash{background:linear-gradient(90deg,#0e0d0c,#1c1916 9%,#2a2520 16%,#141210 24%,#24201c 32%,#0e0d0c 40%,#1a1714 48%,#3a342c 54%,#161412 62%,#221e1a 72%,#121110 82%,#1f1b18 92%,#0e0d0c)}
+.media-a{background:radial-gradient(circle at 68% 18%,rgba(248,217,168,.72),transparent 28%),linear-gradient(145deg,#5e5953,#d7b48e 58%,#eadfca)}
+.media-b{background:radial-gradient(circle at 28% 30%,rgba(255,255,255,.7),transparent 20%),linear-gradient(145deg,#d8d1c5,#a69b8b)}
+.media-c{background:radial-gradient(circle at 58% 30%,rgba(207,224,186,.55),transparent 24%),linear-gradient(145deg,#3d4438,#707a60 55%,#b8b49e)}
+.media-d{background:radial-gradient(circle at 70% 20%,rgba(220,208,185,.22),transparent 20%),linear-gradient(145deg,#101317,#27303a 58%,#55606f)}
+.media-e{background:radial-gradient(circle at 35% 22%,rgba(250,223,221,.7),transparent 22%),linear-gradient(145deg,#615253,#c7a5a1)}
 </style>
 </head>
 <body>
-<div class="app">
-<header>
-  <div class="headrow">
-    <div class="grow"><div class="brand">Штора</div><div class="sub" id="sub">UI preview · offline</div></div>
-    <button class="icon" id="settingsBtn" aria-label="Настройки">⚙</button>
-  </div>
-  <div class="tabs">
-    <button class="tab active" data-app="instagram">Instagram</button>
-    <button class="tab" data-app="files">Файлы</button>
-    <button class="tab" data-app="imagine">Imagine</button>
-  </div>
-</header>
-<main id="main"></main>
-</div>
-<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
-
+<div id="root"></div>
 <script>
-const state={app:"instagram",profile:null,folder:"Штора",selected:new Set(),liked:false,saved:false,imagineMode:"photo",generated:0,thread:null,messages:{lena:["ты опять без сна?","я потом скину кадр","если не усну первой"],mira:["у меня сегодня тихий день","после восьми буду свободна"],nika:["посмотрела 👀"]},settingsTab:"insta",autoSave:true};
-const people=["you","lena","mira","nika","anna"];
-const media=[
- {id:"1",name:"morning-light.jpg",cls:""}, {id:"2",name:"window-01.jpg",cls:"alt"}, {id:"3",name:"kitchen.jpg",cls:"alt"},
- {id:"4",name:"street.mov",cls:"night"}, {id:"5",name:"mirror.jpg",cls:"rose"}, {id:"6",name:"late-sun.jpg",cls:"gold"}
-];
-const $=s=>document.querySelector(s);
-const main=$("#main");
-function avatar(name,large=false){return '<div class="'+(large?"big":"mini")+'">'+String(name||"Ш")[0].toUpperCase()+'</div>'}
-function openModal(html,center=false){$("#sheet").className="sheet"+(center?" center":"");$("#sheet").innerHTML=html;$("#modal").classList.add("open")}
-function closeModal(){$("#modal").classList.remove("open")}
-$("#modal").addEventListener("click",e=>{if(e.target===$("#modal"))closeModal()});
-function render(){
-  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.app===state.app));
-  $("#sub").textContent=state.app==="instagram"?(state.profile?"@"+state.profile:"UI preview · offline"):state.app==="files"?"Файлы · UI preview":"Imagine · UI preview";
-  if(state.app==="instagram") return state.profile?renderProfile():renderInstagram();
-  if(state.app==="files") return renderFiles();
-  renderImagine();
+const state={app:"instagram",profile:null,settings:false,chat:false,thread:null,settingsTab:"insta",liked:false,saved:false,messages:{lena:["ты опять без сна?","я потом скину кадр"],mira:["сегодня после восьми"],nika:["посмотрела 👀"]}};
+const people=["ellissawe","dashutiya","sheptnowa","minsiyaaa"];
+const media=["media-a","media-b","media-c","media-d","media-e","media-a"];
+
+function svg(name,cls="size-5"){
+ const p={
+  search:'<circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path>',
+  settings:'<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="m19.4 15 1.4 1.4-1.4 2.4-1.9-.6a7.8 7.8 0 0 1-1.6 1l-.3 2h-2.8l-.3-2a7.8 7.8 0 0 1-1.8-1l-1.8.6-1.4-2.4L7 15a7.5 7.5 0 0 1 0-2l-1.4-1.4L7 9.2l1.8.6c.5-.4 1.1-.7 1.8-1l.3-2h2.8l.3 2c.6.2 1.2.5 1.6 1l1.9-.6 1.4 2.4-1.4 1.4c.2.7.2 1.3 0 2Z"></path>',
+  message:'<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.7 8.7 0 0 1-3.8-.9L4 19l1-3.3A7 7 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5a7.5 7.5 0 0 1 8 7Z"></path>',
+  heart:'<path d="M20.8 8.8c0 5-8.8 10.2-8.8 10.2S3.2 13.8 3.2 8.8A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 8.8 1.8Z"></path>',
+  bookmark:'<path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V22l-6-3-6 3Z"></path>',
+  send:'<path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path>',
+  home:'<path d="m3 10 9-7 9 7"></path><path d="M5 9.5V21h14V9.5"></path>',
+  folder:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5Z"></path>',
+  dice:'<path d="M5 4.5h5v5H5zM14 14.5h5v5h-5zM14 4.5h5v5h-5zM5 14.5h5v5H5z"></path>',
+  back:'<path d="m15 18-6-6 6-6"></path>',
+  close:'<path d="m6 6 12 12M18 6 6 18"></path>',
+  plus:'<path d="M12 5v14M5 12h14"></path>'
+ };
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="'+cls+'">'+(p[name]||"")+'</svg>';
 }
-function renderInstagram(){
-  let html='<div class="row"><input id="search" class="input" placeholder="поиск по нику"><button class="btn subtle" id="searchBtn">Искать</button><button class="btn subtle" id="chatBtn">💬</button></div>';
-  html+='<div class="stories">'+people.map((n,i)=>'<button class="story '+(i===0?"active":"")+'" onclick="goProfile(\''+n+'\')">'+avatar(n)+'<small>'+n+'</small></button>').join("")+'</div>';
-  html+='<article class="card"><div class="cardhead">'+avatar("lena")+'<div class="meta"><b>lena</b><span>today · apartment</span></div><div class="grow"></div><button class="icon">•••</button></div>';
-  html+='<button style="display:block;width:100%;border:0;background:none;padding:0" onclick="goProfile(\'lena\')"><div class="media"></div></button>';
-  html+='<div class="actions"><button class="icon" onclick="toggleLike()">♡</button><button class="icon" onclick="openChats()">◌</button><button class="icon">↗</button><button class="icon" onclick="toggleSave()" style="margin-left:auto">⌑</button></div>';
-  html+='<div class="likes"><b>'+(state.liked?"128":"127")+'</b> отметок «Нравится»</div><div class="caption"><b>lena</b> morning light, no filter, quiet apartment.</div></article>';
-  html+='<div class="panel" style="margin-top:14px;padding:16px"><b>UI playground</b><div class="muted" style="margin-top:5px">Здесь можно оценивать композицию, навигацию, чаты и настройки без backend.</div></div>';
-  main.innerHTML=html;
-  $("#searchBtn").onclick=()=>{const n=$("#search").value.trim().replace(/^@/,"");if(n)goProfile(n)};
-  $("#chatBtn").onclick=openChats;
+function avatar(name,large){return '<span class="grid '+(large?"size-[84px] text-2xl":"size-10 text-base")+' shrink-0 place-items-center rounded-full bg-elevated font-display text-muted">'+name[0].toUpperCase()+'</span>'}
+function media(i,classes=""){return '<div class="'+media[(i<0?0:i)%media.length]+' '+classes+'"></div>'}
+function shell(){
+ const caption=state.app==="instagram"?(state.profile?"@"+state.profile:"Лента"):state.app==="files"?"Файлы":"Imagine";
+ return '<div class="min-h-dvh bg-bg text-fg"><header class="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(.75rem,env(safe-area-inset-top))] backdrop-blur-md relative"><div class="pointer-events-none absolute inset-0 opacity-25 curtain-wash"></div><div class="relative z-10 mx-auto w-full max-w-3xl px-4 pb-3 sm:px-6"><div class="flex items-start gap-3"><div class="min-w-0 flex-1"><p class="font-display text-[2rem] font-medium leading-none tracking-tight sm:text-4xl">Штора</p><p class="mt-1 text-sm text-muted">'+caption+'</p></div><button id="settings" class="size-11 shrink-0 rounded-full hover:bg-elevated flex items-center justify-center">'+svg("settings")+'</button></div><nav class="mt-3 flex rounded-xl bg-elevated p-1"><button data-app="instagram" class="apptab flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm '+(state.app==="instagram"?"bg-surface text-fg shadow-[0_0_0_1px_rgba(244,239,230,.16)]":"text-muted")+'">'+svg("home","size-4")+'<span>Instagram</span></button><button data-app="files" class="apptab flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm '+(state.app==="files"?"bg-surface text-fg shadow-[0_0_0_1px_rgba(244,239,230,.16)]":"text-muted")+'">'+svg("folder","size-4")+'<span>Файлы</span></button><button data-app="imagine" class="apptab flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm '+(state.app==="imagine"?"bg-surface text-fg shadow-[0_0_0_1px_rgba(244,239,230,.16)]":"text-muted")+'">'+svg("dice","size-4")+'<span>Imagine</span></button></nav></div></header><main class="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">'+content()+'</main></div>';
 }
-function renderProfile(){
-  const n=state.profile; let html='<button class="btn ghost" id="back">← Лента</button><section class="panel profile" style="margin-top:8px"><div class="profiletop">'+avatar(n,true)+'<div><div class="name">'+n+'</div><div class="muted" style="margin-top:4px">@'+n+'</div><div class="stats"><span><b>18</b> посты</span><span><b>4</b> сторис</span><span><b>3</b> highlights</span></div></div></div>';
-  html+='<div class="row" style="margin-top:14px"><button class="btn" id="write">Написать</button><button class="btn" onclick="toast('Только UI')">Сохранить</button><button class="btn" onclick="toast('Обновление отключено')">Обновить</button></div>';
-  html+='<div class="pills"><button class="pill">morning</button><button class="pill">home</button><button class="pill">weekend</button></div></section><div class="grid">';
-  media.forEach((m,i)=>html+='<button class="tile" style="border:0" onclick="openMedia(\''+m.id+'\')"><div class="media '+m.cls+'" style="height:100%"></div></button>');
-  html+='</div>'; main.innerHTML=html; $("#back").onclick=()=>{state.profile=null;render()}; $("#write").onclick=()=>openChat(n);
+function content(){return state.app==="files"?filesView():state.app==="imagine"?imagineView():(state.profile?profileView():feedView())}
+function feedView(){
+ let h='<form id="searchForm" class="flex gap-2"><div class="relative min-w-0 flex-1"><input id="search" class="h-12 w-full rounded-xl border border-border bg-surface px-4 pr-12 text-sm outline-none" placeholder="поиск по нику"><button class="absolute top-1 right-1 size-10 rounded-md text-muted flex items-center justify-center" aria-label="Искать">'+svg("search")+'</button></div><button id="openChats" type="button" class="size-12 shrink-0 rounded-lg bg-elevated flex items-center justify-center">'+svg("message")+'</button></form>';
+ h+='<div class="mt-4 flex gap-3 overflow-x-auto pb-1">';
+ people.forEach((n,i)=>h+='<button class="flex w-[76px] shrink-0 flex-col items-center gap-1.5 person" data-name="'+n+'"><span class="relative size-[72px] rounded-full p-[3px] '+(i<2?"bg-fg":"bg-border")+'"><span class="block size-full overflow-hidden rounded-full border-[3px] border-bg bg-elevated">'+avatar(n,"")+'</span></span><span class="w-full truncate text-center text-[11px] '+(i===0?"text-fg":"text-muted")+'">'+n+'</span></button>');
+ h+='</div>';
+ for(let i=0;i<3;i++){
+  const n=people[i];
+  h+='<article class="mt-5 min-w-0 rounded-xl bg-surface p-3 shadow-[0_0_0_1px_rgba(244,239,230,.16)]"><header class="mb-3 flex items-center gap-3"><button class="person size-10 shrink-0 rounded-full p-[2px] bg-border" data-name="'+n+'"><span class="block size-full overflow-hidden rounded-full border-2 border-surface bg-elevated">'+avatar(n,"")+'</span></button><button class="person min-w-0 flex-1 text-left" data-name="'+n+'"><span class="block truncate text-sm font-medium">'+n+'</span><span class="block text-xs text-subtle">'+(i+1)+" ч. назад"+'</span></button><button class="size-10 rounded-full text-muted">•••</button></header><button class="block relative w-full overflow-hidden rounded-lg" type="button">'+media(i,"aspect-square w-full")+'</button><div class="mt-1 flex items-center gap-1"><button class="like size-11 rounded-full flex items-center justify-center" data-i="'+i+'">'+svg("heart")+'</button><button class="comment size-11 rounded-full flex items-center justify-center">'+svg("message")+'</button><button class="px-1 text-xs text-subtle">Комментарий</button><button class="save ml-auto size-11 rounded-full flex items-center justify-center">'+svg("bookmark")+'</button></div><p class="text-sm leading-relaxed"><button class="person mr-1.5 font-medium" data-name="'+n+'">'+n+'</button><span class="text-muted">утро, обычный кадр, без фильтра.</span></p></article>';
+ }
+ return h;
 }
-function renderFiles(){
- let html='<div class="filehead"><div class="path">/'+state.folder+'</div><button class="btn subtle" onclick="toast('Фильтры UI')">☷</button></div><div class="chips">';
- ["Штора","общее","lena","mira","nika"].forEach(n=>html+='<button class="chip '+(state.folder===n?"active":"")+'" onclick="state.folder=\''+n+'\';state.selected.clear();render()">'+n+'</button>');
- html+='</div>';
- if(state.selected.size) html+='<div class="panel" style="padding:9px;margin-bottom:10px;display:flex;align-items:center;gap:8px"><span>'+state.selected.size+' выбрано</span><span class="grow"></span><button class="btn subtle" onclick="state.selected.clear();render()">Снять</button><button class="btn subtle" onclick="toast('Удаление отключено')">🗑</button></div>';
- html+='<div class="filegrid">';
- media.forEach((m,i)=>{const on=state.selected.has(m.id);html+='<button class="file '+(on?"selected":"")+'" onclick="toggleFile(\''+m.id+'\')"><div class="media '+m.cls+'" style="height:100%"></div>'+(i<2?'<span class="tag">В ленте</span>':"")+'<span class="check">✓</span></button>'});
- html+='</div>'; main.innerHTML=html;
+function profileView(){
+ const n=state.profile;
+ let h='<button id="back" class="mb-2 flex h-10 items-center rounded-lg px-3 text-muted">'+svg("back")+'Назад</button><div class="flex gap-4"><button class="size-[84px] shrink-0 overflow-hidden rounded-full p-[3px] bg-fg">'+avatar(n,"")+'</button><div class="min-w-0 flex-1"><div class="flex items-center gap-1.5"><h1 class="min-w-0 truncate font-display text-2xl font-medium tracking-tight">'+n+'</h1></div><p class="text-sm text-muted">@'+n+'</p><div class="mt-3 flex gap-4 text-sm"><div><p class="font-medium">18</p><p class="text-xs text-subtle">посты</p></div><div><p class="font-medium">2.3K</p><p class="text-xs text-subtle">подписчики</p></div><div><p class="font-medium">412</p><p class="text-xs text-subtle">подписки</p></div></div><div class="relative z-10 mt-3 flex flex-wrap gap-2"><button id="profileChat" class="h-12 rounded-lg bg-fg px-4 text-bg">Написать</button><button class="h-12 rounded-lg bg-elevated px-4">Сохранить</button><button class="h-12 rounded-lg px-4 text-muted">Обновить</button></div><p class="mt-1.5 truncate text-xs text-subtle">/Штора/'+n+'</p></div></div><div class="mt-5 flex gap-3 overflow-x-auto pb-1"><div class="flex w-[76px] shrink-0 flex-col items-center gap-1.5"><span class="size-[72px] rounded-full bg-elevated flex items-center justify-center">•</span><span class="w-full truncate text-center text-[11px] text-muted">утро</span></div><div class="flex w-[76px] shrink-0 flex-col items-center gap-1.5"><span class="size-[72px] rounded-full bg-elevated flex items-center justify-center">•</span><span class="w-full truncate text-center text-[11px] text-muted">дом</span></div></div><div class="mt-5 grid grid-cols-2 gap-1 rounded-lg bg-elevated p-1"><button class="flex h-11 items-center justify-center rounded-md bg-surface text-sm font-medium">Посты</button><button class="flex h-11 items-center justify-center rounded-md text-sm text-muted">Сторис</button></div><div class="mt-3 grid grid-cols-3 gap-1">';
+ for(let i=0;i<6;i++)h+='<div class="aspect-square overflow-hidden rounded-sm">'+media(i,"size-full")+'</div>';
+ return h+'</div>';
 }
-function toggleFile(id){if(state.selected.size||state.selected.has(id)){state.selected.has(id)?state.selected.delete(id):state.selected.add(id)}else openMedia(id);render()}
-function renderImagine(){
- let html='<section class="panel studio"><div class="seg">';
- ["photo","live","edit"].forEach(m=>html+='<button class="'+(state.imagineMode===m?"active":"")+'" onclick="state.imagineMode=\''+m+'\';render()">'+(m==="photo"?"Фото":m==="live"?"Live":"Edit")+'</button>');
- html+='</div><h2 style="font:500 28px Georgia,serif;margin:16px 0 4px">Imagine studio</h2><div class="muted">Только UI. Нажатие «Собрать» меняет локальное состояние и ничего не отправляет.</div>';
- html+='<div class="sources">'+["source","source-2","history"].map(x=>'<button class="source" onclick="toast(\''+x+'\')"><div>'+x+'</div></button>').join("")+'</div>';
- html+='<textarea class="textarea" id="prompt" placeholder="Опиши сцену…">утро, тёплый свет, телефонный кадр, без постановки</textarea><div class="row" style="margin-top:10px"><button class="btn subtle">x1</button><button class="btn subtle">x2</button><button class="btn subtle">x4</button><span class="grow"></span><button class="btn primary" onclick="state.generated++;render()">✦ Собрать</button></div></section>';
- html+='<section style="margin-top:18px"><div class="headrow"><b>Результаты</b><span class="grow"></span><span class="muted">'+(state.generated?state.generated+" локальных":"пока пусто")+'</span></div><div class="resultgrid">';
- const count=Math.max(2,state.generated); for(let i=0;i<count;i++) html+='<div class="tile" style="aspect-ratio:4/5;border-radius:12px;overflow:hidden"><div class="media '+(i%2?"alt":"")+" style="height:100%"></div></div>";
- html+='</div></section>'; main.innerHTML=html;
+function filesView(){
+ let h='<div class="flex flex-wrap gap-2"><button class="h-10 rounded-lg px-3 text-sm bg-fg text-bg">Штора</button><button class="h-10 rounded-lg px-3 text-sm bg-elevated text-muted">общее</button><button class="h-10 rounded-lg px-3 text-sm bg-elevated text-muted">ellissawe</button><button class="h-10 rounded-lg px-3 text-sm bg-elevated text-muted">dashutiya</button></div><div class="mt-3 flex items-center gap-2"><button class="size-10 rounded-lg flex items-center justify-center">'+svg("back")+'</button><p class="min-w-0 flex-1 truncate text-sm text-muted">/Штора</p><button id="selectFiles" class="h-10 rounded-lg px-3 text-sm">Выбрать</button></div><div class="mt-3 grid grid-cols-3 gap-1 pb-24">';
+ for(let i=0;i<9;i++)h+='<button class="fileTile relative aspect-square overflow-hidden rounded-md bg-elevated">'+media(i,"size-full")+(i<2?'<span class="absolute left-1.5 top-1.5 rounded-full bg-bg/80 px-2 py-1 text-[10px]">В ленте</span>':"")+'<span class="check absolute right-1.5 top-1.5 hidden size-6 items-center justify-center rounded-full bg-fg text-bg">✓</span></button>';
+ return h+'</div>';
 }
-function goProfile(n){state.profile=n;state.app="instagram";render()}
-function toggleLike(){state.liked=!state.liked;render()}
-function toggleSave(){state.saved=!state.saved;toast(state.saved?"Сохранено локально":"Убрано локально");render()}
-function openMedia(id){const m=media.find(x=>x.id===id);openModal('<div class="sheethead"><div class="sheettitle">'+m.name+'</div><button class="icon close" onclick="closeModal()">×</button></div><div class="media '+m.cls+'" style="margin-top:12px;aspect-ratio:4/5;border-radius:14px"></div><div class="row" style="margin-top:12px"><button class="btn subtle">В ленту</button><button class="btn primary" style="margin-left:auto" onclick="closeModal()">Готово</button></div>')}
-function openChats(){const rows=["lena","mira","nika"].map(n=>'<button class="listrow" onclick="openChat(\''+n+'\')">'+avatar(n)+'<div class="grow"><b>'+n+'</b><small>'+state.messages[n][state.messages[n].length-1]+'</small></div><span>›</span></button>').join("");openModal('<div class="sheethead"><div class="sheettitle">Чаты</div><button class="icon close" onclick="closeModal()">×</button></div><div class="list">'+rows+'</div>')}
-function openChat(n){state.thread=n;const msgs=state.messages[n]||[];openModal('<div class="chathead">'+avatar(n)+'<div class="grow"><b>'+n+'</b><div class="muted" style="font-size:11px">online · preview</div></div><button class="icon" onclick="openChatSettings(\''+n+'\')">☷</button><button class="icon" onclick="closeModal()">×</button></div><div class="messages" id="msgs">'+msgs.map((m,i)=>'<div class="bubble '+(i%2?"me":"")+'">'+escapeHtml(m)+'</div>').join("")+'<div class="bubble">печатает…</div></div><form class="composer" onsubmit="sendMessage(event,\''+n+'\')"><input class="input" id="msg" placeholder="Сообщение"><button class="btn primary">↗</button></form>')}
-function sendMessage(e,n){e.preventDefault();const v=$("#msg").value.trim();if(!v)return;(state.messages[n] ||= []).push(v);openChat(n)}
-function openChatSettings(n){openModal('<div class="sheethead"><div class="sheettitle">Настройки чата</div><button class="icon close" onclick="closeModal()">×</button></div><div class="section"><h4>Предыстория</h4><div class="field muted">UI-only preview</div></div><div class="section"><h4>Тон</h4><div class="row"><button class="btn subtle">Спокойный</button><button class="btn subtle">Тёплый</button><button class="btn subtle">Игривый</button></div></div>')}
-function openSettings(){const tabs=[["insta","Инста"],["dropbox","Диск"],["chat","Чат"],["more","Ещё"]];let html='<div class="sheethead"><div class="sheettitle">Настройки</div><button class="icon close" onclick="closeModal()">×</button></div><div class="seg" style="margin-top:12px">'+tabs.map(([id,l])=>'<button class="'+(state.settingsTab===id?"active":"")+'" onclick="state.settingsTab=\''+id+'\';openSettings()">'+l+'</button>').join("")+'</div>';const t=state.settingsTab;
- if(t==="insta") html+='<div class="section"><h4>Apify</h4><div class="field muted">apify_api_… · задан</div><div style="margin-top:10px"><button class="btn subtle">Сохранить</button></div></div><div class="section"><h4>Избранное</h4><div class="pills"><span class="pill">@lena</span><span class="pill">@mira</span><span class="pill">@nika</span></div></div>';
- if(t==="dropbox") html+='<div class="section"><h4>Подключение</h4><div class="field">Подключено</div></div><div class="section"><h4>Папки</h4><div class="field">/Штора</div><div class="field" style="margin-top:8px">/Штора/lena</div><div class="field" style="margin-top:8px">/Штора/общее</div></div><div class="section"><h4>Автосохранение</h4><div class="headrow"><span class="grow">Сторис и новые посты</span><button class="toggle '+(state.autoSave?"on":"")+'" onclick="state.autoSave=!state.autoSave;openSettings()"><i></i></button></div></div>';
- if(t==="chat") html+='<div class="section"><h4>Кто пишет</h4><div class="row"><button class="btn primary">Grok</button><button class="btn subtle">Claude</button></div></div><div class="section"><h4>Модель</h4><div class="field">grok</div></div>';
- if(t==="more") html+='<div class="section"><h4>Интерфейс</h4><div class="headrow"><span class="grow">UI preview mode</span><span class="pill">offline</span></div></div><div class="section"><h4>Кэш</h4><button class="btn subtle" onclick="toast(\'Локальный preview очищен\')">Очистить</button></div>';
- openModal(html)}
-function toast(text){const t=document.createElement("div");t.textContent=text;t.style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:90;background:#f4efe6;color:#0e0d0c;padding:10px 14px;border-radius:999px;font-size:12px;box-shadow:0 10px 30px #0008";document.body.appendChild(t);setTimeout(()=>t.remove(),1400)}
-function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{state.app=b.dataset.app;state.profile=null;state.selected.clear();render()});
-$("#settingsBtn").onclick=openSettings; render();
-</script>
-</body>
-</html>
+function imagineView(){return '<div class="flex flex-1 flex-col"><div class="flex items-center justify-between gap-3"><div><p class="font-display text-2xl leading-none">Студия</p><p class="mt-1 text-sm text-muted">Фото, оживить, или отметь кадр из истории.</p></div><button class="h-12 rounded-xl bg-elevated px-4 text-sm">'+svg("plus","size-4")+' Файлы</button></div><button class="mt-6 flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl bg-surface px-6 text-center shadow-[0_0_0_1px_rgba(244,239,230,.16)]"><span class="flex size-12 items-center justify-center rounded-full bg-elevated">'+svg("plus")+'</span><span class="text-sm text-muted">С телефона или из Dropbox</span></button><input class="mt-4 h-12 rounded-xl border border-border bg-surface px-4 outline-none" placeholder="Промпт: поза, одежда, движение"><div class="mt-3 grid grid-cols-2 gap-2"><button class="h-12 rounded-xl bg-fg text-bg">Фото</button><button class="h-12 rounded-xl bg-elevated">Оживить</button><button class="h-12 rounded-xl bg-elevated">Править</button><button class="h-12 rounded-xl bg-elevated">Продлить</button></div><div class="mt-6 grid grid-cols-2 gap-2">'+media.slice(0,4).map((_,i)=>'<div class="overflow-hidden rounded-xl">'+media(i,"aspect-square w-full")+"</div>").join("")+"</div></div>"}
+function modal(inner){return '<div id="modal" class="fixed inset-0 z-50 bg-bg/70 backdrop-blur-sm"><div class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[0_0_0_1px_rgba(244,239,230,.16)] sm:inset-x-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">'+inner+'</div></div>'}
+function settingsModal(){
+ const tabs=[["insta","Инста"],["dropbox","Диск"],["chat","Чат"],["more","Ещё"]];
+ let body;
+ if(state.settingsTab==="insta")body='<section><p class="mb-3 text-xs leading-relaxed text-subtle">Сторис, хайлайты и посты. «Обновить» в профиле — только если ждут новое.</p><label class="mb-2 block text-sm font-medium">Токен</label><input class="h-11 w-full rounded-lg border border-border bg-bg px-3" placeholder="apify_api_…" disabled><button class="mt-3 h-11 rounded-lg bg-elevated px-4 text-sm">Сохранить</button></section><section class="mt-6"><h3 class="mb-2 text-sm font-medium">Кэш</h3><div class="rounded-xl border border-border bg-bg p-4"><p class="text-xs text-subtle">Посты на диске сервера. Очистка снова потратит Apify.</p><button class="mt-3 h-11 rounded-lg bg-elevated px-4">Очистить кэш</button></div></section>';
+ else if(state.settingsTab==="dropbox")body='<section><div class="rounded-lg bg-elevated px-4 py-3 text-sm">Подключено. Токен обновляется сам.</div></section><section class="mt-6"><h3 class="mb-2 text-sm font-medium">Папки</h3><div class="space-y-3"><div class="rounded-xl border border-border/70 bg-bg p-3"><p class="text-xs text-subtle">Корень Шторы</p><p class="mt-1 text-sm">/Штора</p></div><div class="rounded-xl border border-border/70 bg-bg p-3"><p class="text-xs text-subtle">ellissawe</p><p class="mt-1 text-sm">/Штора/ellissawe</p></div></div></section><section class="mt-6"><h3 class="mb-2 text-sm font-medium">Автосохранение</h3><div class="flex items-center justify-between"><span class="text-sm">Сторис и новые посты</span><button id="toggleAuto" class="relative h-7 w-12 rounded-full '+(state.autoSave?"bg-fg":"bg-elevated")+'"><span class="absolute top-1 '+(state.autoSave?"left-6":"left-1")+' size-5 rounded-full bg-bg"></span></button></div></section>';
+ else if(state.settingsTab==="chat")body='<section><p class="mb-4 text-xs leading-relaxed text-subtle">Фото и кубик всегда Imagine. Предыстория — внутри чата, не здесь.</p><div class="grid grid-cols-2 gap-2"><button class="h-11 rounded-lg bg-fg text-bg">Grok</button><button class="h-11 rounded-lg bg-elevated text-muted">Claude</button></div></section><section class="mt-6"><h3 class="mb-2 text-sm font-medium">Модель</h3><div class="rounded-xl border border-border/70 bg-bg p-4"><p class="text-xs text-subtle">Модель</p><p class="mt-1 text-sm">grok</p></div></section>';
+ else body='<section><h3 class="mb-2 text-sm font-medium">Лимиты</h3><div class="rounded-xl border border-border/70 bg-bg p-4 text-sm">Источники: Apify / Hiker / TikHub</div></section>';
+ return modal('<div class="flex items-start justify-between gap-4 px-6 pt-6 pb-3"><div><h2 class="font-display text-2xl font-medium">Настройки</h2><p class="mt-1 text-sm text-muted">Живут на сервере — очистка Chrome их не сотрёт.</p></div><button id="closeModal" class="size-10 rounded-md flex items-center justify-center">'+svg("close")+'</button></div><div class="px-6 pb-3"><div class="grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">'+tabs.map(x=>'<button data-tab="'+x[0]+'" class="h-10 rounded-lg text-sm font-medium '+(state.settingsTab===x[0]?"bg-surface text-fg shadow-[0_0_0_1px_rgba(244,239,230,.16)]":"text-muted")+'">'+x[1]+'</button>').join("")+'</div></div><div class="min-h-0 flex-1 overflow-y-auto px-6 pb-8">'+body+'</div><div class="border-t border-border/70 px-6 py-4"><button id="done" class="h-12 w-full rounded-xl bg-fg text-bg text-sm font-medium">Готово</button></div></div>');
+}
+function chatsModal(){
+ if(state.thread){
+  const n=state.thread;const msgs=state.messages[n].concat(state.temp||[]);
+  return modal('<div class="relative flex min-h-0 flex-1 flex-col"><header class="flex items-center gap-1 px-2 py-2 sm:px-4"><button id="backChats" class="size-10 rounded-lg flex items-center justify-center">'+svg("back")+'</button>'+avatar(n,"size-9")+'<div class="min-w-0 flex-1 px-2"><p class="truncate text-sm font-medium">'+n+'</p><p class="truncate text-xs text-muted">спокойная</p></div><button class="size-10 rounded-lg flex items-center justify-center">'+svg("settings","size-4")+'</button><button id="closeChat" class="size-10 rounded-lg flex items-center justify-center">'+svg("close")+'</button></header><div class="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">'+msgs.map((m,i)=>'<div class="flex '+(i%2?"justify-end":"justify-start")+'"><div class="max-w-[80%] rounded-lg px-3 py-2 text-sm '+(i%2?"bg-accent text-accent-fg":"bg-elevated")+'">'+m+'</div></div>').join("")+'<p class="w-fit rounded-lg bg-elevated px-3 py-2 text-sm text-muted">печатает</p></div><form id="chatForm" class="flex gap-2 border-t border-border/60 px-3 pt-2 pb-[max(.75rem,env(safe-area-inset-bottom))]"><input id="chatInput" class="h-12 min-w-0 flex-1 rounded-xl border border-border bg-surface px-4" placeholder="Сообщение"><button class="h-12 w-12 rounded-lg bg-fg text-bg flex items-center justify-center">'+svg("send")+'</button></form></div>');
+ }
+ const rows=["lena","mira","nika"].map((n,i)=>'<button data-thread="'+n+'" class="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-elevated">'+avatar(n,"size-12")+'<span class="min-w-0 flex-1"><span class="flex items-center justify-between gap-2"><span class="truncate text-sm font-medium">'+n+'</span>'+(i===0?'<span class="rounded-full bg-danger px-2 py-0.5 text-[10px] text-fg">2</span>':"")+'</span><span class="mt-0.5 block truncate text-xs text-muted">'+state.messages[n][state.messages[n].length-1]+'</span></span></button>').join("");
+ return modal('<header class="flex items-center justify-between px-3 py-3 sm:px-5"><div><p class="font-display text-xl">Чаты</p></div><button id="closeChat" class="size-10 rounded-lg flex items-center justify-center">'+svg("close")+'</button></header><div class="min-h-0 flex-1 overflow-y-auto">'+rows+'</div>');
+}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(){document.getElementById("root").innerHTML=shell();bind()}
+function bind(){
+ document.querySelectorAll(".apptab").forEach(b=>b.onclick=()=>{state.app=b.dataset.app;state.profile=null;render()});
+ document.getElementById("settings").onclick=()=>{document.body.insertAdjacentHTML("beforeend",settingsModal());bindModal()};
+ document.querySelectorAll(".person").forEach(b=>b.onclick=()=>{state.profile=b.dataset.name;state.app="instagram";render()});
+ document.getElementById("searchForm").onsubmit=e=>{e.preventDefault();const n=document.getElementById("search").value.trim().replace(/^@/,"");if(n){state.profile=n;render()}};
+ document.getElementById("openChats").onclick=()=>{document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()};
+ document.querySelectorAll(".like").forEach(b=>b.onclick=()=>{state.liked=!state.liked;render()});
+ document.querySelectorAll(".save").forEach(b=>b.onclick=()=>{state.saved=!state.saved;render()});
+ document.querySelectorAll(".comment").forEach(b=>b.onclick=()=>{document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()});
+ if(document.getElementById("back"))document.getElementById("back").onclick=()=>{state.profile=null;render()};
+ if(document.getElementById("profileChat"))document.getElementById("profileChat").onclick=()=>{state.thread=state.profile;document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()};
+ document.querySelectorAll(".fileTile").forEach(b=>b.onclick=()=>{b.querySelector(".check").classList.toggle("hidden");b.querySelector(".check").classList.toggle("flex");b.classList.toggle("ring-2");b.classList.toggle("ring-accent")});
+}
+function bindModal(){
+ document.getElementById("closeModal")?.addEventListener("click",()=>document.getElementById("modal")?.remove());
+ document.getElementById("done")?.addEventListener("click",()=>document.getElementById("modal")?.remove());
+ document.getElementById("closeChat")?.addEventListener("click",()=>{state.thread=null;document.getElementById("modal")?.remove()});
+ document.getElementById("backChats")?.addEventListener("click",()=>{state.thread=null;document.getElementById("modal")?.remove();document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()});
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{state.settingsTab=b.dataset.tab;document.getElementById("modal")?.remove();document.body.insertAdjacentHTML("beforeend",settingsModal());bindModal()});
+ document.querySelectorAll("[data-thread]").forEach(b=>b.onclick=()=>{state.thread=b.dataset.thread;document.getElementById("modal")?.remove();document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()});
+ document.getElementById("toggleAuto")?.addEventListener("click",()=>{state.autoSave=!state.autoSave;document.getElementById("modal")?.remove();document.body.insertAdjacentHTML("beforeend",settingsModal());bindModal()});
+ document.getElementById("chatForm")?.addEventListener("submit",e=>{e.preventDefault();const v=document.getElementById("chatInput").value.trim();if(v){(state.temp||=[]).push(v);document.getElementById("modal")?.remove();document.body.insertAdjacentHTML("beforeend",chatsModal());bindModal()}});
+}
+render();
+</script></body></html>
