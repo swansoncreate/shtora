@@ -51,6 +51,7 @@ jobs:
         env:
           SHTORA_PAGES_PREVIEW: "1"
           SHTORA_PAGES_PREVIEW_PATH: "/shtora/midnight/"
+          VITE_STATIC_PREVIEW: "1"
 
       - name: Checkout classic worktree
         run: git worktree add --detach .classic test/vps-grok-imagine
@@ -74,6 +75,7 @@ jobs:
         env:
           SHTORA_PAGES_PREVIEW: "1"
           SHTORA_PAGES_PREVIEW_PATH: "/shtora/classic/"
+          VITE_STATIC_PREVIEW: "1"
 
       - name: Create comparison landing page
         run: |
