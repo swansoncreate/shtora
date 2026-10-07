@@ -37,13 +37,8 @@ export function HomeFeed({
       <div className="mt-16 flex flex-col items-center px-2 text-center">
         <p className="font-display text-3xl font-medium tracking-tight text-fg">Пока тихо</p>
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
-          Потяни вниз или обнови — старые посты останутся.
+          Потяни вниз — новые посты загрузятся, старые останутся.
         </p>
-        {onRefresh ? (
-          <Button className="mt-5" type="button" disabled={refreshing} onClick={onRefresh}>
-            Обновить
-          </Button>
-        ) : null}
       </div>
     );
   }
