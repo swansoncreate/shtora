@@ -34,6 +34,7 @@ export function formatCount(n: number | null | undefined): string {
 export function mediaSrc(url: string | null | undefined, opts?: { proxy?: boolean }): string | undefined {
   if (!url) return undefined;
   if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+  if (import.meta.env.VITE_STATIC_PREVIEW === "1" && /^https?:\/\//i.test(url)) return url;
   if (url.startsWith("/") || /\/chat-media\//.test(url) || /^https?:\/\//i.test(url)) {
     const rewritten = apiUrl(url);
     if (rewritten.startsWith("/api/") || rewritten.startsWith("/chat-media")) return rewritten;
