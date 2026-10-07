@@ -8,11 +8,13 @@ export function SearchSheet({
   open,
   onClose,
   onSearch,
+  onSettings,
   suggestions = [],
 }: {
   open: boolean;
   onClose: () => void;
   onSearch: (username: string) => void;
+  onSettings?: () => void;
   suggestions?: string[];
 }) {
   const [draft, setDraft] = useState("");
@@ -28,7 +30,7 @@ export function SearchSheet({
 
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Поиск">
-      <ShtoraPageHeader eyebrow="Поиск" title="Найти" onBack={onClose} onClose={undefined} />
+      <ShtoraPageHeader eyebrow="Поиск" title="Найти" onBack={onClose} onSettings={onSettings} />
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
         <form onSubmit={submit} className="flex gap-2">
