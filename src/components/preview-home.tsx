@@ -229,7 +229,7 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         >
           <RefreshCw className={refreshing ? "size-5 animate-spin" : "size-5"} />
         </Button>
-      </form>
+      </div>
 
       <FavoritesStrip
         names={settings.favorites.length ? settings.favorites : profiles.map((item) => item.username)}
