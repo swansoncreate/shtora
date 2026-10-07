@@ -133,6 +133,8 @@ function Home() {
 
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
+  if (clientOnlyPreview) return <PreviewHome />;
+
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
       <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md relative">
