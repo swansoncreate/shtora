@@ -28,7 +28,7 @@ export function ShtoraPageHeader({
           ) : null}
         </div>
 
-        <div className="min-w-0 flex-1 text-center">
+        <div className={onBack ? "min-w-0 flex-1 text-center" : "min-w-0 flex-1 text-left"}>
           {eyebrow ? <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-accent">{eyebrow}</p> : null}
           <h1 className="mt-0.5 truncate text-xl font-extrabold tracking-[-0.025em] text-fg sm:text-2xl">{title}</h1>
         </div>
