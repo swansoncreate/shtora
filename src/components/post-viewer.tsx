@@ -5,6 +5,7 @@ import { ru } from "date-fns/locale";
 import { ChatHeartButton, ChatSendButton } from "@/components/chat-send-button";
 import { ImagineBar } from "@/components/imagine-dice";
 import { MediaSaveButton } from "@/components/media-save-button";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { Button } from "@/components/ui/button";
 import type { IgPost } from "@/lib/instagram/types";
 import { isVideoMediaUrl } from "@/lib/instagram/media-url";
@@ -67,32 +68,46 @@ export function PostViewer({
   const fit = frame === "feed" ? "aspect-square w-full max-w-md object-cover" : "max-h-full max-w-full rounded-md object-contain";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg/95" role="dialog" aria-modal="true">
-      <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-        <p className="tabular text-sm text-muted">
-          {index + 1} / {posts.length}
-        </p>
-        <div className="flex items-center gap-1">
+    <ShtoraMediaViewer
+      eyebrow={`Пост · @${username}`}
+      title={`${index + 1} / ${posts.length}`}
+      onClose={onClose}
+      actions={
+        <>
           <ChatHeartButton username={username} imageUrl={current?.displayUrl} kind="post" />
           <ChatSendButton username={username} imageUrl={current?.displayUrl} kind="post" />
-          <MediaSaveButton
-            username={username}
-            kind="post"
-            post={post}
-            slide={slide}
-            onNeedToken={onNeedToken}
-          />
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Закрыть">
-            <X className="size-5" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
+          <MediaSaveButton username={username} kind="post" post={post} slide={slide} onNeedToken={onNeedToken} />
+        </>
+      }
+      footer={
+        <>
+          {post.slides.length > 1 ? (
+            <div className="flex justify-center gap-1.5 py-2">
+              {post.slides.map((s, i) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={cn("h-1.5 rounded-full transition-all", i === slide ? "w-5 bg-accent" : "w-1.5 bg-subtle")}
+                  aria-label={`Слайд ${i + 1}`}
+                  onClick={() => setSlide(i)}
+                />
+              ))}
+            </div>
+          ) : null}
+          {post.timestamp ? (
+            <p className="px-4 pt-1 text-center text-xs text-subtle">
+              {format(new Date(post.timestamp), "d MMM yyyy", { locale: ru })}
+            </p>
+          ) : null}
+          {current?.type !== "video" ? <ImagineBar mediaUrl={current?.displayUrl} username={username} onNeedToken={onNeedToken} /> : <div className="h-2" />}
+        </>
+      }
+    >
+      <div className="relative flex size-full min-h-0 items-center justify-center">
         {index > 0 || slide > 0 ? (
           <button
             type="button"
-            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:left-4"
+            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:left-3"
             aria-label="Назад"
             onClick={() => {
               if (slide > 0) setSlide(slide - 1);
@@ -104,29 +119,15 @@ export function PostViewer({
         ) : null}
 
         {video ? (
-          <video
-            key={video}
-            src={video}
-            poster={poster}
-            className={fit}
-            controls
-            playsInline
-            autoPlay
-            preload="auto"
-          />
+          <video key={video} src={video} poster={poster} className="max-h-full max-w-full rounded-[18px] object-contain" controls playsInline autoPlay preload="auto" />
         ) : src ? (
-          <img
-            src={src}
-            alt=""
-            className={fit}
-            referrerPolicy="no-referrer"
-          />
+          <img src={src} alt="" className="max-h-full max-w-full rounded-[18px] object-contain" referrerPolicy="no-referrer" />
         ) : null}
 
         {index < posts.length - 1 || slide < post.slides.length - 1 ? (
           <button
             type="button"
-            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:right-4"
+            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:right-3"
             aria-label="Дальше"
             onClick={() => {
               if (slide < post.slides.length - 1) setSlide(slide + 1);
@@ -137,32 +138,5 @@ export function PostViewer({
           </button>
         ) : null}
       </div>
-
-      {post.slides.length > 1 ? (
-        <div className="flex justify-center gap-1.5 py-2">
-          {post.slides.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              className={cn("h-1.5 rounded-full transition-all", i === slide ? "w-5 bg-accent" : "w-1.5 bg-subtle")}
-              aria-label={`Слайд ${i + 1}`}
-              onClick={() => setSlide(i)}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {post.timestamp ? (
-        <p className="px-4 pt-2 text-center text-xs text-subtle">
-          {format(new Date(post.timestamp), "d MMM yyyy", { locale: ru })}
-        </p>
-      ) : null}
-
-      {current?.type !== "video" ? (
-        <ImagineBar mediaUrl={current?.displayUrl} username={username} onNeedToken={onNeedToken} />
-      ) : (
-        <div className="h-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]" />
-      )}
-    </div>
-  );
-}
+    </ShtoraMediaViewer>
+  );}
