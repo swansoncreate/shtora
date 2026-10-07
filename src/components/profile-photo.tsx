@@ -54,8 +54,10 @@ export function ProfilePhotoViewer({
 
   return (
     <ShtoraMediaViewer
-      eyebrow="Профиль"
-      title={`@${username}`}
+      eyebrow={`Аватар · @${username}`}
+      title="Портрет"
+      backdropSrc={url}
+      meta={<span>Профиль · личная фотография · источник сохранения: Dropbox</span>}
       onClose={onClose}
       actions={
         <>
