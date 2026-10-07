@@ -783,7 +783,6 @@ export function characterCanon(username: string, settings?: ShtoraSettings) {
 }
 
 async function hydrateFromServer() {
-  if (import.meta.env.VITE_STATIC_PREVIEW === "1") return;
   try {
     const res = await apiFetch("/api/autosave-config");
     if (!res.ok) return;
