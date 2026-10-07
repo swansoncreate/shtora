@@ -16,11 +16,13 @@ export function DropboxBrowser({
   path,
   onPath,
   onNeedToken,
+  previewMode = false,
 }: {
   settings: ShtoraSettings;
   path: string;
   onPath: (path: string) => void;
   onNeedToken: () => void;
+  previewMode?: boolean;
 }) {
   const token = settings.dropboxToken.trim();
   useEffect(() => {
@@ -182,6 +184,79 @@ export function DropboxBrowser({
   const viewerIndex = viewer ? media.findIndex((entry) => entry.path === viewer.path) : -1;
 
   if (!token) {
+    if (previewMode) {
+      const previewFolders = [
+        { name: "2026", meta: "24 файла", note: "архив года" },
+        { name: "София", meta: "18 файлов", note: "личное" },
+        { name: "Общее", meta: "42 файла", note: "доступное всем" },
+        { name: "Избранное", meta: "9 файлов", note: "для Шторы" },
+      ];
+      const previewPhotos = [
+        { name: "IMG_2041.jpg", url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=82" },
+        { name: "IMG_1988.jpg", url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=700&q=82" },
+        { name: "VID_1022.mp4", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=82" },
+      ];
+      return (
+        <div className="mt-2 pb-12">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-subtle">пример структуры</p>
+              <p className="mt-1 truncate text-sm text-muted">/Штора</p>
+            </div>
+            <span className="rounded-full bg-elevated px-3 py-1.5 text-[11px] text-muted">токен не нужен</span>
+          </div>
+
+          <section className="mt-7">
+            <div className="flex items-end justify-between">
+              <p className="font-display text-xl text-fg">Папки</p>
+              <p className="text-xs text-subtle">как будут выглядеть</p>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {previewFolders.map((folder) => (
+                <button
+                  key={folder.name}
+                  type="button"
+                  className="group flex min-h-28 flex-col justify-between rounded-2xl bg-surface p-4 text-left shadow-[var(--shadow-border)] transition-colors hover:bg-elevated"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <Folder className="size-6 text-accent" />
+                    <span className="text-[10px] uppercase tracking-[0.16em] text-subtle">{folder.meta}</span>
+                  </div>
+                  <div className="mt-6 min-w-0">
+                    <p className="truncate text-sm font-medium text-fg">{folder.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted">{folder.note}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-9">
+            <div className="flex items-end justify-between">
+              <p className="font-display text-xl text-fg">Последние файлы</p>
+              <p className="text-xs text-subtle">фото и видео</p>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {previewPhotos.map((photo) => (
+                <div key={photo.name} className="overflow-hidden rounded-xl bg-elevated">
+                  <img src={photo.url} alt="" className="aspect-square w-full object-cover" referrerPolicy="no-referrer" />
+                  <p className="truncate px-2 py-2 text-[10px] text-muted">{photo.name}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="mt-8 border-t border-border/50 pt-4">
+            <p className="text-xs leading-5 text-muted">
+              После подключения Dropbox эти карточки заменятся реальными папками и файлами. Внутри папки остаётся такая же сетка и просмотрщик.
+            </p>
+            <Button className="mt-4 h-11 rounded-xl" variant="subtle" onClick={onNeedToken}>
+              Подключить Dropbox
+            </Button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="mt-6 rounded-2xl bg-surface px-4 py-10 text-center shadow-[var(--shadow-border)]">
         <p className="font-display text-2xl text-fg">Нет токена Dropbox</p>
