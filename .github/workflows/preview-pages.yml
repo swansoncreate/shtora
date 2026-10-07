@@ -39,6 +39,9 @@ jobs:
       - name: Build Midnight
         run: |
           npm run build:dev
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          SHTORA_PAGES_PREVIEW_PATH: "/shtora/midnight/"
           test -d ".vercel/output/static"
           rm -rf site
           mkdir -p site/midnight
@@ -60,6 +63,9 @@ jobs:
         working-directory: .classic
         run: |
           npm run build:dev
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          SHTORA_PAGES_PREVIEW_PATH: "/shtora/classic/"
           test -d ".vercel/output/static"
           mkdir -p ../site/classic
           cp -R .vercel/output/static/. ../site/classic/
