@@ -172,13 +172,13 @@ export default defineConfig(({ command, isPreview }) => {
     tanstackStart(
       pagesPreview
         ? {
-            spa: {
+            prerender: {
               enabled: true,
-              prerender: {
-                outputPath: "/_shell.html",
-                crawlLinks: false,
-                retryCount: 1,
-              },
+              autoSubfolderIndex: false,
+              autoStaticPathsDiscovery: false,
+              crawlLinks: false,
+              retryCount: 1,
+              failOnError: true,
             },
           }
         : undefined,
