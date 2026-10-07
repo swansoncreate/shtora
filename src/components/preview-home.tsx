@@ -211,7 +211,7 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         eyebrow="архив"
         onBack={() => void navigate({ to: "/", search: { preview: "1" } })}
       >
-        <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} />
+        <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} previewMode />
       </PreviewAppPage>
     );
   }
@@ -223,7 +223,7 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         eyebrow="studio"
         onBack={() => void navigate({ to: "/", search: { preview: "1" } })}
       >
-        <ImagineStudio settings={{ ...settings, dropboxToken: "" }} onNeedToken={onNeedSettings} />
+        <ImagineStudio settings={{ ...settings, dropboxToken: "" }} onNeedToken={onNeedSettings} previewMode />
       </PreviewAppPage>
     );
   }
@@ -347,7 +347,7 @@ function PreviewAppPage({
   children: ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg pb-24" role="dialog" aria-modal="true" aria-label={title}>
       <ShtoraPageHeader eyebrow={eyebrow} title={title} onBack={onBack} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">{children}</main>
     </div>
