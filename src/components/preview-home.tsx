@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
@@ -27,12 +28,12 @@ type Props = {
 
 type ProfileView = { username: string; tab: "posts" | "stories" };
 
-const img1 =
-  "https://scontent-ham3-1.cdninstagram.com/v/t51.82787-15/791996244_17911993050294263_1123133377771000635_n.jpg?stp=dst-jpg_e35_p1080x1080_sh2.08_tt6&_nc_ht=scontent-ham3-1.cdninstagram.com&_nc_cat=111&_nc_oc=Q6cZ2gHcW6KRLenJOzts1Ui57cmF5-gU4n6l1_USUw0wsu1rNAnlvofjmYtZnDWCiWfenHc&_nc_ohc=JE-qWiJWY1QQ7kNvwG3_a4t&_nc_gid=fMpl9Egbw_x8_7bzhB-2sA&edm=AOQ1c0wBAAAA&ccb=7-5&ig_cache_key=Mzk3NjYxMTYzMzUyNjA4NTQ5MA%3D%3D.3-ccb7-5&oh=00_AQLyUjFTZPNVvcJHu1qPTQbJ3UQ1w3JpDWfehIXLEFEsVg&oe=6A9F2294&_nc_sid=8b3546";
-const img2 =
-  "https://instagram.fwaw8-2.fna.fbcdn.net/v/t51.71878-15/503026628_1383910889496911_6891064760215577954_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fwaw8-2.fna.fbcdn.net&_nc_cat=111&_nc_oc=Q6cZ2gHzg-o0a4pmJtAUXqtho2YQTt7Mi7izFclIkQ-mo1zOZ11YQ1yBr4HjC9a9ms_q__Q&_nc_ohc=2u1MVVh0IzEQ7kNvwFbRJjm&_nc_gid=DfcH8QHOnB5F3Tj4OPMDeA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AQJLNWL57eQrVQDSytySAwG9FzrYa0cDF8VVMeyViMSNfQ&oe=6A9F2EB6&_nc_sid=8b3546";
-const img3 =
-  "https://instagram.ffec19-1.fna.fbcdn.net/v/t51.82787-15/651593557_18067981268270278_4368376125826548432_n.webp?stp=dst-jpg_e15_tt6&_nc_ht=instagram.ffec19-1.fna.fbcdn.net&_nc_cat=110&_nc_oc=Q6cZ2gEjkWX04PgW32b2zlVzJuQUYifhtEqvdUMuXVKyNOC4Q67z85XVD2GiKapDHo9xgk4&_nc_ohc=-0k0nmJIDbwQ7kNvwF5zYke&_nc_gid=jqdmEWyFxsMNkx4J5a4ggg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AQJZdM8enPxvYBMBVfUNBgkTtMBJscDEoSaxv2f8Tc54fQ&oe=6A9F5114&_nc_sid=8b3546";
+const img1 = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85";
+const img2 = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=85";
+const img3 = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=85";
+const img4 = "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=85";
+const img5 = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=85";
+const img6 = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85";
 
 function post(id: string, url: string, caption: string, timestamp: string, type: IgPost["type"] = "image"): IgPost {
   return {
@@ -60,7 +61,7 @@ const profiles: IgProfile[] = [
     private: false,
     posts: [
       post("ella-1", img1, "Тренировка на спину 🪄", "2026-09-01T13:31:50.000Z", "sidecar"),
-      post("ella-2", img2, "", "2026-08-31T09:52:04.000Z", "video"),
+      post("ella-2", img4, "", "2026-08-31T09:52:04.000Z", "video"),
       post("ella-3", img3, "утро", "2026-08-18T10:12:24.000Z"),
     ],
   },
@@ -76,8 +77,8 @@ const profiles: IgProfile[] = [
     private: false,
     posts: [
       post("mina-1", img2, "🤍", "2026-08-19T19:58:57.000Z", "video"),
-      post("mina-2", img1, "Та самая история.", "2026-08-10T11:21:00.000Z", "sidecar"),
-      post("mina-3", img3, "Welcome back", "2026-07-30T17:10:00.000Z"),
+      post("mina-2", img5, "Та самая история.", "2026-08-10T11:21:00.000Z", "sidecar"),
+      post("mina-3", img6, "Welcome back", "2026-07-30T17:10:00.000Z"),
     ],
   },
   {
@@ -92,8 +93,8 @@ const profiles: IgProfile[] = [
     private: false,
     posts: [
       post("shep-1", img3, "🌹", "2022-05-18T19:51:32.000Z", "sidecar"),
-      post("shep-2", img2, "", "2022-05-08T22:34:37.000Z", "sidecar"),
-      post("shep-3", img1, "🖤", "2022-02-14T15:31:00.000Z", "sidecar"),
+      post("shep-2", img6, "", "2022-05-08T22:34:37.000Z", "sidecar"),
+      post("shep-3", img4, "🖤", "2022-02-14T15:31:00.000Z", "sidecar"),
     ],
   },
 ];
@@ -136,6 +137,7 @@ function feedCards(): FeedCard[] {
 }
 
 export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettings }: Props) {
+  const navigate = useNavigate({ from: "/" });
   const [view, setView] = useState<ProfileView | null>(null);
   const [postView, setPostView] = useState<{ username: string; posts: IgPost[]; index: number } | null>(null);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
@@ -154,11 +156,27 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
   }, [username]);
 
   if (app === "dropbox") {
-    return <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} />;
+    return (
+      <PreviewAppPage
+        title="Dropbox"
+        eyebrow="архив"
+        onBack={() => void navigate({ to: "/", search: { preview: "1" } })}
+      >
+        <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} />
+      </PreviewAppPage>
+    );
   }
 
   if (app === "imagine") {
-    return <ImagineStudio settings={{ ...settings, dropboxToken: "" }} onNeedToken={onNeedSettings} />;
+    return (
+      <PreviewAppPage
+        title="Imagine"
+        eyebrow="studio"
+        onBack={() => void navigate({ to: "/", search: { preview: "1" } })}
+      >
+        <ImagineStudio settings={{ ...settings, dropboxToken: "" }} onNeedToken={onNeedSettings} />
+      </PreviewAppPage>
+    );
   }
 
   if (view && profile) {
@@ -249,5 +267,35 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
       ) : null}
 
     </section>
+  );
+}
+
+
+function PreviewAppPage({
+  title,
+  eyebrow,
+  onBack,
+  children,
+}: {
+  title: string;
+  eyebrow: string;
+  onBack: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label={title}>
+      <header className="sticky top-0 z-10 border-b border-border/55 bg-bg/88 px-4 pt-[max(0.65rem,env(safe-area-inset-top))] pb-4 backdrop-blur-xl sm:px-6">
+        <div className="mx-auto flex max-w-4xl items-center gap-3">
+          <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted" onClick={onBack} aria-label="Назад">
+            <span aria-hidden className="text-lg">←</span>
+          </Button>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-subtle">{eyebrow}</p>
+            <h1 className="font-display text-3xl leading-none tracking-tight text-fg">{title}</h1>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">{children}</main>
+    </div>
   );
 }
