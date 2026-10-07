@@ -1,7 +1,8 @@
-import { CloudUpload, Dices, Eye, EyeOff, LoaderCircle, X } from "lucide-react";
+import { CloudUpload, Dices, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useRef, useState, type FormEvent, type MouseEvent, type PointerEvent } from "react";
 import { toast } from "sonner";
 import { ChatSendButton } from "@/components/chat-send-button";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendToChat } from "@/lib/chat/send";
@@ -182,15 +183,17 @@ export function ImagineBar({
     <>
       {renderForm(false)}
       {open ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Imagine">
-          <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-            <p className="text-sm text-muted">{busy ? "Крутим кадр" : result ? "Imagine" : "Imagine"}</p>
-            <div className="flex items-center gap-1">
+        <ShtoraMediaViewer
+          eyebrow="Imagine · вариация"
+          title={busy ? "Генерирую…" : result ? "Новая версия" : "Подготовка"}
+          onClose={closeSheet}
+          actions={
+            <>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10"
+                className="size-10 rounded-full"
                 aria-label={compare ? "Скрыть сравнение" : "Было / стало"}
                 disabled={!original || !current}
                 onClick={() => setCompare((v) => !v)}
@@ -202,39 +205,42 @@ export function ImagineBar({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10"
+                className="size-10 rounded-full"
                 aria-label="Сохранить в Dropbox"
                 onClick={(e) => void saveToDropbox(e)}
                 disabled={saving || busy || !current}
               >
                 {saving ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Закрыть" onClick={closeSheet}>
-                <X className="size-5" />
-              </Button>
-            </div>
-          </header>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1">
-              {current ? (
-                compare && original ? (
-                  <CompareSlide original={original} generated={current} />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center px-3">
-                    <img src={current} alt="" className="max-h-full max-w-full rounded-md object-contain" referrerPolicy="no-referrer" />
-                  </div>
-                )
+            </>
+          }
+          footer={renderForm(true)}
+        >
+          <div className="relative flex size-full min-h-0 items-center justify-center">
+            {current ? (
+              compare && original ? (
+                <CompareSlide original={original} generated={current} />
               ) : (
-                <p className="flex h-full items-center justify-center gap-2 text-sm text-muted">
-                  <LoaderCircle className="size-4 animate-spin" />
-                  Крутим кадр
-                </p>
-              )}
-            </div>
+                <div className="flex h-full w-full items-center justify-center px-2">
+                  <img
+                    src={current}
+                    alt=""
+                    className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 text-sm text-muted">
+                <span className="flex size-12 items-center justify-center rounded-full border border-accent/35 bg-accent/10">
+                  <LoaderCircle className="size-5 animate-spin text-accent" />
+                </span>
+                <span className="uppercase tracking-[0.18em]">Крутим кадр</span>
+              </div>
+            )}
           </div>
-          {renderForm(true)}
-        </div>
-      ) : null}
+        </ShtoraMediaViewer>
+      ) : null}}
     </>
   );
 }
