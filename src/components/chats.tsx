@@ -102,7 +102,7 @@ export function ChatsSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
+    <div className="fixed inset-0 z-[55] flex min-h-dvh flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
       {threadUser ? (
         <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} />
       ) : (
@@ -123,8 +123,8 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
 
   return (
     <>
-      <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-        <p className="flex items-center gap-2 font-display text-xl">
+      <header className="flex items-center justify-between border-b border-border/70 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-4 sm:px-6">
+        <p className="flex items-center gap-2 font-display text-2xl tracking-tight">
           Чаты
           <UnreadBadge count={threads.reduce((sum, t) => sum + (t.unread || 0), 0)} />
         </p>
@@ -134,7 +134,7 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
             <Button
               type="button"
               variant="ghost"
-              className="h-10 px-3 text-xs text-muted"
+              className="h-10 rounded-full px-3 text-xs text-muted"
               onClick={() => void markAllChatsRead()}
             >
               прочитано
@@ -154,7 +154,7 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
             </Button>
             </>
           ) : null}
-          <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
+          <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={onClose} aria-label="Закрыть">
             <X className="size-5" />
           </Button>
         </div>
@@ -322,7 +322,7 @@ function ThreadView({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center gap-1 px-2 py-2 sm:px-4">
+      <header className="flex items-center gap-1 border-b border-border/70 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 sm:px-5">
         <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onBack} aria-label="К чатам">
           <ChevronLeft className="size-5" />
         </Button>
