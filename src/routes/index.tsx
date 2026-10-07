@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { AlertCircle, Dices, House, MessageCircle, Settings, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats";
@@ -154,43 +154,10 @@ function Home() {
               <Settings className="size-5" />
             </Button>
           </div>
-          <nav className="mt-3 flex rounded-xl bg-elevated p-1" aria-label="Разделы">
-            <AppTab
-              label="Instagram"
-              active={app === "instagram"}
-              onClick={() => void navigate({ to: "/", search: { preview: "1" } })}
-            >
-              <Instagram className="size-4" />
-            </AppTab>
-            <AppTab
-              label="Файлы"
-              active={app === "dropbox"}
-              onClick={() =>
-                void navigate({
-                  to: "/",
-                  search: { app: "dropbox", p: dropboxPath, u: username || undefined, preview: "1" },
-                })
-              }
-            >
-              <DropboxMark className="size-4" />
-            </AppTab>
-            <AppTab
-              label="Imagine"
-              active={app === "imagine"}
-              onClick={() =>
-                void navigate({
-                  to: "/",
-                  search: { app: "imagine", u: username || undefined, preview: "1" },
-                })
-              }
-            >
-              <Dices className="size-4" />
-            </AppTab>
-          </nav>
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-28 pt-5 sm:px-6">
         {showPreview ? <PreviewHome settings={settings} app={app} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
         {!showPreview && (offline || apiOk === false) ? (
           <div
@@ -255,36 +222,74 @@ function Home() {
           onPatch={patch}
           onAccountFolder={setAccountFolder}
         />
+        <BottomNav
+          app={app}
+          chatsOpen={chatsOpen}
+          onHome={() => void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} })}
+          onChats={() => {
+            setChatUser(null);
+            setChatsOpen(true);
+          }}
+          onDropbox={() =>
+            void navigate({
+              to: "/",
+              search: { app: "dropbox", p: dropboxPath, u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
+            })
+          }
+          onImagine={() =>
+            void navigate({
+              to: "/",
+              search: { app: "imagine", u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
+            })
+          }
+        />
       </div>
     </div>
   );
 }
 
-function AppTab({
-  label,
-  active,
-  onClick,
-  children,
+function BottomNav({
+  app,
+  chatsOpen,
+  onHome,
+  onChats,
+  onDropbox,
+  onImagine,
 }: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
+  app: AppView;
+  chatsOpen: boolean;
+  onHome: () => void;
+  onChats: () => void;
+  onDropbox: () => void;
+  onImagine: () => void;
 }) {
+  const itemClass = (active: boolean) =>
+    cn(
+      "flex h-12 items-center justify-center rounded-xl text-muted transition-colors duration-[var(--motion-quick)]",
+      "hover:bg-elevated hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+      active && "text-fg",
+    );
+
   return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm text-muted transition-colors duration-[var(--motion-quick)]",
-        active && "bg-surface text-fg shadow-[var(--shadow-border)]",
-      )}
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-bg/92 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl"
+      aria-label="Основная навигация"
     >
-      {children}
-      <span className="truncate">{label}</span>
-    </button>
+      <div className="mx-auto grid max-w-3xl grid-cols-4 px-4 sm:px-6">
+        <button type="button" className={itemClass(app === "instagram")} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
+          <House className={cn("size-6", app === "instagram" && "fill-current")} />
+        </button>
+        <button type="button" className={itemClass(chatsOpen)} aria-label="Сообщения" aria-current={chatsOpen ? "page" : undefined} onClick={onChats}>
+          <MessageCircle className={cn("size-6", chatsOpen && "fill-current")} />
+        </button>
+        <button type="button" className={itemClass(app === "dropbox")} aria-label="Dropbox" aria-current={app === "dropbox" ? "page" : undefined} onClick={onDropbox}>
+          <DropboxMark className={cn("size-6", app === "dropbox" && "fill-current")} />
+        </button>
+        <button type="button" className={itemClass(app === "imagine")} aria-label="Imagine" aria-current={app === "imagine" ? "page" : undefined} onClick={onImagine}>
+          <Sparkles className={cn("size-6", app === "imagine" && "fill-current")} />
+        </button>
+      </div>
+    </nav>
   );
 }
 
