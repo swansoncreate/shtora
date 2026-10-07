@@ -240,7 +240,6 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
           onSettings={onNeedSettings}
         />
         <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 sm:pt-8">
-        <div className="mt-4">
           <ProfileHeader
             profile={profile}
             storyCount={stories.length}
@@ -250,9 +249,9 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
             refreshing={false}
             onSave={() => undefined}
             onRefresh={() => {
-          setRefreshing(true);
-          window.setTimeout(() => setRefreshing(false), 650);
-        }}
+              setRefreshing(true);
+              window.setTimeout(() => setRefreshing(false), 650);
+            }}
             onOpenPhoto={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
             onOpenStories={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
             onMessage={() => onOpenChats(profile.username)}
@@ -260,12 +259,25 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
             chatUnread={0}
             onToggleFavorite={() => undefined}
           />
-          <HighlightsRail highlights={hls} onOpen={(hl) => setPostView({ username: profile.username, posts: hl.items as unknown as IgPost[], index: 0 })} />
+          <HighlightsRail
+            highlights={hls}
+            onOpen={(hl) => setPostView({ username: profile.username, posts: hl.items as unknown as IgPost[], index: 0 })}
+          />
           <ProfileTabs tab={view.tab} storyCount={stories.length} onTab={(tab) => setView({ ...view, tab })} />
           {view.tab === "posts" ? (
-            <PostsGrid posts={profile.posts} username={profile.username} onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })} onNeedToken={onNeedSettings} />
+            <PostsGrid
+              posts={profile.posts}
+              username={profile.username}
+              onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })}
+              onNeedToken={onNeedSettings}
+            />
           ) : (
-            <StoriesGrid stories={stories} username={profile.username} onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })} onNeedToken={onNeedSettings} />
+            <StoriesGrid
+              stories={stories}
+              username={profile.username}
+              onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })}
+              onNeedToken={onNeedSettings}
+            />
           )}
         </div>
         {postView ? (
@@ -285,44 +297,43 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
   return (
     <section className="-mx-4 sm:-mx-6">
       <ShtoraPageHeader eyebrow="Лента" title="Штора" onSettings={onNeedSettings} />
-      <div className="mx-auto max-w-4xl px-4 pt-3 sm:px-6 sm:pt-4">
-      <FavoritesStrip
-        names={profiles.map((item) => item.username)}
-        active=""
-        tick={0}
-        previewPictures={{ ellissawe: img1, minsiyaaa: img2, sheptnowa: img3, sofia: img4, lena: img5, mira: img6 }}
-        onPick={(name) => {
-          const found = profiles.find((item) => item.username === name);
-          if (found) setView({ username: found.username, tab: "posts" });
-        }}
-      />
-
-      <HomeFeed
-        items={cards}
-        refreshing={refreshing}
-        onRefresh={() => undefined}
-        onOpenPost={(username, posts, index) => setPostView({ username, posts, index })}
-        onOpenDropbox={() => undefined}
-        onOpenProfile={(username) => setView({ username, tab: "posts" })}
-        onLike={(card) => setLiked((prev) => ({ ...prev, [card.id]: !(prev[card.id] ?? false) }))}
-        onComments={() => undefined}
-      />
-
-      {postView ? (
-        <PostViewer
-          posts={postView.posts}
-          index={postView.index}
-          username={postView.username}
-          onClose={() => setPostView(null)}
-          onIndex={(index) => setPostView({ ...postView, index })}
-          onNeedToken={onNeedSettings}
+      <div className="mx-auto max-w-4xl px-4 pt-4 sm:px-6 sm:pt-5">
+        <FavoritesStrip
+          names={profiles.map((item) => item.username)}
+          active=""
+          tick={0}
+          previewPictures={{ ellissawe: img1, minsiyaaa: img2, sheptnowa: img3, sofia: img4, lena: img5, mira: img6 }}
+          onPick={(name) => {
+            const found = profiles.find((item) => item.username === name);
+            if (found) setView({ username: found.username, tab: "posts" });
+          }}
         />
-      ) : null}
 
+        <HomeFeed
+          items={cards}
+          refreshing={refreshing}
+          onRefresh={() => undefined}
+          onOpenPost={(username, posts, index) => setPostView({ username, posts, index })}
+          onOpenDropbox={() => undefined}
+          onOpenProfile={(username) => setView({ username, tab: "posts" })}
+          onLike={(card) => setLiked((prev) => ({ ...prev, [card.id]: !(prev[card.id] ?? false) }))}
+          onComments={() => undefined}
+        />
+
+        {postView ? (
+          <PostViewer
+            posts={postView.posts}
+            index={postView.index}
+            username={postView.username}
+            onClose={() => setPostView(null)}
+            onIndex={(index) => setPostView({ ...postView, index })}
+            onNeedToken={onNeedSettings}
+          />
+        ) : null}
+      </div>
     </section>
   );
 }
-
 
 function PreviewAppPage({
   title,
@@ -337,17 +348,7 @@ function PreviewAppPage({
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label={title}>
-      <header className="sticky top-0 z-10 border-b border-border/55 bg-bg/88 px-4 pt-[max(0.65rem,env(safe-area-inset-top))] pb-4 backdrop-blur-xl sm:px-6">
-        <div className="mx-auto flex max-w-4xl items-center gap-3">
-          <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted" onClick={onBack} aria-label="Назад">
-            <span aria-hidden className="text-lg">←</span>
-          </Button>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-subtle">{eyebrow}</p>
-            <h1 className="font-display text-3xl leading-none tracking-tight text-fg">{title}</h1>
-          </div>
-        </div>
-      </header>
+      <ShtoraPageHeader eyebrow={eyebrow} title={title} onBack={onBack} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">{children}</main>
     </div>
   );
