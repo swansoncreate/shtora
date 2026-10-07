@@ -7,12 +7,14 @@ export function ShtoraMediaViewer({
   title,
   actions,
   footer,
+  onClose,
   children,
 }: {
   eyebrow?: string;
   title: string;
   actions?: ReactNode;
   footer?: ReactNode;
+  onClose: () => void;
   children: ReactNode;
 }) {
   return (
@@ -25,7 +27,7 @@ export function ShtoraMediaViewer({
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             {actions}
-            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted hover:text-fg" onClick={() => window.dispatchEvent(new CustomEvent("shtora-media-viewer-close"))} aria-label="Закрыть">
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted hover:text-fg" onClick={onClose} aria-label="Закрыть">
               <X className="size-[18px]" />
             </Button>
           </div>
