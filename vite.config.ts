@@ -147,8 +147,9 @@ function authPopupPlugin(): Plugin {
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command, isPreview }) => {
   const pagesPreview = process.env.SHTORA_PAGES_PREVIEW === "1";
+  const pagesPreviewPath = process.env.SHTORA_PAGES_PREVIEW_PATH || "/shtora/";
   return {
-  base: pagesPreview ? "/shtora/" : "/",
+  base: pagesPreview ? pagesPreviewPath : "/",
   server: {
     host: "0.0.0.0",
     port: 8080,
