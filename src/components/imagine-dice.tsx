@@ -144,8 +144,11 @@ export function ImagineBar({
   function renderForm(chain: boolean) {
     const withReply = Boolean(replyKind) && !chain;
     return (
-      <div className="shrink-0 border-t border-border/60 bg-bg pt-2">
-        <form className="flex gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5" onSubmit={(e) => onPromptSubmit(e, chain)}>
+      <div className="relative shrink-0 px-3 pb-[max(0.8rem,env(safe-area-inset-bottom))] pt-2.5 sm:px-5">
+        <form
+          className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-[18px] border border-border/60 bg-surface/92 p-1.5 shadow-[0_14px_44px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+          onSubmit={(e) => onPromptSubmit(e, chain)}
+        >
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -154,26 +157,34 @@ export function ImagineBar({
               if (!busy && !open && !sending) onBusy?.(false);
             }}
             placeholder={
-              chain ? "Докрутить этот кадр" : withReply ? "Ответить или свой промпт" : "Свой промпт"
+              chain ? "Докрутить кадр…" : withReply ? "Ответить или написать промпт…" : "Что изменить в кадре…"
             }
             maxLength={800}
             aria-label={withReply ? "Ответ или промпт Imagine" : "Промпт Imagine"}
             disabled={busy || sending}
+            className="h-11 min-w-0 flex-1 rounded-[14px] border-0 bg-transparent px-3 text-sm shadow-none focus-visible:ring-0"
           />
-          <Button type="submit" size="lg" className="h-12 w-12 shrink-0 rounded-lg px-0" disabled={busy} aria-label="Сгенерировать">
-            {busy ? <LoaderCircle className="size-4 animate-spin" /> : <Dices className="size-5" />}
-          </Button>
           {withReply ? (
             <Button
               type="button"
-              size="lg"
-              className="h-12 shrink-0 rounded-lg px-4"
+              size="sm"
+              className="h-11 shrink-0 rounded-[14px] px-3"
               disabled={sending || busy || !draft.trim()}
               onClick={() => void sendReply()}
             >
               {sending ? "…" : "Ответ"}
             </Button>
-          ) : null}
+          ) : (
+            <Button
+              type="submit"
+              size="icon"
+              className="h-11 w-11 shrink-0 rounded-[14px]"
+              disabled={busy}
+              aria-label="Сгенерировать"
+            >
+              {busy ? <LoaderCircle className="size-4 animate-spin" /> : <Dices className="size-5" />}
+            </Button>
+          )}
         </form>
       </div>
     );
