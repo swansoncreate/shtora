@@ -143,6 +143,8 @@ function Home() {
 
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
+  return (
+    <div className="flex min-h-dvh flex-col bg-bg">
       {!showPreview ? <ShtoraPageHeader eyebrow={caption} title="Штора" onSettings={() => setSettingsOpen(true)} /> : null}
 
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-28 pt-4 sm:px-6 sm:pt-5">
