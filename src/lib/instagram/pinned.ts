@@ -2,7 +2,7 @@ export const PINNED_ACCOUNTS = ["ellissawe", "dashutiya", "sheptnowa", "minsiyaa
 
 export type PinnedAccount = (typeof PINNED_ACCOUNTS)[number];
 
-export const DEFAULT_FAVORITES: string[] = [];
+export const DEFAULT_FAVORITES: string[] = [...PINNED_ACCOUNTS];
 
 export const MAX_FAVORITES = 16;
 
