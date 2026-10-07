@@ -229,24 +229,40 @@ function Home() {
           app={app}
           chatsOpen={chatsOpen}
           searchOpen={searchOpen}
-          onHome={() => void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} })}
-          onSearch={() => setSearchOpen(true)}
+          onHome={() => {
+            setSearchOpen(false);
+            setChatsOpen(false);
+            setChatUser(null);
+            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
+          }}
+          onSearch={() => {
+            setChatsOpen(false);
+            setChatUser(null);
+            setSearchOpen(true);
+          }}
           onChats={() => {
+            setSearchOpen(false);
             setChatUser(null);
             setChatsOpen(true);
           }}
-          onDropbox={() =>
+          onDropbox={() => {
+            setSearchOpen(false);
+            setChatsOpen(false);
+            setChatUser(null);
             void navigate({
               to: "/",
               search: { app: "dropbox", p: dropboxPath, u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
-            })
-          }
-          onImagine={() =>
+            });
+          }}
+          onImagine={() => {
+            setSearchOpen(false);
+            setChatsOpen(false);
+            setChatUser(null);
             void navigate({
               to: "/",
               search: { app: "imagine", u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
-            })
-          }
+            });
+          }}
         />
       </div>
     </div>
