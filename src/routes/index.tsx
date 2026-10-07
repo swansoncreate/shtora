@@ -301,9 +301,9 @@ function BottomNav({
 }) {
   const itemClass = (active: boolean) =>
     cn(
-      "relative flex h-11 items-center justify-center rounded-2xl text-muted transition-colors duration-[var(--motion-quick)]",
+      "group relative flex h-12 items-center justify-center rounded-2xl text-muted transition-colors duration-[var(--motion-quick)]",
       "hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-      active && "bg-elevated/75 text-fg",
+      active && "text-fg after:absolute after:bottom-1.5 after:size-1 after:rounded-full after:bg-accent",
     );
 
   return (
@@ -311,7 +311,7 @@ function BottomNav({
       className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
       aria-label="Основная навигация"
     >
-      <div className="pointer-events-auto mx-auto grid max-w-xl grid-cols-5 rounded-[20px] border border-border bg-surface/90 px-2 py-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
+      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 rounded-[24px] border border-border/70 bg-surface/72 px-3 py-2.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
         <button type="button" className={itemClass(app === "instagram")} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
           <House className={cn("size-6", app === "instagram" && "fill-current")} />
         </button>
