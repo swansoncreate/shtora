@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
@@ -249,12 +248,6 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         />
       ) : null}
 
-      <div className="mt-6 flex items-center justify-between rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
-        <p className="text-sm text-muted">UI preview · данные локальные · backend не нужен</p>
-        <Button type="button" variant="ghost" size="icon" className="size-10 rounded-lg" aria-label="Закрыть" onClick={() => setView(null)}>
-          <X className="size-4" />
-        </Button>
-      </div>
     </section>
   );
 }
