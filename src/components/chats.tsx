@@ -34,6 +34,7 @@ import { chatBackstoryFor } from "@/lib/shtora-settings";
 import { isChatTyping, resetChatEngine, subscribeTyping } from "@/lib/chat/engine";
 import { herAsk } from "@/lib/chat/life";
 import { cn } from "@/lib/utils";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { ShtoraPageHeader } from "@/components/shtora-page-header";
 
 export function UnreadBadge({ count, className }: { count: number; className?: string }) {
@@ -603,6 +604,7 @@ function ThreadView({
 function OncePhoto({ url, username, onClose }: { url: string; username: string; onClose: () => void }) {
   const [src, setSrc] = useState<string | undefined>();
   const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     let live = true;
     void resolveChatImage(url).then((next) => {
@@ -612,27 +614,21 @@ function OncePhoto({ url, username, onClose }: { url: string; username: string; 
       live = false;
     };
   }, [url]);
+
   return (
-    <div
-      className="fixed inset-0 z-[80] flex flex-col bg-bg"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Фото один раз"
-      onClick={onClose}
+    <ShtoraMediaViewer
+      eyebrow={`Приватное фото · @${username}`}
+      title="1 просмотр"
+      onClose={onClose}
+      footer={<p className="px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-subtle">После закрытия фото будет отмечено как просмотренное</p>}
     >
-      <header className="flex items-center justify-between px-3 py-3">
-        <p className="text-sm text-muted">@{username} · 1 просмотр</p>
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-          <X className="size-5" />
-        </Button>
-      </header>
-      <div className="flex min-h-0 flex-1 items-center justify-center px-2">
+      <div className="relative flex size-full min-h-0 items-center justify-center">
         {!src && !failed ? <LoaderCircle className="size-6 animate-spin text-muted" /> : null}
         {src && !failed ? (
           <img
             src={src}
             alt=""
-            className="max-h-full max-w-full rounded-md object-contain"
+            className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
             referrerPolicy="no-referrer"
             onError={() => {
               if (src !== url) setSrc(url);
@@ -642,7 +638,7 @@ function OncePhoto({ url, username, onClose }: { url: string; username: string; 
         ) : null}
         {failed ? <p className="text-sm text-muted">не загрузилось</p> : null}
       </div>
-    </div>
+    </ShtoraMediaViewer>
   );
 }
 
@@ -720,9 +716,7 @@ function ChatPic({ url }: { url: string }) {
 }
 
 function CircleNote({ url }: { url: string }) {
-  const wrap = useRef<HTMLButtonElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const [wide, setWide] = useState(false);
+  const [open, setOpen] = useState(false);
   const [src, setSrc] = useState("");
   const [clip, setClip] = useState(() => /\.(mp4|webm|mov)(\?|$)/i.test(url) || /id=.*\.mp4/i.test(url));
 
@@ -748,50 +742,48 @@ function CircleNote({ url }: { url: string }) {
     };
   }, [url]);
 
-  useEffect(() => {
-    if (!wide) return;
-    const onDoc = (e: PointerEvent) => {
-      const root = wrap.current;
-      if (root && e.target instanceof Node && root.contains(e.target)) return;
-      setWide(false);
-      if (video.current) video.current.muted = true;
-    };
-    document.addEventListener("pointerdown", onDoc, true);
-    return () => document.removeEventListener("pointerdown", onDoc, true);
-  }, [wide]);
-
   return (
-    <button
-      ref={wrap}
-      type="button"
-      className={cn(
-        "relative block shrink-0 overflow-hidden rounded-full bg-black transition-[width,height] duration-200",
-        wide ? "size-64" : "size-36",
-      )}
-      aria-label="Кружок"
-      onClick={() => {
-        setWide(true);
-        const el = video.current;
-        if (!el) return;
-        el.muted = false;
-        void el.play();
-      }}
-    >
-      {clip && src ? (
-        <video
-          ref={video}
-          src={src}
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onError={() => setClip(false)}
-        />
-      ) : src ? (
-        <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+    <>
+      <button
+        type="button"
+        className="relative block size-36 shrink-0 overflow-hidden rounded-full border border-border/50 bg-black shadow-[0_14px_40px_rgba(0,0,0,0.25)] transition-transform duration-200 hover:scale-[1.02]"
+        aria-label="Открыть кружок"
+        onClick={() => setOpen(true)}
+      >
+        {clip && src ? (
+          <video src={src} className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline preload="auto" />
+        ) : src ? (
+          <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
+        <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#070605]/65 px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-fg backdrop-blur-md">
+          кружок
+        </span>
+      </button>
+
+      {open ? (
+        <ShtoraMediaViewer
+          eyebrow="Сообщение · кружок"
+          title="Момент"
+          onClose={() => setOpen(false)}
+        >
+          <div className="relative flex size-full min-h-0 items-center justify-center">
+            {clip && src ? (
+              <video
+                src={src}
+                className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : src ? (
+              <img src={src} alt="" className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]" />
+            ) : (
+              <LoaderCircle className="size-6 animate-spin text-muted" />
+            )}
+          </div>
+        </ShtoraMediaViewer>
       ) : null}
-    </button>
+    </>
   );
 }
+
