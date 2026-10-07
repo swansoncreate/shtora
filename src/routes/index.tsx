@@ -142,26 +142,35 @@ function Home() {
 
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
+  if (showPreview && entryOpen) {
+    return (
+      <WelcomeScreen
+        onContinue={() => {
+          window.localStorage.setItem("shtora-entry-seen", "1");
+          setEntryOpen(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md relative">
-        <div className="pointer-events-none absolute inset-0 opacity-25 curtain-wash" aria-hidden />
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-3 sm:px-6">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
-              <p className="mt-1 text-sm text-muted">{caption}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11 shrink-0 rounded-full"
-              aria-label="Настройки"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings className="size-5" />
-            </Button>
+      <header className="sticky top-0 z-20 bg-bg/88 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 curtain-wash opacity-35" aria-hidden />
+        <div className="relative z-10 mx-auto flex w-full max-w-3xl items-center justify-between px-4 pb-2 pt-2 sm:px-6">
+          <div className="flex min-w-0 items-baseline gap-3">
+            <p className="font-display text-[1.85rem] leading-none tracking-[0.01em] text-fg sm:text-3xl">Штора</p>
+            <p className="truncate text-[10px] font-medium tracking-[0.2em] text-subtle uppercase">{caption}</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10 shrink-0 rounded-full text-muted hover:text-fg"
+            aria-label="Настройки"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings className="size-[18px]" />
+          </Button>
         </div>
       </header>
 
@@ -292,9 +301,9 @@ function BottomNav({
 }) {
   const itemClass = (active: boolean) =>
     cn(
-      "flex h-12 items-center justify-center rounded-xl text-muted transition-colors duration-[var(--motion-quick)]",
-      "hover:bg-elevated hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-      active && "text-fg",
+      "relative flex h-11 items-center justify-center rounded-2xl text-muted transition-colors duration-[var(--motion-quick)]",
+      "hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+      active && "bg-elevated/75 text-fg",
     );
 
   return (
