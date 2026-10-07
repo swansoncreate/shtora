@@ -619,6 +619,8 @@ function OncePhoto({ url, username, onClose }: { url: string; username: string; 
     <ShtoraMediaViewer
       eyebrow={`Приватное фото · @${username}`}
       title="1 просмотр"
+      backdropSrc={src || url}
+      meta={<span>{`Сообщение · одноразовый кадр · @${username}`}</span>}
       onClose={onClose}
       footer={<p className="px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-subtle">После закрытия фото будет отмечено как просмотренное</p>}
     >
@@ -764,6 +766,8 @@ function CircleNote({ url }: { url: string }) {
         <ShtoraMediaViewer
           eyebrow="Сообщение · кружок"
           title="Момент"
+          backdropSrc={src || url}
+          meta={<span>Сообщение · видео/фото-кружок · личный архив</span>}
           onClose={() => setOpen(false)}
         >
           <div className="relative flex size-full min-h-0 items-center justify-center">
