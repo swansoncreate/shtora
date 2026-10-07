@@ -33,7 +33,9 @@ export function ShtoraPageHeader({
         </div>
 
         <div className="flex size-10 shrink-0 items-center justify-center">
-          {onSettings ? (
+          {actions ? (
+            actions
+          ) : onSettings ? (
             <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted hover:text-fg" onClick={onSettings} aria-label="Настройки">
               <Settings className="size-[18px]" />
             </Button>
