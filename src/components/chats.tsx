@@ -34,6 +34,7 @@ import { chatBackstoryFor } from "@/lib/shtora-settings";
 import { isChatTyping, resetChatEngine, subscribeTyping } from "@/lib/chat/engine";
 import { herAsk } from "@/lib/chat/life";
 import { cn } from "@/lib/utils";
+import { ShtoraPageHeader } from "@/components/shtora-page-header";
 
 export function UnreadBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
@@ -123,42 +124,7 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-border/70 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-4 sm:px-6">
-        <p className="flex items-center gap-2 font-display text-2xl tracking-tight">
-          Чаты
-          <UnreadBadge count={threads.reduce((sum, t) => sum + (t.unread || 0), 0)} />
-        </p>
-        <div className="flex items-center gap-1">
-          {threads.length ? (
-            <>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 rounded-full px-3 text-xs text-muted"
-              onClick={() => void markAllChatsRead()}
-            >
-              прочитано
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 px-3 text-xs text-muted"
-              onClick={() => {
-                if (window.confirm("Удалить все переписки? Предыстории в настройках останутся.")) {
-                  resetChatEngine();
-                  void clearAllChats();
-                }
-              }}
-            >
-              очистить
-            </Button>
-            </>
-          ) : null}
-          <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={onClose} aria-label="Закрыть">
-            <X className="size-5" />
-          </Button>
-        </div>
-      </header>
+      <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         {threads.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-muted">
