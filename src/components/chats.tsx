@@ -168,16 +168,16 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
           threads.map((thread) => {
             const last = thread.messages[thread.messages.length - 1];
             return (
-              <div key={thread.username} className="flex items-center gap-1 pr-2 hover:bg-elevated">
+              <div key={thread.username} className="flex items-center gap-1 border-b border-border/45 pr-2 transition-colors hover:bg-elevated/45">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left"
+                className="flex min-w-0 flex-1 items-center gap-4 px-6 py-4 text-left"
                 onClick={() => onOpen(thread.username)}
               >
                 <span
                   className={cn(
-                    "size-12 shrink-0 rounded-full p-[2px]",
-                    storiesUnseen(thread.username) ? "bg-danger" : "bg-transparent",
+                    "size-13 shrink-0 rounded-full border p-[2px]",
+                    storiesUnseen(thread.username) ? "border-accent" : "border-border",
                   )}
                 >
                   <span className="block size-full overflow-hidden rounded-full border-2 border-bg bg-elevated">
@@ -198,7 +198,7 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10 shrink-0"
+                className="size-10 shrink-0 rounded-full"
                 aria-label="Удалить чат"
                 onClick={() => {
                   resetChatEngine(thread.username);
