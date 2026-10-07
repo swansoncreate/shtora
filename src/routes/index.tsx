@@ -7,6 +7,7 @@ import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats"
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { PreviewHome } from "@/components/preview-home";
+import { bootstrapStaticPreview } from "@/lib/static-preview";
 import { Button } from "@/components/ui/button";
 import { CHAT_OPEN_EVENT } from "@/lib/chat/send";
 import { useChatEngine } from "@/lib/chat/engine";
@@ -51,6 +52,8 @@ function Home() {
   const tab: Tab = search.tab ?? "posts";
   const app: AppView = search.app === "dropbox" || search.app === "imagine" ? search.app : "instagram";
   const preview = search.preview === "1";
+  const staticPreview = import.meta.env.VITE_STATIC_PREVIEW === "1";
+  const clientOnlyPreview = preview || staticPreview;
   const navigate = useNavigate({ from: "/" });
   const { settings, patch, setAccountFolder, hydrated } = useShtoraSettings();
   const dropboxPath = search.p || settings.defaultFolder || "/Штора";
@@ -63,8 +66,12 @@ function Home() {
       void caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith("shtora-")).map((k) => caches.delete(k))));
     }
   }, []);
-  useAutoSave(settings, !preview && ready && hydrated);
-  useServerState(!preview && ready && hydrated);
+  useEffect(() => {
+    if (!staticPreview || !ready || !hydrated) return;
+    void bootstrapStaticPreview();
+  }, [staticPreview, ready, hydrated]);
+  useAutoSave(settings, !clientOnlyPreview && ready && hydrated);
+  useServerState(!clientOnlyPreview && ready && hydrated);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [offline, setOffline] = useState(false);
@@ -80,6 +87,10 @@ function Home() {
     };
   }, []);
   useEffect(() => {
+    if (staticPreview) {
+      setApiOk(null);
+      return;
+    }
     let cancelled = false;
     async function ping() {
       try {
@@ -100,9 +111,9 @@ function Home() {
   const [chatUser, setChatUser] = useState<string | null>(null);
   const chatUnread = useChatUnread();
   const chatUnreadMap = useChatUnreadMap();
-  useChatPings(settings.favorites, !preview && ready && hydrated, chatsOpen ? chatUser : null);
-  useChatEngine(!preview && ready && hydrated, chatsOpen ? chatUser : null);
-  useChatDiskSync(!preview && ready && hydrated);
+  useChatPings(settings.favorites, !clientOnlyPreview && ready && hydrated, chatsOpen ? chatUser : null);
+  useChatEngine(!clientOnlyPreview && ready && hydrated, chatsOpen ? chatUser : null);
+  useChatDiskSync(!clientOnlyPreview && ready && hydrated);
 
   useEffect(() => {
     const onOpen = (e: Event) => {
@@ -180,7 +191,7 @@ function Home() {
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
         {preview ? <PreviewHome /> : null}
-        {!preview && (offline || apiOk === false) ? (
+        {!preview && !staticPreview && (offline || apiOk === false) ? (
           <div
             className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
             role="status"
