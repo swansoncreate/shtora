@@ -281,7 +281,7 @@ function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
+      className="fixed inset-x-0 bottom-0 z-[65] px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
       aria-label="Основная навигация"
     >
       <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 rounded-[24px] border border-border/70 bg-surface/72 px-3 py-2.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
