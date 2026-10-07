@@ -148,7 +148,7 @@ export function ChatsSheet({
   onClose: () => void;
   onSettings?: () => void;
   previewMode?: boolean;
-})
+}) {
   const [threadUser, setThreadUser] = useState<string | null>(null);
 
   useEffect(() => {
