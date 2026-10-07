@@ -240,7 +240,7 @@ export function ImagineBar({
             )}
           </div>
         </ShtoraMediaViewer>
-      ) : null}}
+      ) : null}
     </>
   );
 }
