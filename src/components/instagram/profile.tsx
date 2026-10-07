@@ -51,13 +51,13 @@ export function ProfileHeader({
 }) {
   const hasRing = storyCount > 0;
   return (
-    <div className="flex gap-4">
+    <div className="midnight-panel flex gap-4 rounded-[26px] p-4 sm:p-5">
       <button
         type="button"
         onClick={hasRing ? onOpenStories : onOpenPhoto}
         className={cn(
-          "size-[84px] shrink-0 overflow-hidden rounded-full p-[3px]",
-          hasRing ? (unseenStories > 0 ? "bg-danger" : "bg-fg") : "bg-border",
+          "size-[88px] shrink-0 overflow-hidden rounded-full p-[3px]",
+          hasRing ? (unseenStories > 0 ? "bg-[conic-gradient(from_180deg,#7c6bff,#f36b9a,#7c6bff)]" : "bg-white/20") : "bg-white/10",
         )}
         aria-label={hasRing ? "Открыть сторис" : "Открыть аватар"}
       >
@@ -69,7 +69,7 @@ export function ProfileHeader({
       </button>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <h1 className="min-w-0 truncate font-display text-2xl font-medium tracking-tight">
+          <h1 className="min-w-0 truncate text-2xl font-extrabold tracking-[-0.03em]">
             {profile.fullName || profile.username}
           </h1>
           {profile.verified ? <BadgeCheck className="size-5 shrink-0 text-accent" /> : null}
@@ -91,11 +91,11 @@ export function ProfileHeader({
           <Stat label="подписки" value={profile.followsCount} />
         </div>
         <div className="relative z-10 mt-3 flex flex-wrap gap-2">
-          <Button type="button" className="relative h-12 min-w-[44px] rounded-lg touch-manipulation" onClick={onMessage}>
+          <Button type="button" className="midnight-gradient relative h-11 min-w-[44px] rounded-[14px] border-0 touch-manipulation text-white" onClick={onMessage}>
             Написать
             <UnreadBadge count={chatUnread ?? 0} className="absolute -top-1.5 -right-1.5" />
           </Button>
-          <Button type="button" variant="subtle" className="h-12 rounded-lg touch-manipulation" onClick={onSave} disabled={saving}>
+          <Button type="button" variant="subtle" className="h-11 rounded-[14px] touch-manipulation" onClick={onSave} disabled={saving}>
             {saving ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
             Сохранить
           </Button>
@@ -129,7 +129,7 @@ export function HighlightsRail({
 }) {
   if (!highlights.length) return null;
   return (
-    <div className="mt-5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="mt-5 flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {highlights.map((hl) => (
         <button
           key={hl.id}
@@ -137,7 +137,7 @@ export function HighlightsRail({
           className="flex w-[76px] shrink-0 flex-col items-center gap-1.5"
           onClick={() => onOpen(hl)}
         >
-          <span className="size-[72px] overflow-hidden rounded-full bg-elevated p-[2px] shadow-[var(--shadow-border)]">
+          <span className="size-[72px] overflow-hidden rounded-[20px] bg-elevated p-[2px] shadow-[var(--shadow-border)]">
             {hl.coverImageUrl || hl.items?.[0]?.imageUrl ? (
               <MediaImg src={hl.coverImageUrl || hl.items?.[0]?.imageUrl} alt="" className="size-full rounded-full object-cover" />
             ) : (
@@ -170,9 +170,9 @@ export function PostsGrid({
     return <p className="mt-10 text-center text-sm text-muted">Постов нет</p>;
   }
   return (
-    <div className="mt-3 grid grid-cols-3 gap-1">
+    <div className="mt-4 grid grid-cols-3 gap-2">
       {posts.map((post, i) => (
-        <div key={post.id} className="relative aspect-square overflow-hidden rounded-sm bg-elevated">
+        <div key={post.id} className="relative aspect-square overflow-hidden rounded-[14px] bg-elevated">
           <button type="button" className="size-full" onClick={() => onOpen(i)} aria-label="Открыть пост">
             <MediaImg src={post.displayUrl} alt="" className="size-full" />
           </button>
