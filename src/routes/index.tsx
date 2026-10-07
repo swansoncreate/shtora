@@ -53,7 +53,8 @@ function Home() {
   const app: AppView = search.app === "dropbox" || search.app === "imagine" ? search.app : "instagram";
   const preview = search.preview === "1";
   const staticPreview = import.meta.env.VITE_STATIC_PREVIEW === "1";
-  const clientOnlyPreview = preview || staticPreview;
+  const showPreview = preview || staticPreview;
+  const clientOnlyPreview = showPreview;
   const navigate = useNavigate({ from: "/" });
   const { settings, patch, setAccountFolder, hydrated } = useShtoraSettings();
   const dropboxPath = search.p || settings.defaultFolder || "/Штора";
@@ -157,7 +158,7 @@ function Home() {
             <AppTab
               label="Instagram"
               active={app === "instagram"}
-              onClick={() => void navigate({ to: "/", search: {} })}
+              onClick={() => void navigate({ to: "/", search: { preview: "1" })}
             >
               <Instagram className="size-4" />
             </AppTab>
@@ -167,7 +168,7 @@ function Home() {
               onClick={() =>
                 void navigate({
                   to: "/",
-                  search: { app: "dropbox", p: dropboxPath, u: username || undefined },
+                  search: { app: "dropbox", p: dropboxPath, u: username || undefined, preview: "1" },
                 })
               }
             >
@@ -179,7 +180,7 @@ function Home() {
               onClick={() =>
                 void navigate({
                   to: "/",
-                  search: { app: "imagine", u: username || undefined },
+                  search: { app: "imagine", u: username || undefined, preview: "1" },
                 })
               }
             >
@@ -190,8 +191,8 @@ function Home() {
       </header>
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
-        {preview ? <PreviewHome /> : null}
-        {!preview && !staticPreview && (offline || apiOk === false) ? (
+        {showPreview ? <PreviewHome settings={settings} app={app} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
+        {!showPreview && (offline || apiOk === false) ? (
           <div
             className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
             role="status"
@@ -200,7 +201,7 @@ function Home() {
             <p className="min-w-0 flex-1">Сервер не отвечает — данные не подтянуть</p>
           </div>
         ) : null}
-        {!preview ? (
+        {!showPreview ? (
           app === "dropbox" ? (
             <DropboxBrowser
               settings={settings}
