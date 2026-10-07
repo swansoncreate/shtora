@@ -39,9 +39,6 @@ jobs:
       - name: Build Midnight
         run: |
           npm run build:dev
-        env:
-          SHTORA_PAGES_PREVIEW: "1"
-          SHTORA_PAGES_PREVIEW_PATH: "/shtora/midnight/"
           test -d ".vercel/output/static"
           rm -rf site
           mkdir -p site/midnight
@@ -51,6 +48,9 @@ jobs:
           fi
           test -f "site/midnight/index.html"
           cp "site/midnight/index.html" "site/midnight/404.html"
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          SHTORA_PAGES_PREVIEW_PATH: "/shtora/midnight/"
 
       - name: Checkout classic worktree
         run: git worktree add --detach .classic test/vps-grok-imagine
@@ -63,9 +63,6 @@ jobs:
         working-directory: .classic
         run: |
           npm run build:dev
-        env:
-          SHTORA_PAGES_PREVIEW: "1"
-          SHTORA_PAGES_PREVIEW_PATH: "/shtora/classic/"
           test -d ".vercel/output/static"
           mkdir -p ../site/classic
           cp -R .vercel/output/static/. ../site/classic/
@@ -74,6 +71,9 @@ jobs:
           fi
           test -f "../site/classic/index.html"
           cp "../site/classic/index.html" "../site/classic/404.html"
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          SHTORA_PAGES_PREVIEW_PATH: "/shtora/classic/"
 
       - name: Create comparison landing page
         run: |
