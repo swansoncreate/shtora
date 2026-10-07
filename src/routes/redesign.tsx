@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";\nimport "@/styles/redesign.css";
 import {
   ArrowUpRight,
   Bell,
@@ -94,7 +94,7 @@ function Avatar({ name, size = "md", tone }: { name: string; size?: "sm" | "md" 
   );
 }
 
-export const Route = () => <Redesign />;
+export const Route = createFileRoute("/redesign")({ component: Redesign });
 
 function Redesign() {
   const [page, setPage] = useState<Page>("today");
