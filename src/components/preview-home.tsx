@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
-import { MessageCircle, RefreshCw, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { RefreshCw, X } from "lucide-react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
 import { PostViewer } from "@/components/post-viewer";
 import { FavoritesStrip } from "@/components/favorites-strip";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   HighlightsRail,
@@ -22,6 +21,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   settings: ShtoraSettings;
   app: "instagram" | "dropbox" | "imagine";
+  username?: string;
   onOpenChats: (name?: string | null) => void;
   onNeedSettings: () => void;
 };
@@ -136,15 +136,23 @@ function feedCards(): FeedCard[] {
     .slice(0, 6);
 }
 
-export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Props) {
+export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettings }: Props) {
   const [view, setView] = useState<ProfileView | null>(null);
-  const [draft, setDraft] = useState("");
   const [postView, setPostView] = useState<{ username: string; posts: IgPost[]; index: number } | null>(null);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
 
   const cards = useMemo(() => feedCards().map((card) => ({ ...card, liked: liked[card.id] ?? false })), [liked]);
   const profile = view ? profiles.find((item) => item.username === view.username) || profiles[0] : null;
+
+  useEffect(() => {
+    if (!username) {
+      setView(null);
+      return;
+    }
+    const found = profiles.find((item) => item.username === username.toLowerCase());
+    setView(found ? { username: found.username, tab: "posts" } : null);
+  }, [username]);
 
   if (app === "dropbox") {
     return <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} />;
@@ -206,36 +214,7 @@ export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Prop
 
   return (
     <section>
-      <form
-        action="/"
-        method="get"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const clean = draft.trim().replace(/^@/, "").toLowerCase();
-          const found = profiles.find((item) => item.username === clean);
-          if (found) setView({ username: found.username, tab: "posts" });
-        }}
-        className="flex gap-2"
-      >
-        <div className="relative min-w-0 flex-1">
-          <Input
-            name="u"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="поиск по нику"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            aria-label="Ник Instagram"
-            className="pr-12"
-          />
-          <Button type="submit" variant="ghost" size="icon" className="absolute top-1 right-1 size-10 rounded-md text-muted" aria-label="Искать">
-            <Search className="size-5" />
-          </Button>
-        </div>
-        <Button type="button" variant="subtle" size="icon" className="relative size-12 shrink-0 rounded-lg" aria-label="Сообщения" onClick={() => onOpenChats(null)}>
-          <MessageCircle className="size-5" />
-        </Button>
+      <div className="flex justify-end">
         <Button
           type="button"
           variant="subtle"
@@ -253,7 +232,7 @@ export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Prop
       </form>
 
       <FavoritesStrip
-        names={settings.favorites}
+        names={settings.favorites.length ? settings.favorites : profiles.map((item) => item.username)}
         active=""
         tick={0}
         onPick={(name) => {
