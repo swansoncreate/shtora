@@ -7,6 +7,7 @@ import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats"
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { PreviewHome } from "@/components/preview-home";
+import { ShtoraPageHeader } from "@/components/shtora-page-header";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { SearchSheet } from "@/components/search-sheet";
 import { bootstrapStaticPreview } from "@/lib/static-preview";
@@ -142,39 +143,9 @@ function Home() {
 
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
-  if (showPreview && entryOpen) {
-    return (
-      <WelcomeScreen
-        onContinue={() => {
-          window.localStorage.setItem("shtora-entry-seen", "1");
-          setEntryOpen(false);
-        }}
-      />
-    );
-  }
+      {!showPreview ? <ShtoraPageHeader eyebrow={caption} title="Штора" onSettings={() => setSettingsOpen(true)} /> : null}
 
-  return (
-    <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="sticky top-0 z-20 bg-bg/88 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 curtain-wash opacity-35" aria-hidden />
-        <div className="relative z-10 mx-auto flex w-full max-w-3xl items-center justify-between px-4 pb-2 pt-2 sm:px-6">
-          <div className="flex min-w-0 items-baseline gap-3">
-            <p className="font-display text-[1.85rem] leading-none tracking-[0.01em] text-fg sm:text-3xl">Штора</p>
-            <p className="truncate text-[10px] font-medium tracking-[0.2em] text-subtle uppercase">{caption}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-10 shrink-0 rounded-full text-muted hover:text-fg"
-            aria-label="Настройки"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="size-[18px]" />
-          </Button>
-        </div>
-      </header>
-
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-28 pt-3 sm:px-6">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-28 pt-4 sm:px-6 sm:pt-5">
         {showPreview ? <PreviewHome settings={settings} app={app} username={username} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
         {!showPreview && (offline || apiOk === false) ? (
           <div
