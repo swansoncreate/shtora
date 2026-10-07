@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";\nimport "@/styles/redesign.css";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import "@/styles/redesign.css";
 import {
   ArrowUpRight,
   Bell,
