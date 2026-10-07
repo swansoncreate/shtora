@@ -97,6 +97,54 @@ const profiles: IgProfile[] = [
       post("shep-3", img4, "🖤", "2022-02-14T15:31:00.000Z", "sidecar"),
     ],
   },
+  {
+    username: "sofia",
+    fullName: "Sofia",
+    biography: "soft light, hard edges.",
+    followersCount: 391,
+    followsCount: 184,
+    postsCount: 3,
+    profilePicUrl: img4,
+    verified: false,
+    private: false,
+    posts: [
+      post("sofia-1", img4, "вечерний свет", "2026-08-22T18:21:00.000Z"),
+      post("sofia-2", img1, "slow sunday", "2026-08-14T10:20:00.000Z"),
+      post("sofia-3", img5, "", "2026-08-02T08:40:00.000Z", "sidecar"),
+    ],
+  },
+  {
+    username: "lena",
+    fullName: "Lena",
+    biography: "ничего лишнего.",
+    followersCount: 127,
+    followsCount: 73,
+    postsCount: 3,
+    profilePicUrl: img5,
+    verified: true,
+    private: false,
+    posts: [
+      post("lena-1", img5, "Новый день.", "2026-08-11T12:11:00.000Z", "sidecar"),
+      post("lena-2", img2, "🤍", "2026-07-28T19:08:00.000Z"),
+      post("lena-3", img6, "city / rain", "2026-07-17T06:31:00.000Z"),
+    ],
+  },
+  {
+    username: "mira",
+    fullName: "Mira",
+    biography: "архивирую случайные моменты.",
+    followersCount: 88,
+    followsCount: 41,
+    postsCount: 3,
+    profilePicUrl: img6,
+    verified: false,
+    private: false,
+    posts: [
+      post("mira-1", img6, "archive 09", "2026-08-03T21:51:00.000Z"),
+      post("mira-2", img3, "пятница", "2026-07-22T16:42:00.000Z", "video"),
+      post("mira-3", img4, "", "2026-07-06T09:15:00.000Z"),
+    ],
+  },
 ];
 
 function storySet(profile: IgProfile): IgStoryItem[] {
@@ -235,10 +283,10 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
   return (
     <section>
       <FavoritesStrip
-        names={settings.favorites.length ? settings.favorites : profiles.map((item) => item.username)}
+        names={profiles.map((item) => item.username)}
         active=""
         tick={0}
-        previewPictures={{ ellissawe: img1, minsiyaaa: img2, sheptnowa: img3 }}
+        previewPictures={{ ellissawe: img1, minsiyaaa: img2, sheptnowa: img3, sofia: img4, lena: img5, mira: img6 }}
         onPick={(name) => {
           const found = profiles.find((item) => item.username === name);
           if (found) setView({ username: found.username, tab: "posts" });
