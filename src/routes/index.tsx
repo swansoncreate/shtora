@@ -158,7 +158,7 @@ function Home() {
             <AppTab
               label="Instagram"
               active={app === "instagram"}
-              onClick={() => void navigate({ to: "/", search: { preview: "1" })}
+              onClick={() => void navigate({ to: "/", search: { preview: "1" } })}
             >
               <Instagram className="size-4" />
             </AppTab>
