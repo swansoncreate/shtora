@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, X } from "lucide-react";
+import { X } from "lucide-react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
@@ -181,7 +181,10 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
             saving={false}
             refreshing={false}
             onSave={() => undefined}
-            onRefresh={() => undefined}
+            onRefresh={() => {
+          setRefreshing(true);
+          window.setTimeout(() => setRefreshing(false), 650);
+        }}
             onOpenPhoto={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
             onOpenStories={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
             onMessage={() => onOpenChats(profile.username)}
@@ -213,23 +216,6 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
 
   return (
     <section>
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="subtle"
-          size="icon"
-          className="size-12 shrink-0 rounded-lg"
-          aria-label="Обновить ленту"
-          disabled={refreshing}
-          onClick={() => {
-            setRefreshing(true);
-            window.setTimeout(() => setRefreshing(false), 650);
-          }}
-        >
-          <RefreshCw className={refreshing ? "size-5 animate-spin" : "size-5"} />
-        </Button>
-      </div>
-
       <FavoritesStrip
         names={settings.favorites.length ? settings.favorites : profiles.map((item) => item.username)}
         active=""
