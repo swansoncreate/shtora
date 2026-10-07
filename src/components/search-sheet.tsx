@@ -1,6 +1,7 @@
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { ShtoraPageHeader } from "@/components/shtora-page-header";
 import { Input } from "@/components/ui/input";
 
 export function SearchSheet({
@@ -27,18 +28,7 @@ export function SearchSheet({
 
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Поиск">
-      <header className="flex items-center gap-2 border-b border-border/60 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-4 sm:px-6">
-        <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label="Назад" onClick={onClose}>
-          <ArrowLeft className="size-5" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-2xl leading-none tracking-tight">Поиск</p>
-          <p className="mt-1 text-[10px] tracking-[0.16em] text-subtle uppercase">Instagram и профильные подборки</p>
-        </div>
-        <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label="Закрыть" onClick={onClose}>
-          <X className="size-5" />
-        </Button>
-      </header>
+      <ShtoraPageHeader eyebrow="Поиск" title="Найти" onBack={onClose} onClose={undefined} />
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6">
         <form onSubmit={submit} className="flex gap-2">
