@@ -22,12 +22,50 @@ type Result = StudioItem;
 type Job = "photo" | "live" | "edit" | "extend";
 const COUNTS = [1, 2, 4, 6, 8] as const;
 
+const PREVIEW_HISTORY: StudioItem[] = [
+  {
+    id: "preview-1",
+    kind: "image",
+    url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=85",
+    from: "preview",
+    at: Date.now() - 1000 * 60 * 18,
+    prompt: "мягкий вечерний свет, чистый фон",
+  },
+  {
+    id: "preview-2",
+    kind: "image",
+    url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=85",
+    from: "preview",
+    at: Date.now() - 1000 * 60 * 73,
+    prompt: "портрет, тёплое зерно, редакционный стиль",
+  },
+  {
+    id: "preview-3",
+    kind: "image",
+    url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=85",
+    from: "preview",
+    at: Date.now() - 1000 * 60 * 60 * 5,
+    prompt: "чёрный фон, розовый акцент, мягкий свет",
+  },
+  {
+    id: "preview-4",
+    kind: "image",
+    url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85",
+    from: "preview",
+    at: Date.now() - 1000 * 60 * 60 * 22,
+    prompt: "естественная поза, спокойное настроение",
+  },
+];
+
+
 export function ImagineStudio({
   settings,
   onNeedToken,
+  previewMode = false,
 }: {
   settings: ShtoraSettings;
   onNeedToken: () => void;
+  previewMode?: boolean;
 }) {
   const [picker, setPicker] = useState(false);
   const [files, setFiles] = useState<PickedFile[]>([]);
@@ -511,62 +549,76 @@ export function ImagineStudio({
         </p>
       ) : null}
 
-      <div className="mt-6 grid grid-cols-2 gap-2">
-        {results.length === 0 && !busy ? (
-          <p className="col-span-2 py-6 text-center text-sm text-muted">Генерации остаются здесь, даже если закрыть вкладку.</p>
-        ) : null}
-        {results.map((item) => {
-          const src = liveSrc[item.id] || item.url;
-          const on = picked.includes(item.id);
-          return (
-          <div
-            key={item.id}
-            role="button"
-            tabIndex={0}
-            className="relative overflow-hidden rounded-xl bg-elevated"
-            onClick={() => setOpen({ ...item, url: src })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setOpen({ ...item, url: src });
-              }
-            }}
-          >
-            {item.kind === "video" ? (
-              <VideoThumb
-                src={src}
-                poster={posters[item.id]}
-                onPoster={(url) => setPosters((prev) => (prev[item.id] ? prev : { ...prev, [item.id]: url }))}
-              />
-            ) : (
-              <StudioStill url={src} />
-            )}
-            {item.urls && item.urls.length > 1 ? (
-              <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded-full bg-bg/80 px-2 py-0.5 text-[11px] font-medium">
-                {item.urls.length}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className={cn(
-                "absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full",
-                on ? "bg-accent text-accent-fg" : "bg-bg/75 text-fg ring-1 ring-fg/40",
-              )}
-              aria-label={on ? "Снять" : "Выбрать"}
-              aria-pressed={on}
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePick(item.id);
-              }}
-            >
-              {on ? <Check className="size-4" /> : null}
-            </button>
+      <section className="mt-8">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-subtle">архив студии</p>
+            <p className="mt-1 font-display text-xl text-fg">История генераций</p>
           </div>
-          );
-        })}
-      </div>
+          <span className="text-xs text-subtle">{results.length || (previewMode ? PREVIEW_HISTORY.length : 0)} шт.</span>
+        </div>
 
-      {open ? (
+        {results.length === 0 && !busy && !previewMode ? (
+          <p className="py-6 text-center text-sm text-muted">Генерации остаются здесь, даже если закрыть вкладку.</p>
+        ) : null}
+
+        {(results.length ? results : previewMode ? PREVIEW_HISTORY : []).length ? (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {(results.length ? results : PREVIEW_HISTORY).map((item) => {
+              const src = liveSrc[item.id] || item.url;
+              const on = picked.includes(item.id);
+              return (
+                <div
+                  key={item.id}
+                  role={results.length ? "button" : undefined}
+                  tabIndex={results.length ? 0 : undefined}
+                  className="relative overflow-hidden rounded-xl bg-elevated"
+                  onClick={results.length ? () => setOpen({ ...item, url: src }) : undefined}
+                  onKeyDown={
+                    results.length
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setOpen({ ...item, url: src });
+                          }
+                        }
+                      : undefined
+                  }
+                >
+                  <StudioStill url={src} />
+                  <div className="border-t border-border/40 px-3 py-2.5">
+                    <p className="line-clamp-2 text-xs text-fg">{item.prompt || "Без промпта"}</p>
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-subtle">{formatRelative(item.at)}</p>
+                  </div>
+                  {results.length ? (
+                    <button
+                      type="button"
+                      className={cn(
+                        "absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full",
+                        on ? "bg-accent text-accent-fg" : "bg-bg/75 text-fg ring-1 ring-fg/40",
+                      )}
+                      aria-label={on ? "Снять" : "Выбрать"}
+                      aria-pressed={on}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePick(item.id);
+                      }}
+                    >
+                      {on ? <Check className="size-4" /> : null}
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </section>
+
+      {results.length ? (
+        <div className="sr-only" aria-hidden="true" />
+      ) : null}
+
+      {open ? (      {open ? (
         <StudioViewer
           item={{ ...open, url: liveSrc[open.id] || open.url }}
           saving={saving === open.id}
@@ -663,6 +715,16 @@ export function ImagineStudio({
       />
     </div>
   );
+}
+
+function formatRelative(at: number) {
+  const diff = Math.max(0, Date.now() - at);
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))} мин назад`;
+  if (diff < day) return `${Math.floor(diff / hour)} ч назад`;
+  return `${Math.floor(diff / day)} дн назад`;
 }
 
 function showable(url: string) {
