@@ -16,7 +16,6 @@ import {
 import type { FeedCard } from "@/lib/feed/simulate";
 import type { IgHighlight, IgPost, IgProfile, IgStoryItem } from "@/lib/instagram/types";
 import type { ShtoraSettings } from "@/lib/shtora-settings";
-import { cn } from "@/lib/utils";
 
 type Props = {
   settings: ShtoraSettings;
