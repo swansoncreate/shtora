@@ -1,4 +1,4 @@
-import { ArrowLeft, Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { ShtoraPageHeader } from "@/components/shtora-page-header";
