@@ -12,7 +12,8 @@
   --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
   --color-border-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
   --color-danger: #b76666;
-  --color-ring: #a96868;\n  --color-warm: #c8b8a5;
+  --color-ring: #a96868;
+  --color-warm: #c8b8a5;
 
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
