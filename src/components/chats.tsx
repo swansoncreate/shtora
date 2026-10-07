@@ -179,7 +179,7 @@ function InboxView({ onOpen, onClose, onSettings, previewMode }: { onOpen: (user
     return subscribeChats(sync);
   }, []);
 
-  const visibleThreads = previewMode && threads.length === 0 ? PREVIEW_THREADS : threads;
+  const visibleThreads = previewMode ? PREVIEW_THREADS : threads;
 
   return (
     <>
