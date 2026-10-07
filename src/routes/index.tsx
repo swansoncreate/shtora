@@ -48,12 +48,6 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const search = Route.useSearch();
-  if (search.preview === "1" || import.meta.env.VITE_STATIC_PREVIEW === "1") return <PreviewHome />;
-  return <LiveHome />;
-}
-
-function LiveHome() {
-  const search = Route.useSearch();
   const username = search.u ? cleanUsername(search.u) : "";
   const tab: Tab = search.tab ?? "posts";
   const app: AppView = search.app === "dropbox" || search.app === "imagine" ? search.app : "instagram";
