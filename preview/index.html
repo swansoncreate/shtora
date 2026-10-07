@@ -1,49 +1,106 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Shtora — interactive preview</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Штора — preview</title>
+<link rel="icon" href="../favicon.svg">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f4f2;color:#171717;font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
-.app{width:min(100%,430px);min-height:100vh;margin:auto;background:#fff;border-left:1px solid #ddd;border-right:1px solid #ddd}
-header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #e5e5e5}
-.logo{font-size:25px;font-weight:700}.muted{color:#777}.small{font-size:11px;letter-spacing:.14em;text-transform:uppercase}
-button{border:0;background:none;color:inherit;cursor:pointer}header button,.icon{padding:9px;border-radius:50%}
-.stories{display:flex;gap:14px;overflow:auto;padding:16px}.story{flex:0 0 62px;text-align:center;font-size:11px;color:#777}.avatar{width:58px;height:58px;border-radius:50%;border:2px solid #222;display:grid;place-items:center;margin:auto auto 5px;font-weight:600}
-.post{border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5}.posthead{display:flex;align-items:center;gap:9px;padding:12px 16px}.postavatar{width:36px;height:36px;border-radius:50%;background:#eee;display:grid;place-items:center;font-weight:600}
-.photo{aspect-ratio:4/5;background:linear-gradient(145deg,#eee,#d9d9d5);padding:24px;display:flex;flex-direction:column;justify-content:end}.photo .title{font-size:31px;font-weight:700}.actions{display:flex;gap:2px;padding:8px}.actions .save{margin-left:auto}.likes{padding:0 16px 16px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}.tile{aspect-ratio:1;background:#eee;padding:10px;text-align:left}
-section{padding:20px}.profiletop{display:flex;gap:16px;align-items:center}.bigavatar{width:82px;height:82px;border-radius:50%;background:#eee;display:grid;place-items:center;font-size:28px;font-weight:700}
-.messages{display:flex;flex-direction:column;gap:7px;margin-top:18px}.msg{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;text-align:left}.msg:hover{background:#f2f2f0}
-nav{position:sticky;bottom:0;height:64px;border-top:1px solid #e5e5e5;background:rgba(255,255,255,.96);display:flex;justify-content:space-around;align-items:center}
-nav button{font-size:23px;padding:10px}.hidden{display:none}.back{font-size:22px}
+:root{--bg:#0e0d0c;--surface:#171513;--elev:#211e1b;--border:rgba(244,239,230,.11);--text:#f4efe6;--muted:#a8a098;--subtle:#716b64;--accent:#d5b67a;--danger:#d66b6b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.42 Manrope,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh}.app{width:min(100%,760px);margin:0 auto;min-height:100dvh}
+button,input{font:inherit;color:inherit}.button{border:1px solid var(--border);background:var(--surface);border-radius:12px;height:44px;padding:0 15px;cursor:pointer}.button.ghost{background:transparent;border-color:transparent}.button.small{height:38px;padding:0 12px;font-size:13px}
+header{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);background:rgba(14,13,12,.92);backdrop-filter:blur(18px);padding:12px max(16px,env(safe-area-inset-left)) 12px max(16px,env(safe-area-inset-right))}
+.headrow{display:flex;align-items:flex-start;gap:12px}.brand{font-family:"Cormorant Garamond",serif;font-size:40px;line-height:.95;font-weight:600;letter-spacing:-.03em}.caption{margin-top:5px;color:var(--muted);font-size:13px}.spacer{flex:1}
+.iconbtn{width:44px;height:44px;border:0;border-radius:12px;background:transparent;color:var(--text);cursor:pointer}.iconbtn:hover{background:var(--elev)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--elev);padding:4px;border-radius:12px;margin-top:12px}.tab{height:40px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}.tab.active{background:var(--surface);color:var(--text)}
+main{padding:18px 16px 44px}.searchrow{display:flex;gap:8px}.search{height:46px;flex:1;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:0 13px;outline:none}.search:focus{border-color:rgba(213,182,122,.5)}
+.favs{display:flex;gap:13px;overflow:auto;padding:16px 2px 10px;scrollbar-width:none}.fav{width:76px;flex:none;text-align:center;background:none;border:0;color:var(--muted);cursor:pointer}.avatar{width:68px;height:68px;border-radius:50%;padding:3px;margin:0 auto 6px;background:var(--border)}.avatar.story{background:linear-gradient(135deg,#d66b6b,#d5b67a)}.avatar>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--elev);font-family:"Cormorant Garamond",serif;font-size:26px;color:var(--text)}.avatar img{width:100%;height:100%;object-fit:cover}.favname{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.feed{display:flex;flex-direction:column;gap:14px}.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}.cardhead{display:flex;align-items:center;gap:11px;padding:13px 14px}.mini{width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--elev);display:grid;place-items:center}.mini img{width:100%;height:100%;object-fit:cover}.user{font-weight:600;font-size:14px}.time{font-size:12px;color:var(--subtle);margin-top:2px}.cardimg{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#201d1a}.actions{display:flex;align-items:center;gap:4px;padding:8px 10px}.heart{font-size:22px}.save{margin-left:auto}.likes{padding:0 14px 5px;font-size:13px}.captiontext{padding:0 14px 14px;font-size:14px}.muted{color:var(--muted)}
+.profile{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px}.profiletop{display:flex;gap:14px}.bigavatar{width:86px;height:86px;border-radius:50%;overflow:hidden;background:var(--elev);flex:none}.bigavatar img{width:100%;height:100%;object-fit:cover}.fullname{font-family:"Cormorant Garamond",serif;font-size:28px;line-height:1}.handle{color:var(--muted);margin-top:4px}.stats{display:flex;gap:18px;margin-top:12px}.stat b{display:block}.stat span{display:block;font-size:11px;color:var(--subtle)}.profileactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.rail{display:flex;gap:10px;overflow:auto;margin-top:14px;padding-bottom:2px}.hl{width:72px;flex:none;text-align:center;font-size:10px;color:var(--muted)}.hl img{display:block;width:68px;height:68px;border-radius:50%;object-fit:cover;margin:0 auto 5px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:14px}.grid img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--elev)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px}.panel h2{font-family:"Cormorant Garamond",serif;font-size:32px;margin:0 0 5px}.panel p{color:var(--muted);margin:0 0 18px}.filebox{padding:22px;border:1px dashed var(--border);border-radius:14px;text-align:center;color:var(--muted)}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.68);display:none;align-items:flex-end}.modal.open{display:flex}.sheet{width:100%;max-width:760px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-bottom:0;border-radius:20px 20px 0 0;padding:16px 16px max(18px,env(safe-area-inset-bottom))}.sheethead{display:flex;align-items:center;gap:8px}.sheet h3{margin:0;font-family:"Cormorant Garamond",serif;font-size:28px}.close{margin-left:auto}.chatlist{display:flex;flex-direction:column;gap:8px;margin-top:12px}.chat{display:flex;gap:12px;align-items:center;border:1px solid var(--border);background:var(--elev);border-radius:14px;padding:11px;text-align:left;cursor:pointer}.chat .mini{width:44px;height:44px}.chattext{flex:1}.chattext b{display:block}.chattext span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+@media(min-width:760px){main{padding-left:0;padding-right:0}.card,.profile,.panel{border-radius:18px}}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body><div class="app">
-<header><button id="back" class="back hidden">‹</button><span id="logo" class="logo">Штора</span><span class="small muted">preview</span><button onclick="show('inbox')">✉</button></header>
-<div id="content"></div>
-<nav>
-<button onclick="show('home')">⌂</button><button onclick="show('search')">⌕</button><button onclick="show('inbox')">♡</button><button onclick="show('profile')">◯</button>
-</nav>
+<body>
+<div class="app">
+<header>
+  <div class="headrow">
+    <div><div class="brand">Штора</div><div class="caption" id="caption">Лента</div></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="settingsBtn" aria-label="Настройки">⚙︎</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-app="instagram">Instagram</button>
+    <button class="tab" data-app="dropbox">Файлы</button>
+    <button class="tab" data-app="imagine">Imagine</button>
+  </div>
+</header>
+<main id="main"></main>
 </div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 <script>
-let liked=false,saved=false,screen='home';
-const names=['you','lena','mira','nika','anna'];
-function show(s){screen=s;document.getElementById('back').classList.toggle('hidden',s==='home');render()}
-document.getElementById('back').onclick=()=>show('home');
-function render(){
- const c=document.getElementById('content'), logo=document.getElementById('logo');
- logo.textContent=screen==='home'?'Штора':'';
- if(screen==='home') c.innerHTML=`
- <div class="stories">${names.map((n,i)=>'<button class="story" onclick="show(\\'profile\\')"><div class="avatar" style="border-color:'+(i?'#ddd':'#222')+'">'+n[0].toUpperCase()+'</div>'+n+'</button>').join('')}</div>
- <article class="post">
- <div class="posthead"><button onclick="show('profile')" class="postavatar">L</button><b>lena</b><span class="muted" style="margin-left:auto">•••</span></div>
- <button class="photo" style="width:100%;text-align:left" onclick="show('profile')"><span class="small muted">moment 07:42</span><span class="title">morning light</span><span class="muted">casual frame · no filter · apartment</span></button>
- <div class="actions"><button class="icon" onclick="liked=!liked;render()">♡</button><button class="icon" onclick="show('inbox')">○</button><button class="icon">↗</button><button class="icon save" onclick="saved=!saved;render()">🔖</button></div>
- <div class="likes"><b>${liked?'128':'127'}</b> likes · <span class="muted">today</span></div></article>`;
- else if(screen==='profile') c.innerHTML=`<section><div class="profiletop"><div class="bigavatar">L</div><div><h2 style="margin:0">lena</h2><span class="muted">ordinary life, captured quietly</span></div></div><div class="grid" style="margin-top:24px">${[1,2,3,4,5,6].map(n=>'<button class="tile" onclick="show(\\'home\\')">frame '+n+'</button>').join('')}</div></section>`;
- else if(screen==='search') c.innerHTML=`<section><div style="background:#eee;border-radius:12px;padding:11px;color:#777">⌕ Search</div><div class="grid" style="margin-top:18px;grid-template-columns:1fr 1fr">${['lena','mira','nika','anna'].map(n=>'<button class="tile" style="aspect-ratio:auto;border-radius:14px" onclick="show(\\'profile\\')"><b>'+n[0].toUpperCase()+' &nbsp; '+n+'</b><br><span class="muted">profile</span></button>').join('')}</div></section>`;
- else c.innerHTML=`<section><h2 style="font-size:28px;margin-top:0">Messages</h2><div class="messages">${['lena','mira','nika'].map(n=>'<button class="msg" onclick="show(\\'profile\\')"><span class="avatar" style="margin:0;width:44px;height:44px;border:0;background:#eee">'+n[0].toUpperCase()+'</span><span><b>'+n+'</b><br><span class="muted">Tap to open chat preview</span></span></button>').join('')}</div></section>`;
+const state={snapshots:[],screen:"home",app:"instagram",liked:new Set(),saved:new Set()};
+const favorites=["ellissawe","dashutiya","sheptnowa","minsiyaaa"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const snapBy=n=>state.snapshots.find(x=>String(x.username).toLowerCase()===n.toLowerCase());
+const profile=n=>snapBy(n)?.profile||{username:n,fullName:n,followersCount:0,followsCount:0,posts:[],profilePicUrl:""};
+const liveStories=n=>snapBy(n)?.stories?.stories||[];
+const highlights=n=>snapBy(n)?.stories?.highlights||[];
+function img(url,fallback=""){return url?'<img src="'+esc(url)+'" alt="" referrerpolicy="no-referrer">':esc(fallback)}
+function timeLabel(ts){try{const d=new Date(ts);return isNaN(d)? "сегодня":d.toLocaleDateString("ru-RU",{day:"2-digit",month:"short"})}catch{return"сегодня"}}
+function card(p,n,i){
+ const key=n+":"+p.id, liked=state.liked.has(key), saved=state.saved.has(key);
+ return '<article class="card"><div class="cardhead"><div class="mini">'+img(profile(n).profilePicUrl,n[0]?.toUpperCase()||"Ш")+'</div><div><div class="user">'+esc(n)+'</div><div class="time">'+esc(timeLabel(p.timestamp))+'</div></div><div class="spacer"></div><button class="iconbtn" onclick="openProfile(\''+esc(n)+'\')">⋯</button></div>'+
+ '<button style="display:block;width:100%;border:0;padding:0;background:none" onclick="openPost(\''+esc(n)+'\','+i+')"><img class="cardimg" src="'+esc(p.displayUrl||"")+'" alt="" referrerpolicy="no-referrer"></button>'+
+ '<div class="actions"><button class="iconbtn heart" onclick="toggleLike(\''+key+'\')">'+(liked?"♥":"♡")+'</button><button class="iconbtn">◌</button><button class="iconbtn">↗</button><button class="iconbtn save" onclick="toggleSave(\''+key+'\')">'+(saved?"🔖":"⌑")+'</button></div>'+
+ '<div class="likes"><b>'+(liked?"128":"127")+'</b> отметок «Нравится»</div><div class="captiontext"><b>'+esc(n)+'</b> <span class="muted">'+esc(p.caption||"")+'</span></div></article>';
 }
-render();
-</script></body></html>
+function renderHome(){
+ $("#caption").textContent="Лента";
+ let html='<div class="searchrow"><input id="search" class="search" placeholder="Поиск по нику" autocomplete="off"><button class="button" onclick="doSearch()">Искать</button><button class="button" onclick="openChats()">♡</button></div>';
+ html+='<div class="favs">'+favorites.map(n=>{const p=profile(n), st=liveStories(n).length>0;return '<button class="fav" onclick="openProfile(\''+n+'\')"><div class="avatar '+(st?"story":"")+'"><span>'+img(p.profilePicUrl,n[0]?.toUpperCase()||"Ш")+'</span></div><span class="favname">'+esc(n)+'</span></button>'}).join("")+'</div>';
+ const rows=[];
+ favorites.forEach(n=>(profile(n).posts||[]).forEach((p,i)=>rows.push({n,p,i,at:p.timestamp?Date.parse(p.timestamp):0})));
+ rows.sort((a,b)=>b.at-a.at);
+ if(!rows.length) html+='<div class="panel"><h2>Пока тихо</h2><p>Это UI-preview: сервер и внешние действия отключены.</p></div>';
+ else html+='<div class="feed">'+rows.slice(0,18).map(x=>card(x.p,x.n,x.i)).join("")+'</div>';
+ $("#main").innerHTML=html;
+}
+function openProfile(n){
+ state.screen="profile"; const p=profile(n), h=highlights(n);
+ $("#caption").textContent="@"+n;
+ let html='<button class="button ghost" onclick="goHome()">← Лента</button>';
+ html+='<section class="profile"><div class="profiletop"><div class="bigavatar">'+img(p.profilePicUrl,n[0]?.toUpperCase()||"Ш")+'</div><div><div class="fullname">'+esc(p.fullName||p.username)+'</div><div class="handle">@'+esc(p.username)+'</div><div class="stats"><div class="stat"><b>'+(p.postsCount??(p.posts||[]).length)+'</b><span>посты</span></div><div class="stat"><b>'+(p.followersCount??0)+'</b><span>подписчики</span></div><div class="stat"><b>'+(p.followsCount??0)+'</b><span>подписки</span></div></div></div></div>';
+ html+='<div class="profileactions"><button class="button" onclick="openChat(\''+n+'\')">Написать</button><button class="button" onclick="alert(\'Сохранение отключено в Pages preview\')">Сохранить</button><button class="button" onclick="alert(\'Обновление отключено в Pages preview\')">Обновить</button></div>';
+ if(h.length) html+='<div class="rail">'+h.slice(0,8).map(x=>'<div class="hl">'+(x.coverImageUrl?'<img src="'+esc(x.coverImageUrl)+'">':'<div class="avatar"><span>•</span></div>')+'<span>'+esc(x.title||"")+'</span></div>').join("")+'</div>';
+ html+='</section><div class="grid">'+(p.posts||[]).slice(0,24).map(x=>'<img src="'+esc(x.displayUrl||"")+'" alt="" referrerpolicy="no-referrer">').join("")+'</div>';
+ $("#main").innerHTML=html;
+}
+function renderPanel(kind){
+ $("#caption").textContent=kind==="dropbox"?"Файлы":"Imagine";
+ if(kind==="dropbox") $("#main").innerHTML='<div class="panel"><h2>Файлы</h2><p>Интерфейс Dropbox из приложения. В Pages preview сервер недоступен.</p><div class="filebox">/Штора<br><br>Фото и видео появятся здесь в рабочем приложении.</div></div>';
+ else $("#main").innerHTML='<div class="panel"><h2>Студия</h2><p>Imagine из приложения. Генерация в Pages preview намеренно выключена.</p><div class="filebox">Выберите кадр → задайте изменение → запустите генерацию.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button class="button" onclick="alert(\'Генерация отключена в preview\')">Фото</button><button class="button" onclick="alert(\'Генерация отключена в preview\')">Оживить</button></div></div>';
+}
+function goHome(){state.screen="home";renderHome()}
+function openPost(n,i){const posts=profile(n).posts||[],p=posts[i]; if(!p)return; $("#sheet").innerHTML='<div class="sheethead"><h3>@'+esc(n)+'</h3><button class="iconbtn close" onclick="closeModal()">×</button></div><img style="width:100%;max-height:72dvh;object-fit:contain;background:#0a0908;border-radius:14px;margin-top:12px" src="'+esc(p.displayUrl||"")+'" referrerpolicy="no-referrer"><p style="margin:12px 0 0">'+esc(p.caption||"")+'</p>'; $("#modal").classList.add("open")}
+function openChats(){const rows=favorites.map(n=>'<button class="chat" onclick="openChat(\''+n+'\')"><div class="mini">'+img(profile(n).profilePicUrl,n[0]?.toUpperCase()||"Ш")+'</div><div class="chattext"><b>'+esc(n)+'</b><span>Открыть чат</span></div></button>').join("");$("#sheet").innerHTML='<div class="sheethead"><h3>Сообщения</h3><button class="iconbtn close" onclick="closeModal()">×</button></div><div class="chatlist">'+rows+'</div>';$("#modal").classList.add("open")}
+function openChat(n){$("#sheet").innerHTML='<div class="sheethead"><h3>'+esc(n)+'</h3><button class="iconbtn close" onclick="closeModal()">×</button></div><div class="filebox" style="margin-top:12px">Чат из приложения<br><br>Ответы Grok отключены в GitHub Pages preview.</div>';$("#modal").classList.add("open")}
+function closeModal(){$("#modal").classList.remove("open")}
+function toggleLike(k){state.liked.has(k)?state.liked.delete(k):state.liked.add(k);renderHome()}
+function toggleSave(k){state.saved.has(k)?state.saved.delete(k):state.saved.add(k);renderHome()}
+function doSearch(){const n=$("#search")?.value?.trim().replace(/^@/,"").toLowerCase();if(n)openProfile(n)}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));state.app=b.dataset.app;if(state.app==="instagram")goHome();else renderPanel(state.app)});
+$("#settingsBtn").onclick=()=>{$("#sheet").innerHTML='<div class="sheethead"><h3>Настройки</h3><button class="iconbtn close" onclick="closeModal()">×</button></div><div class="filebox" style="margin-top:12px;text-align:left">Apify · Dropbox · Hiker · TikHub · Chat engine · Imagine prompt<br><br>Настройки сохраняются в рабочем приложении. Pages preview открыт только для просмотра интерфейса.</div>';$("#modal").classList.add("open")};
+$("#modal").onclick=e=>{if(e.target===$("#modal"))closeModal()};
+
+fetch("shtora-seed/state.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(x=>{state.snapshots=Array.isArray(x?.snapshots)?x.snapshots:[];renderHome()}).catch(()=>renderHome());
+renderHome();
+</script>
+</body>
+</html>
