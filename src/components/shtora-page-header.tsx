@@ -8,6 +8,7 @@ export function ShtoraPageHeader({
   onBack,
   onClose,
   onSettings,
+  actions,
 }: {
   eyebrow?: string;
   title: string;
@@ -36,6 +37,8 @@ export function ShtoraPageHeader({
             <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted hover:text-fg" onClick={onSettings} aria-label="Настройки">
               <Settings className="size-[18px]" />
             </Button>
+          ) : actions ? (
+            actions
           ) : onClose ? (
             <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full text-muted hover:text-fg" onClick={onClose} aria-label="Закрыть">
               <X className="size-[18px]" />
