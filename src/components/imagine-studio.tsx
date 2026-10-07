@@ -614,11 +614,7 @@ export function ImagineStudio({
         ) : null}
       </section>
 
-      {results.length ? (
-        <div className="sr-only" aria-hidden="true" />
-      ) : null}
-
-      {open ? (      {open ? (
+      {open ? (
         <StudioViewer
           item={{ ...open, url: liveSrc[open.id] || open.url }}
           saving={saving === open.id}
