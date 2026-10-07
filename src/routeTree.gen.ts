@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RedesignRouteImport } from './routes/redesign'
 import { Route as DropboxOauthRouteImport } from './routes/dropbox-oauth'
 import { Route as ApiAutosaveRouteImport } from './routes/api/autosave'
 import { Route as ApiAutosaveConfigRouteImport } from './routes/api/autosave-config'
@@ -30,6 +31,11 @@ import { Route as ApiTokensRouteImport } from './routes/api/tokens'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedesignRoute = RedesignRouteImport.update({
+  id: '/redesign',
+  path: '/redesign',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DropboxOauthRoute = DropboxOauthRouteImport.update({
@@ -114,6 +120,7 @@ const ApiTokensRoute = ApiTokensRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/redesign': typeof RedesignRoute
   '/': typeof IndexRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
   '/api/autosave': typeof ApiAutosaveRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/api/tokens': typeof ApiTokensRoute
 }
 export interface FileRoutesByTo {
+  '/redesign': typeof RedesignRoute
   '/': typeof IndexRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
   '/api/autosave': typeof ApiAutosaveRoute
@@ -152,6 +160,7 @@ export interface FileRoutesByTo {
   '/api/tokens': typeof ApiTokensRoute
 }
 export interface FileRoutesById {
+  '/redesign': typeof RedesignRoute
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/redesign'
     | '/'
     | '/dropbox-oauth'
     | '/api/autosave'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/api/tokens'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/redesign'
     | '/'
     | '/dropbox-oauth'
     | '/api/autosave'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/api/tokens'
   id:
     | '__root__'
+    | '/redesign'
     | '/'
     | '/dropbox-oauth'
     | '/api/autosave'
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RedesignRoute: typeof RedesignRoute
   DropboxOauthRoute: typeof DropboxOauthRoute
   ApiAutosaveRoute: typeof ApiAutosaveRoute
   ApiAutosaveConfigRoute: typeof ApiAutosaveConfigRoute
@@ -253,6 +266,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/redesign': {
+      id: '/redesign'
+      path: '/redesign'
+      fullPath: '/redesign'
+      preLoaderRoute: typeof RedesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -377,6 +397,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RedesignRoute: RedesignRoute,
   DropboxOauthRoute: DropboxOauthRoute,
   ApiAutosaveRoute: ApiAutosaveRoute,
   ApiAutosaveConfigRoute: ApiAutosaveConfigRoute,
