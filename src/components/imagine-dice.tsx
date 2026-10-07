@@ -186,6 +186,8 @@ export function ImagineBar({
         <ShtoraMediaViewer
           eyebrow="Imagine · вариация"
           title={busy ? "Генерирую…" : result ? "Новая версия" : "Подготовка"}
+          backdropSrc={current || source}
+          meta={<span>{result ? "оригинал → новая версия" : "исходный кадр · готов к преобразованию"}</span>}
           onClose={closeSheet}
           actions={
             <>
