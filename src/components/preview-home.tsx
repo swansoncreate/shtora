@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MessageCircle, Search, X } from "lucide-react";
+import { MessageCircle, RefreshCw, Search, X } from "lucide-react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { HomeFeed } from "@/components/home-feed";
@@ -141,6 +141,7 @@ export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Prop
   const [draft, setDraft] = useState("");
   const [postView, setPostView] = useState<{ username: string; posts: IgPost[]; index: number } | null>(null);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const cards = useMemo(() => feedCards().map((card) => ({ ...card, liked: liked[card.id] ?? false })), [liked]);
   const profile = view ? profiles.find((item) => item.username === view.username) || profiles[0] : null;
@@ -235,6 +236,20 @@ export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Prop
         <Button type="button" variant="subtle" size="icon" className="relative size-12 shrink-0 rounded-lg" aria-label="Сообщения" onClick={() => onOpenChats(null)}>
           <MessageCircle className="size-5" />
         </Button>
+        <Button
+          type="button"
+          variant="subtle"
+          size="icon"
+          className="size-12 shrink-0 rounded-lg"
+          aria-label="Обновить ленту"
+          disabled={refreshing}
+          onClick={() => {
+            setRefreshing(true);
+            window.setTimeout(() => setRefreshing(false), 650);
+          }}
+        >
+          <RefreshCw className={refreshing ? "size-5 animate-spin" : "size-5"} />
+        </Button>
       </form>
 
       <FavoritesStrip
@@ -249,7 +264,7 @@ export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Prop
 
       <HomeFeed
         items={cards}
-        refreshing={false}
+        refreshing={refreshing}
         onRefresh={() => undefined}
         onOpenPost={(username, posts, index) => setPostView({ username, posts, index })}
         onOpenDropbox={() => undefined}
