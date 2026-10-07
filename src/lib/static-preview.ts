@@ -1,31 +1,36 @@
-import { applyStateSnapshots, loadShtoraState } from "@/lib/shtora-state";
-import { loadDaily, saveDaily, todayKey, type DailyPost } from "@/lib/feed/daily";
+import { applyStateSnapshots } from "@/lib/shtora-state";
 
 let inflight: Promise<void> | null = null;
 
-/**
- * GitHub Pages has no Shtora API/runtime. Bootstrap the real UI with the
- * repository's published seed so Instagram/profile/stories render normally;
- * server-backed actions remain intentionally unavailable.
- */
+type SeedState = {
+  snapshots?: Array<{
+    username: string;
+    profile?: {
+      posts?: Array<{ id: string; displayUrl?: string; caption?: string; timestamp?: string }>;
+    } | null;
+  }>;
+};
+
 export function bootstrapStaticPreview() {
   if (inflight) return inflight;
   inflight = (async () => {
-    const state = await loadShtoraState();
-    applyStateSnapshots(state.snapshots);
+    const base = import.meta.env.BASE_URL || "/";
+    const seedUrl = `${base.endsWith("/") ? base : `${base}/`}shtora-seed/state.json`;
+    const res = await fetch(seedUrl, { cache: "no-store" });
+    if (!res.ok) return;
+    const state = (await res.json()) as SeedState;
+    const snapshots = Array.isArray(state.snapshots) ? state.snapshots : [];
+    applyStateSnapshots(snapshots as Parameters<typeof applyStateSnapshots>[0]);
 
-    const current = loadDaily();
-    if (current.posts.length > 0) return;
-
-    const posts: DailyPost[] = state.snapshots
+    const posts = snapshots
       .flatMap((snap) =>
         (snap.profile?.posts ?? [])
           .filter((post) => Boolean(post.displayUrl))
           .map((post) => ({
             id: `seed-${snap.username}-${post.id}`,
-            username: snap.username,
-            imageUrl: post.displayUrl!,
-            caption: post.caption || "",
+            username: snap.username.toLowerCase(),
+            imageUrl: post.displayUrl as string,
+            caption: (post.caption || "").trim(),
             at: post.timestamp ? Date.parse(post.timestamp) || Date.now() : Date.now(),
             kind: "post" as const,
           })),
@@ -33,8 +38,13 @@ export function bootstrapStaticPreview() {
       .sort((a, b) => b.at - a.at)
       .slice(0, 72);
 
-    if (posts.length) {
-      saveDaily({ date: todayKey(), posts, quiet: {} });
+    try {
+      localStorage.setItem(
+        "shtora-feed-v7",
+        JSON.stringify({ date: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Moscow" }).format(new Date()), posts, quiet: {} }),
+      );
+    } catch {
+      /* localStorage unavailable */
     }
   })().finally(() => {
     inflight = null;
