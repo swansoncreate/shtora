@@ -1,133 +1,280 @@
-import { useState } from "react";
-import { ArrowLeft, Bell, Bookmark, Heart, Home, MessageCircle, MoreHorizontal, Search, Send, User } from "lucide-react";
+import { useMemo, useState } from "react";
+import { MessageCircle, Search, X } from "lucide-react";
+import { DropboxBrowser } from "@/components/dropbox-browser";
+import { ImagineStudio } from "@/components/imagine-studio";
+import { HomeFeed } from "@/components/home-feed";
+import { PostViewer } from "@/components/post-viewer";
+import { FavoritesStrip } from "@/components/favorites-strip";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  HighlightsRail,
+  PostsGrid,
+  ProfileHeader,
+  ProfileTabs,
+  StoriesGrid,
+} from "@/components/instagram/profile";
+import type { FeedCard } from "@/lib/feed/simulate";
+import type { IgHighlight, IgPost, IgProfile, IgStoryItem } from "@/lib/instagram/types";
+import type { ShtoraSettings } from "@/lib/shtora-settings";
 import { cn } from "@/lib/utils";
 
-type Screen = "home" | "search" | "inbox" | "profile";
+type Props = {
+  settings: ShtoraSettings;
+  app: "instagram" | "dropbox" | "imagine";
+  onOpenChats: (name?: string | null) => void;
+  onNeedSettings: () => void;
+};
 
-export function PreviewHome() {
-  const [screen, setScreen] = useState<Screen>("home");
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+type ProfileView = { username: string; tab: "posts" | "stories" };
+
+const img1 =
+  "https://scontent-ham3-1.cdninstagram.com/v/t51.82787-15/791996244_17911993050294263_1123133377771000635_n.jpg?stp=dst-jpg_e35_p1080x1080_sh2.08_tt6&_nc_ht=scontent-ham3-1.cdninstagram.com&_nc_cat=111&_nc_oc=Q6cZ2gHcW6KRLenJOzts1Ui57cmF5-gU4n6l1_USUw0wsu1rNAnlvofjmYtZnDWCiWfenHc&_nc_ohc=JE-qWiJWY1QQ7kNvwG3_a4t&_nc_gid=fMpl9Egbw_x8_7bzhB-2sA&edm=AOQ1c0wBAAAA&ccb=7-5&ig_cache_key=Mzk3NjYxMTYzMzUyNjA4NTQ5MA%3D%3D.3-ccb7-5&oh=00_AQLyUjFTZPNVvcJHu1qPTQbJ3UQ1w3JpDWfehIXLEFEsVg&oe=6A9F2294&_nc_sid=8b3546";
+const img2 =
+  "https://instagram.fwaw8-2.fna.fbcdn.net/v/t51.71878-15/503026628_1383910889496911_6891064760215577954_n.jpg?stp=dst-jpg_e15_tt6&_nc_ht=instagram.fwaw8-2.fna.fbcdn.net&_nc_cat=111&_nc_oc=Q6cZ2gHzg-o0a4pmJtAUXqtho2YQTt7Mi7izFclIkQ-mo1zOZ11YQ1yBr4HjC9a9ms_q__Q&_nc_ohc=2u1MVVh0IzEQ7kNvwFbRJjm&_nc_gid=DfcH8QHOnB5F3Tj4OPMDeA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AQJLNWL57eQrVQDSytySAwG9FzrYa0cDF8VVMeyViMSNfQ&oe=6A9F2EB6&_nc_sid=8b3546";
+const img3 =
+  "https://instagram.ffec19-1.fna.fbcdn.net/v/t51.82787-15/651593557_18067981268270278_4368376125826548432_n.webp?stp=dst-jpg_e15_tt6&_nc_ht=instagram.ffec19-1.fna.fbcdn.net&_nc_cat=110&_nc_oc=Q6cZ2gEjkWX04PgW32b2zlVzJuQUYifhtEqvdUMuXVKyNOC4Q67z85XVD2GiKapDHo9xgk4&_nc_ohc=-0k0nmJIDbwQ7kNvwF5zYke&_nc_gid=jqdmEWyFxsMNkx4J5a4ggg&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AQJZdM8enPxvYBMBVfUNBgkTtMBJscDEoSaxv2f8Tc54fQ&oe=6A9F5114&_nc_sid=8b3546";
+
+function post(id: string, url: string, caption: string, timestamp: string, type: IgPost["type"] = "image"): IgPost {
+  return {
+    id,
+    type,
+    caption,
+    displayUrl: url,
+    timestamp,
+    likesCount: 127,
+    commentsCount: 4,
+    slides: [{ id: id + "-1", type: type === "video" ? "video" : "image", displayUrl: url }],
+  };
+}
+
+const profiles: IgProfile[] = [
+  {
+    username: "ellissawe",
+    fullName: "Lisa",
+    biography: "Тихо смотрю на жизнь и сохраняю кадры.",
+    followersCount: 48,
+    followsCount: 21,
+    postsCount: 6,
+    profilePicUrl: img1,
+    verified: false,
+    private: false,
+    posts: [
+      post("ella-1", img1, "Тренировка на спину 🪄", "2026-09-01T13:31:50.000Z", "sidecar"),
+      post("ella-2", img2, "", "2026-08-31T09:52:04.000Z", "video"),
+      post("ella-3", img3, "утро", "2026-08-18T10:12:24.000Z"),
+    ],
+  },
+  {
+    username: "minsiyaaa",
+    fullName: "𝓐𝓷𝓪𝓼𝓽𝓪𝓼𝓲𝓪🧿",
+    biography: "Три месяца спустя всё ещё улыбаюсь.",
+    followersCount: 684,
+    followsCount: 339,
+    postsCount: 22,
+    profilePicUrl: img2,
+    verified: true,
+    private: false,
+    posts: [
+      post("mina-1", img2, "🤍", "2026-08-19T19:58:57.000Z", "video"),
+      post("mina-2", img1, "Та самая история.", "2026-08-10T11:21:00.000Z", "sidecar"),
+      post("mina-3", img3, "Welcome back", "2026-07-30T17:10:00.000Z"),
+    ],
+  },
+  {
+    username: "sheptnowa",
+    fullName: "An Sheptunowa",
+    biography: "rose / black / quiet.",
+    followersCount: 219,
+    followsCount: 102,
+    postsCount: 3,
+    profilePicUrl: img3,
+    verified: false,
+    private: false,
+    posts: [
+      post("shep-1", img3, "🌹", "2022-05-18T19:51:32.000Z", "sidecar"),
+      post("shep-2", img2, "", "2022-05-08T22:34:37.000Z", "sidecar"),
+      post("shep-3", img1, "🖤", "2022-02-14T15:31:00.000Z", "sidecar"),
+    ],
+  },
+];
+
+function storySet(profile: IgProfile): IgStoryItem[] {
+  return profile.posts.map((p, i) => ({
+    id: profile.username + "-story-" + i,
+    mediaType: p.type === "video" ? "video" : "image",
+    imageUrl: p.displayUrl,
+    videoUrl: p.type === "video" ? p.displayUrl : undefined,
+    takenAt: Date.parse(p.timestamp || "") || Date.now(),
+  }));
+}
+
+function highlights(profile: IgProfile): IgHighlight[] {
+  const stories = storySet(profile);
+  return [
+    { id: profile.username + "-hl-1", title: "жизнь", coverImageUrl: stories[0]?.imageUrl, mediaCount: stories.length, items: stories },
+    { id: profile.username + "-hl-2", title: "ещё", coverImageUrl: stories[1]?.imageUrl, mediaCount: Math.max(1, stories.length - 1), items: stories.slice(1) },
+  ];
+}
+
+function feedCards(): FeedCard[] {
+  return profiles
+    .flatMap((profile) =>
+      profile.posts.map((p, i) => ({
+        id: profile.username + ":" + p.id,
+        username: profile.username,
+        fullName: profile.fullName,
+        avatar: profile.profilePicUrl,
+        verified: profile.verified,
+        caption: p.caption,
+        at: Date.parse(p.timestamp || "") || Date.now() - i * 3600_000,
+        post: p,
+        comments: p.commentsCount || 0,
+      })),
+    )
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 6);
+}
+
+export function PreviewHome({ settings, app, onOpenChats, onNeedSettings }: Props) {
+  const [view, setView] = useState<ProfileView | null>(null);
+  const [draft, setDraft] = useState("");
+  const [postView, setPostView] = useState<{ username: string; posts: IgPost[]; index: number } | null>(null);
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+
+  const cards = useMemo(() => feedCards().map((card) => ({ ...card, liked: liked[card.id] ?? false })), [liked]);
+  const profile = view ? profiles.find((item) => item.username === view.username) || profiles[0] : null;
+
+  if (app === "dropbox") {
+    return <DropboxBrowser settings={{ ...settings, dropboxToken: "" }} path="/Штора" onPath={() => undefined} onNeedToken={onNeedSettings} />;
+  }
+
+  if (app === "imagine") {
+    return <ImagineStudio settings={{ ...settings, dropboxToken: "" }} onNeedToken={onNeedSettings} />;
+  }
+
+  if (view && profile) {
+    const stories = storySet(profile);
+    const hls = highlights(profile);
+    return (
+      <section>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="size-10 rounded-lg" aria-label="Назад" onClick={() => setView(null)}>
+            <span aria-hidden>←</span>
+          </Button>
+          <p className="truncate text-sm text-muted">Профиль · @{profile.username}</p>
+        </div>
+        <div className="mt-4">
+          <ProfileHeader
+            profile={profile}
+            storyCount={stories.length}
+            unseenStories={0}
+            folder={settings.accountFolders[profile.username] || `/Штора/${profile.username}`}
+            saving={false}
+            refreshing={false}
+            onSave={() => undefined}
+            onRefresh={() => undefined}
+            onOpenPhoto={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
+            onOpenStories={() => setPostView({ username: profile.username, posts: profile.posts, index: 0 })}
+            onMessage={() => onOpenChats(profile.username)}
+            favorite={settings.favorites.includes(profile.username)}
+            chatUnread={0}
+            onToggleFavorite={() => undefined}
+          />
+          <HighlightsRail highlights={hls} onOpen={(hl) => setPostView({ username: profile.username, posts: hl.items as unknown as IgPost[], index: 0 })} />
+          <ProfileTabs tab={view.tab} storyCount={stories.length} onTab={(tab) => setView({ ...view, tab })} />
+          {view.tab === "posts" ? (
+            <PostsGrid posts={profile.posts} username={profile.username} onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })} onNeedToken={onNeedSettings} />
+          ) : (
+            <StoriesGrid stories={stories} username={profile.username} onOpen={(index) => setPostView({ username: profile.username, posts: profile.posts, index })} onNeedToken={onNeedSettings} />
+          )}
+        </div>
+        {postView ? (
+          <PostViewer
+            posts={postView.posts}
+            index={Math.min(postView.index, Math.max(0, postView.posts.length - 1))}
+            username={postView.username}
+            onClose={() => setPostView(null)}
+            onIndex={(index) => setPostView({ ...postView, index })}
+            onNeedToken={onNeedSettings}
+          />
+        ) : null}
+      </section>
+    );
+  }
 
   return (
-    <main className="min-h-[calc(100dvh-8rem)] bg-bg text-fg">
-      <div className="mx-auto max-w-md overflow-hidden rounded-[2rem] border border-border/80 bg-bg shadow-[var(--shadow-border)]">
-        <header className="flex h-14 items-center justify-between border-b border-border/70 px-4">
-          {screen === "home" ? (
-            <span className="font-display text-2xl tracking-tight">Штора</span>
-          ) : (
-            <button type="button" onClick={() => setScreen("home")} className="rounded-full p-2" aria-label="Назад">
-              <ArrowLeft className="size-5" />
-            </button>
-          )}
-          <span className="text-xs uppercase tracking-[0.18em] text-muted">preview</span>
-          <button type="button" onClick={() => setScreen("inbox")} className="rounded-full p-2" aria-label="Сообщения">
-            <MessageCircle className="size-5" />
-          </button>
-        </header>
+    <section>
+      <form
+        action="/"
+        method="get"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const clean = draft.trim().replace(/^@/, "").toLowerCase();
+          const found = profiles.find((item) => item.username === clean);
+          if (found) setView({ username: found.username, tab: "posts" });
+        }}
+        className="flex gap-2"
+      >
+        <div className="relative min-w-0 flex-1">
+          <Input
+            name="u"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="поиск по нику"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            aria-label="Ник Instagram"
+            className="pr-12"
+          />
+          <Button type="submit" variant="ghost" size="icon" className="absolute top-1 right-1 size-10 rounded-md text-muted" aria-label="Искать">
+            <Search className="size-5" />
+          </Button>
+        </div>
+        <Button type="button" variant="subtle" size="icon" className="relative size-12 shrink-0 rounded-lg" aria-label="Сообщения" onClick={() => onOpenChats(null)}>
+          <MessageCircle className="size-5" />
+        </Button>
+      </form>
 
-        {screen === "home" ? (
-          <>
-            <div className="flex gap-3 overflow-x-auto px-4 py-4">
-              {["you", "lena", "mira", "nika", "anna"].map((name, i) => (
-                <button key={name} type="button" onClick={() => setScreen("profile")} className="shrink-0 text-center">
-                  <div className={cn("grid size-16 place-items-center rounded-full border-2", i === 0 ? "border-fg" : "border-border")}>
-                    <span className="text-sm font-medium">{name[0].toUpperCase()}</span>
-                  </div>
-                  <span className="mt-1 block max-w-16 truncate text-[11px] text-muted">{name}</span>
-                </button>
-              ))}
-            </div>
+      <FavoritesStrip
+        names={settings.favorites}
+        active=""
+        tick={0}
+        onPick={(name) => {
+          const found = profiles.find((item) => item.username === name);
+          if (found) setView({ username: found.username, tab: "posts" });
+        }}
+      />
 
-            <article className="border-y border-border/70">
-              <div className="flex items-center justify-between px-4 py-3">
-                <button type="button" onClick={() => setScreen("profile")} className="flex items-center gap-2">
-                  <span className="grid size-9 place-items-center rounded-full bg-surface font-medium">L</span>
-                  <span className="text-sm font-medium">lena</span>
-                </button>
-                <MoreHorizontal className="size-5 text-muted" />
-              </div>
+      <HomeFeed
+        items={cards}
+        refreshing={false}
+        onRefresh={() => undefined}
+        onOpenPost={(username, posts, index) => setPostView({ username, posts, index })}
+        onOpenDropbox={() => undefined}
+        onOpenProfile={(username) => setView({ username, tab: "posts" })}
+        onLike={(card) => setLiked((prev) => ({ ...prev, [card.id]: !(prev[card.id] ?? false) }))}
+        onComments={() => undefined}
+      />
 
-              <button type="button" onClick={() => setScreen("profile")} className="block aspect-[4/5] w-full bg-surface text-left">
-                <div className="flex h-full flex-col justify-end bg-[radial-gradient(circle_at_65%_25%,hsl(var(--surface)),transparent_38%),linear-gradient(145deg,hsl(var(--elevated)),hsl(var(--surface)))] p-6">
-                  <span className="text-xs uppercase tracking-[0.2em] text-muted">moment 07:42</span>
-                  <span className="mt-2 text-3xl font-display">morning light</span>
-                  <span className="mt-1 max-w-[18rem] text-sm text-muted">casual frame · no filter · apartment</span>
-                </div>
-              </button>
+      {postView ? (
+        <PostViewer
+          posts={postView.posts}
+          index={postView.index}
+          username={postView.username}
+          onClose={() => setPostView(null)}
+          onIndex={(index) => setPostView({ ...postView, index })}
+          onNeedToken={onNeedSettings}
+        />
+      ) : null}
 
-              <div className="flex items-center gap-1 px-3 py-2">
-                <button type="button" onClick={() => setLiked(!liked)} className="rounded-full p-2" aria-label="Нравится">
-                  <Heart className={cn("size-5", liked && "fill-current")} />
-                </button>
-                <button type="button" onClick={() => setScreen("inbox")} className="rounded-full p-2" aria-label="Комментарий">
-                  <MessageCircle className="size-5" />
-                </button>
-                <button type="button" className="rounded-full p-2" aria-label="Поделиться">
-                  <Send className="size-5" />
-                </button>
-                <button type="button" onClick={() => setSaved(!saved)} className="ml-auto rounded-full p-2" aria-label="Сохранить">
-                  <Bookmark className={cn("size-5", saved && "fill-current")} />
-                </button>
-              </div>
-              <p className="px-4 pb-4 text-sm"><b>{liked ? "128" : "127"}</b> likes · <span className="text-muted">today</span></p>
-            </article>
-          </>
-        ) : screen === "profile" ? (
-          <section className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="grid size-20 place-items-center rounded-full bg-surface text-2xl font-display">L</div>
-              <div className="flex-1">
-                <p className="text-lg font-medium">lena</p>
-                <p className="text-sm text-muted">ordinary life, captured quietly</p>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-3 gap-1">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <button key={n} type="button" onClick={() => setScreen("home")} className="aspect-square bg-surface p-3 text-left">
-                  <span className="text-xs text-muted">frame {n}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : screen === "search" ? (
-          <section className="p-5">
-            <div className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2.5">
-              <Search className="size-4 text-muted" />
-              <span className="text-sm text-muted">Search</span>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              {["lena", "mira", "nika", "anna"].map((name) => (
-                <button key={name} type="button" onClick={() => setScreen("profile")} className="rounded-2xl border border-border p-4 text-left">
-                  <span className="grid size-10 place-items-center rounded-full bg-surface font-medium">{name[0].toUpperCase()}</span>
-                  <span className="mt-3 block text-sm font-medium">{name}</span>
-                  <span className="text-xs text-muted">profile</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : (
-          <section className="p-5">
-            <h2 className="text-2xl font-display">Messages</h2>
-            <div className="mt-5 space-y-2">
-              {["lena", "mira", "nika"].map((name) => (
-                <button key={name} type="button" onClick={() => setScreen("profile")} className="flex w-full items-center gap-3 rounded-2xl p-3 text-left hover:bg-surface">
-                  <span className="grid size-11 place-items-center rounded-full bg-surface font-medium">{name[0].toUpperCase()}</span>
-                  <span className="flex-1"><b className="block text-sm">{name}</b><span className="text-xs text-muted">Tap to open chat preview</span></span>
-                  <Bell className="size-4 text-muted" />
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <nav className="sticky bottom-0 flex h-16 items-center justify-around border-t border-border/70 bg-bg/95 backdrop-blur">
-          <button type="button" onClick={() => setScreen("home")} className="rounded-full p-3" aria-label="Главная"><Home className="size-5" /></button>
-          <button type="button" onClick={() => setScreen("search")} className="rounded-full p-3" aria-label="Поиск"><Search className="size-5" /></button>
-          <button type="button" onClick={() => setScreen("inbox")} className="rounded-full p-3" aria-label="Сообщения"><MessageCircle className="size-5" /></button>
-          <button type="button" onClick={() => setScreen("profile")} className="rounded-full p-3" aria-label="Профиль"><User className="size-5" /></button>
-        </nav>
+      <div className="mt-6 flex items-center justify-between rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
+        <p className="text-sm text-muted">UI preview · данные локальные · backend не нужен</p>
+        <Button type="button" variant="ghost" size="icon" className="size-10 rounded-lg" aria-label="Закрыть" onClick={() => setView(null)}>
+          <X className="size-4" />
+        </Button>
       </div>
-    </main>
+    </section>
   );
 }
