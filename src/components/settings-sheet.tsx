@@ -173,10 +173,10 @@ export function SettingsSheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/78 backdrop-blur-[2px]" />
         <Dialog.Content
-          className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(92vw,30rem)] flex-col overflow-hidden rounded-l-[20px] border-l border-border bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.38)] outline-none"
+          className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(92vw,30rem)] flex-col overflow-hidden rounded-l-[28px] border-l border-border bg-surface shadow-[-24px_0_80px_rgba(0,0,0,0.48)] outline-none"
           aria-describedby="settings-desc"
         >
-          <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 pt-7 pb-5">
+          <div className="flex items-start justify-between gap-4 border-b border-border/50 px-6 pt-7 pb-5">
             <div>
               <Dialog.Title className="font-display text-3xl font-medium tracking-tight text-fg">Настройки</Dialog.Title>
               <Dialog.Description id="settings-desc" className="mt-2 max-w-xs text-xs leading-relaxed text-muted">
@@ -191,7 +191,7 @@ export function SettingsSheet({
           </div>
 
           {picker ? null : (
-            <div className="grid shrink-0 grid-cols-4 gap-1 px-6 py-4">
+            <div className="grid shrink-0 grid-cols-4 gap-2 px-6 py-4">
               <div className="col-span-4 grid grid-cols-4 border-b border-border/60 pb-1">
                 {(
                   [
