@@ -625,6 +625,8 @@ export function DropboxViewer({
     <ShtoraMediaViewer
       eyebrow={`Dropbox · ${chatUsername ? `@${chatUsername}` : "архив"}`}
       title={item.name}
+      backdropSrc={objectUrl}
+      meta={<span>/{item.path.split("/").slice(0, -1).join("/")} · {item.video ? "видео" : "фото"} · личный архив</span>}
       onClose={onClose}
       actions={
         <>
