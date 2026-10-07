@@ -18,15 +18,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build real app
+        run: npm run build:dev
+        env:
+          SHTORA_PAGES_PREVIEW: "1"
+          VITE_STATIC_PREVIEW: "1"
+
       - name: Prepare Pages artifact
         run: |
           set -euo pipefail
           rm -rf site
           mkdir -p site
-          cp -R preview/. site/
+          test -d ".vercel/output/static"
+          cp -R .vercel/output/static/. site/
+          if [ -f "site/_shell.html" ]; then
+            cp "site/_shell.html" "site/index.html"
+          fi
+          cp "site/index.html" "site/404.html"
           touch site/.nojekyll
-          echo "Pages preview artifact:"
-          find site -maxdepth 3 -type f | sort | head -120
+          echo "Pages artifact:"
+          find site -maxdepth 2 -type f | sort | head -100
 
       - name: Upload preview artifact
         uses: actions/upload-pages-artifact@v4
