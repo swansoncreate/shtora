@@ -113,8 +113,8 @@ test("chat VPS routing is locked to published Grok and cannot invoke Imagine dir
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../src/lib/chat/functions.ts", import.meta.url), "utf8");
 
-  assert.match(source, /if \(runningOnVps\(\)\) \{[\\s\\S]*callGrokApp<ChatOut>\("reply"/);
-  assert.match(source, /if \(runningOnVps\(\)\) \{[\\s\\S]*callGrokApp<ChatOut>\("ping"/);
+  assert.match(source, /if \(runningOnVps\(\)\) \{[\s\S]*callGrokApp<ChatOut>\("reply"/);
+  assert.match(source, /if \(runningOnVps\(\)\) \{[\s\S]*callGrokApp<ChatOut>\("ping"/);
   assert.match(source, /const \{ replyDm \} = await import\("@\/lib\/dm\/chat"\)/);
   assert.match(source, /const \{ pingDm \} = await import\("@\/lib\/dm\/chat"\)/);
   assert.match(source, /chatApiKey: undefined/);
