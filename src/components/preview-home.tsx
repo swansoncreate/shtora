@@ -236,7 +236,10 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         <ShtoraPageHeader
           eyebrow="Профиль"
           title={`@${profile.username}`}
-          onBack={() => setView(null)}
+          onBack={() => {
+            setView(null);
+            void navigate({ to: "/", search: { preview: "1" } });
+          }}
           onSettings={onNeedSettings}
         />
         <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 sm:pt-8">
@@ -296,7 +299,7 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
 
   return (
     <section className="-mx-4 sm:-mx-6">
-      <ShtoraPageHeader eyebrow="Лента" title="Штора" onSettings={onNeedSettings} />
+      <ShtoraPageHeader eyebrow="Главное" title="Штора" onSettings={onNeedSettings} />
       <div className="mx-auto max-w-4xl px-4 pt-4 sm:px-6 sm:pt-5">
         <FavoritesStrip
           names={profiles.map((item) => item.username)}
@@ -348,7 +351,7 @@ function PreviewAppPage({
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg pb-24" role="dialog" aria-modal="true" aria-label={title}>
-      <ShtoraPageHeader eyebrow={eyebrow} title={title} onBack={onBack} />
+      <ShtoraPageHeader eyebrow={eyebrow} title={title} onBack={onBack} onSettings={undefined} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-12 pt-6 sm:px-6 sm:pt-8">{children}</main>
     </div>
   );
