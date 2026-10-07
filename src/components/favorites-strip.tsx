@@ -11,19 +11,21 @@ export function FavoritesStrip({
   onPick,
   tick,
   onOpenStory,
+  previewPictures,
 }: {
   names: string[];
   active?: string;
   onPick: (name: string) => void;
   tick?: number;
   onOpenStory?: (name: string, items: IgStoryItem[]) => void;
+  previewPictures?: Record<string, string>;
 }) {
   void tick;
   if (!names.length) return null;
   const rows = names
     .map((name) => {
       const count = unseenCount(name);
-      const pic = getCachedProfile(name)?.data.profilePicUrl;
+      const pic = previewPictures?.[name] || getCachedProfile(name)?.data.profilePicUrl;
       const selected = active === name;
       const stories = liveStories(getCachedStories(name)?.data.stories);
       const freshCount = unseenStoryCount(name);
