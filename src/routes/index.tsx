@@ -7,6 +7,7 @@ import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats"
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { PreviewHome } from "@/components/preview-home";
+import { WelcomeScreen } from "@/components/welcome-screen";
 import { SearchSheet } from "@/components/search-sheet";
 import { bootstrapStaticPreview } from "@/lib/static-preview";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ function Home() {
   useServerState(!clientOnlyPreview && ready && hydrated);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(showPreview);
   const [offline, setOffline] = useState(false);
   const [apiOk, setApiOk] = useState<boolean | null>(null);
   useEffect(() => {
@@ -130,6 +132,10 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    if (!showPreview || typeof window === "undefined") return;
+    if (window.localStorage.getItem("shtora-entry-seen") === "1") setEntryOpen(false);
+  }, [showPreview]);
+  useEffect(() => {
     if (!settings.dropboxRefreshToken) return;
     void liveDropboxToken(settings.dropboxToken).catch(() => undefined);
   }, [settings.dropboxRefreshToken, settings.dropboxToken]);
@@ -159,7 +165,7 @@ function Home() {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-28 pt-5 sm:px-6">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-28 pt-3 sm:px-6">
         {showPreview ? <PreviewHome settings={settings} app={app} username={username} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
         {!showPreview && (offline || apiOk === false) ? (
           <div
@@ -293,10 +299,10 @@ function BottomNav({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-bg/92 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
       aria-label="Основная навигация"
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-5 px-4 sm:px-6">
+      <div className="pointer-events-auto mx-auto grid max-w-xl grid-cols-5 rounded-[20px] border border-border bg-surface/90 px-2 py-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
         <button type="button" className={itemClass(app === "instagram")} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
           <House className={cn("size-6", app === "instagram" && "fill-current")} />
         </button>
