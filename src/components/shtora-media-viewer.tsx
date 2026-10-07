@@ -47,8 +47,7 @@ export function ShtoraMediaViewer({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(169,104,104,0.12),transparent_42%),linear-gradient(180deg,rgba(0,0,0,0.4),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.55))]" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:38px_38px]" />
 
-      {!immersive && hudOpen ? (
-        <header className="relative z-30 shrink-0 pt-[max(0.45rem,env(safe-area-inset-top))]">
+      <header className={`relative z-30 shrink-0 pt-[max(0.45rem,env(safe-area-inset-top))] ${immersive ? "opacity-0 transition-opacity hover:opacity-100" : ""}`}>
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-3 py-2.5 sm:px-6">
             <div className="min-w-0">
               <p className="text-[9px] font-medium uppercase tracking-[0.3em] text-accent/80">СЦЕНА</p>
@@ -80,8 +79,7 @@ export function ShtoraMediaViewer({
               </Button>
             </div>
           </div>
-        </header>
-      ) : null}
+      </header>
 
       <main
         className={`relative z-10 min-h-0 flex-1 overflow-hidden px-2 sm:px-6 ${immersive ? "py-0" : "py-2 sm:py-3"}`}
@@ -103,7 +101,10 @@ export function ShtoraMediaViewer({
 
           {!immersive && hudOpen && actions ? (
             <div className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2 sm:bottom-5">
-              <div className="flex max-w-[92vw] items-center gap-1 overflow-x-auto rounded-full border border-border/40 bg-[#0c0a09]/78 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.48)] backdrop-blur-2xl [&_button]:rounded-full">
+              <div
+                className="flex max-w-[92vw] items-center gap-1 overflow-x-auto rounded-full border border-border/40 bg-[#0c0a09]/78 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,0.48)] backdrop-blur-2xl [&_button]:rounded-full"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {actions}
               </div>
             </div>
