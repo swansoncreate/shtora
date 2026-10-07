@@ -141,6 +141,14 @@ function Home() {
     void liveDropboxToken(settings.dropboxToken).catch(() => undefined);
   }, [settings.dropboxRefreshToken, settings.dropboxToken]);
 
+  useEffect(() => {
+    if (app !== "instagram") {
+      setSearchOpen(false);
+      setChatsOpen(false);
+      setChatUser(null);
+    }
+  }, [app]);
+
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
   return (
@@ -213,6 +221,7 @@ function Home() {
         <ChatsSheet
           open={chatsOpen}
           username={chatUser}
+          previewMode={showPreview}
           onClose={() => {
             setChatsOpen(false);
             setChatUser(null);
@@ -301,7 +310,7 @@ function BottomNav({
       aria-label="Основная навигация"
     >
       <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 rounded-[24px] border border-border/70 bg-surface/72 px-3 py-2.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
-        <button type="button" className={itemClass(app === "instagram")} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
+        <button type="button" className={itemClass(app === "instagram" && !searchOpen && !chatsOpen)} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
           <House className={cn("size-6", app === "instagram" && "fill-current")} />
         </button>
         <button type="button" className={itemClass(searchOpen)} aria-label="Поиск" aria-current={searchOpen ? "page" : undefined} onClick={onSearch}>
