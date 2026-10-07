@@ -83,14 +83,69 @@ export function useChatUnread() {
   return n;
 }
 
+const PREVIEW_AVATARS = {
+  ellissawe: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80",
+  sofia: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=240&q=80",
+  mira: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80",
+};
+
+const PREVIEW_THREADS: ChatThread[] = [
+  {
+    username: "ellissawe",
+    fullName: "Lisa",
+    avatar: PREVIEW_AVATARS.ellissawe,
+    updatedAt: Date.now() - 4 * 60_000,
+    unread: 2,
+    warmth: 72,
+    mood: "тихо и тепло",
+    messages: [
+      { id: "preview-chat-1", role: "assistant", text: "Ты сегодня совсем пропала.", at: Date.now() - 12 * 60_000, kind: "text" },
+      { id: "preview-chat-2", role: "user", text: "Я здесь. Просто разбираю архив.", at: Date.now() - 9 * 60_000, kind: "text" },
+      { id: "preview-chat-3", role: "assistant", text: "Покажешь потом самый красивый кадр?", at: Date.now() - 6 * 60_000, kind: "text" },
+      { id: "preview-chat-4", role: "user", text: "Может быть 🤍", at: Date.now() - 4 * 60_000, kind: "text", heartByUser: true },
+    ],
+  },
+  {
+    username: "sofia",
+    fullName: "Sofia",
+    avatar: PREVIEW_AVATARS.sofia,
+    updatedAt: Date.now() - 48 * 60_000,
+    unread: 0,
+    warmth: 51,
+    mood: "вечерний свет",
+    messages: [
+      { id: "preview-chat-5", role: "assistant", text: "Ты уже посмотрела ту фотографию?", at: Date.now() - 55 * 60_000, kind: "text" },
+      { id: "preview-chat-6", role: "user", text: "Да. Оставила её в Избранном.", at: Date.now() - 48 * 60_000, kind: "text" },
+    ],
+  },
+  {
+    username: "mira",
+    fullName: "Mira",
+    avatar: PREVIEW_AVATARS.mira,
+    updatedAt: Date.now() - 3 * 60 * 60_000,
+    unread: 1,
+    warmth: 63,
+    mood: "архивный день",
+    messages: [
+      { id: "preview-chat-7", role: "assistant", text: "Случайный кадр оказался лучшим.", at: Date.now() - 3 * 60 * 60_000, kind: "text" },
+    ],
+  },
+];
+
+function previewThread(username: string) {
+  return PREVIEW_THREADS.find((item) => item.username === username) || PREVIEW_THREADS[0];
+}
+
 export function ChatsSheet({
   open,
   username,
   onClose,
+  previewMode = false,
 }: {
   open: boolean;
   username?: string | null;
   onClose: () => void;
+  previewMode?: boolean;
 }) {
   const [threadUser, setThreadUser] = useState<string | null>(null);
 
@@ -105,15 +160,15 @@ export function ChatsSheet({
   return (
     <div className="fixed inset-0 z-[55] flex min-h-dvh flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
       {threadUser ? (
-        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} />
+        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} previewMode={previewMode} />
       ) : (
-        <InboxView onOpen={setThreadUser} onClose={onClose} />
+        <InboxView onOpen={setThreadUser} onClose={onClose} previewMode={previewMode} />
       )}
     </div>
   );
 }
 
-function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; onClose: () => void }) {
+function InboxView({ onOpen, onClose, previewMode }: { onOpen: (username: string) => void; onClose: () => void; previewMode: boolean }) {
   const [threads, setThreads] = useState<ChatThread[]>(listThreads());
   useUnseenTick();
   useEffect(() => {
@@ -122,16 +177,18 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
     return subscribeChats(sync);
   }, []);
 
+  const visibleThreads = previewMode && threads.length === 0 ? PREVIEW_THREADS : threads;
+
   return (
     <>
       <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {threads.length === 0 ? (
+        {visibleThreads.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-muted">
             На профиле нажми «Написать» — переписка сохранится здесь.
           </p>
         ) : (
-          threads.map((thread) => {
+          visibleThreads.map((thread) => {
             const last = thread.messages[thread.messages.length - 1];
             return (
               <div key={thread.username} className="flex items-center gap-1 border-b border-border/45 pr-2 transition-colors hover:bg-elevated/45">
@@ -186,12 +243,14 @@ function ThreadView({
   username,
   onBack,
   onClose,
+  previewMode = false,
 }: {
   username: string;
   onBack: () => void;
   onClose: () => void;
+  previewMode?: boolean;
 }) {
-  const [thread, setThread] = useState(() => getThread(username));
+  const [thread, setThread] = useState(() => previewMode ? previewThread(username) : getThread(username));
   const [draft, setDraft] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
   const [openPhoto, setOpenPhoto] = useState<string | null>(null);
@@ -200,6 +259,7 @@ function ThreadView({
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (previewMode) return;
     let cancelled = false;
     const profile = getCachedProfile(username)?.data;
     void (async () => {
@@ -236,17 +296,19 @@ function ThreadView({
     return () => {
       cancelled = true;
     };
-  }, [username]);
+  }, [username, previewMode]);
 
   useEffect(() => {
+    if (previewMode) return;
     return subscribeChats(() => setThread(getThread(username)));
   }, [username]);
 
   useEffect(() => {
+    if (previewMode) return;
     const sync = () => setTyping(isChatTyping(username));
     sync();
     return subscribeTyping(sync);
-  }, [username]);
+  }, [username, previewMode]);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
@@ -262,10 +324,40 @@ function ThreadView({
     const text = draft.trim();
     if (!text) return;
     setDraft("");
+    if (previewMode) {
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                { id: `preview-${Date.now()}`, role: "user", text, kind: "text", at: Date.now() },
+              ],
+              updatedAt: Date.now(),
+            }
+          : prev,
+      );
+      return;
+    }
     await appendMessage(username, { role: "user", text, kind: "text" });
   }
 
   async function sendHeart() {
+    if (previewMode) {
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                { id: `preview-heart-${Date.now()}`, role: "user", text: "", kind: "heart", at: Date.now(), heartByUser: true },
+              ],
+              updatedAt: Date.now(),
+            }
+          : prev,
+      );
+      return;
+    }
     await appendMessage(username, { role: "user", text: "", kind: "heart", heartByUser: true });
     await bumpWarmth(username, 1);
   }
