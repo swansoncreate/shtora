@@ -173,7 +173,7 @@ export function SettingsSheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/70" />
         <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[min(92dvh,44rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-border)] outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-[min(92vw,30rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+          className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(92vw,30rem)] flex-col overflow-hidden rounded-l-2xl bg-surface shadow-[-8px_0_32px_rgba(0,0,0,0.28),var(--shadow-border)] outline-none"
           aria-describedby="settings-desc"
         >
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-3">
