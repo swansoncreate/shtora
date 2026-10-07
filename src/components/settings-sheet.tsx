@@ -171,28 +171,28 @@ export function SettingsSheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/70" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/78 backdrop-blur-[2px]" />
         <Dialog.Content
-          className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(92vw,30rem)] flex-col overflow-hidden rounded-l-2xl bg-surface shadow-[-8px_0_32px_rgba(0,0,0,0.28),var(--shadow-border)] outline-none"
+          className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[min(92vw,30rem)] flex-col overflow-hidden rounded-l-[20px] border-l border-border bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.38)] outline-none"
           aria-describedby="settings-desc"
         >
-          <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-3">
+          <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 pt-7 pb-5">
             <div>
-              <Dialog.Title className="font-display text-2xl font-medium tracking-tight text-fg">Настройки</Dialog.Title>
-              <Dialog.Description id="settings-desc" className="mt-1 text-sm text-muted">
+              <Dialog.Title className="font-display text-3xl font-medium tracking-tight text-fg">Настройки</Dialog.Title>
+              <Dialog.Description id="settings-desc" className="mt-2 max-w-xs text-xs leading-relaxed text-muted">
                 Живут на сервере — очистка Chrome их не сотрёт.
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="size-10 shrink-0 rounded-md" aria-label="Закрыть">
+              <Button variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label="Закрыть">
                 <X className="size-5" />
               </Button>
             </Dialog.Close>
           </div>
 
           {picker ? null : (
-            <div className="grid shrink-0 grid-cols-4 gap-1 px-6 pb-3">
-              <div className="col-span-4 grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">
+            <div className="grid shrink-0 grid-cols-4 gap-1 px-6 py-4">
+              <div className="col-span-4 grid grid-cols-4 border-b border-border/60 pb-1">
                 {(
                   [
                     ["insta", "Инста"],
@@ -206,8 +206,8 @@ export function SettingsSheet({
                     type="button"
                     onClick={() => setTab(id)}
                     className={cn(
-                      "h-10 rounded-lg text-sm font-medium",
-                      tab === id ? "bg-surface text-fg shadow-[var(--shadow-border)]" : "text-muted",
+                      "relative h-10 rounded-none text-xs font-medium",
+                      tab === id ? "text-fg after:absolute after:inset-x-3 after:bottom-[-5px] after:h-px after:bg-accent" : "text-muted",
                     )}
                   >
                     {label}
