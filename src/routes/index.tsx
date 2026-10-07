@@ -207,7 +207,8 @@ function Home() {
 
         <SearchSheet
           open={searchOpen}
-          suggestions={settings.favorites}
+          suggestions={showPreview ? ["ellissawe", "minsiyaaa", "sheptnowa", "sofia"] : settings.favorites}
+          onSettings={() => setSettingsOpen(true)}
           onClose={() => setSearchOpen(false)}
           onSearch={(name) => {
             setSearchOpen(false);
@@ -221,6 +222,7 @@ function Home() {
         <ChatsSheet
           open={chatsOpen}
           username={chatUser}
+          onSettings={() => setSettingsOpen(true)}
           previewMode={showPreview}
           onClose={() => {
             setChatsOpen(false);
@@ -247,11 +249,13 @@ function Home() {
           onSearch={() => {
             setChatsOpen(false);
             setChatUser(null);
+            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
             setSearchOpen(true);
           }}
           onChats={() => {
             setSearchOpen(false);
             setChatUser(null);
+            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
             setChatsOpen(true);
           }}
           onDropbox={() => {
