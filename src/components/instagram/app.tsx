@@ -1,4 +1,4 @@
-import { LoaderCircle, MessageCircle, RefreshCw, Search } from "lucide-react";
+import { LoaderCircle, MessageCircle, Search } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { FavoritesStrip } from "@/components/favorites-strip";
@@ -241,23 +241,6 @@ export function InstagramApp({
           <MessageCircle className="size-5" />
           <UnreadBadge count={chatUnread} className="absolute -top-1 -right-1" />
         </Button>
-        {!username ? (
-          <Button
-            type="button"
-            variant="subtle"
-            size="icon"
-            className="size-12 shrink-0 rounded-lg"
-            aria-label="Обновить ленту"
-            disabled={feed.busy}
-            onClick={() => {
-              void feed.regenerate().then((n) =>
-                toast.success(n ? "Новые посты в ленте" : "Новых пока нет — старые на месте"),
-              );
-            }}
-          >
-            <RefreshCw className={feed.busy ? "size-5 animate-spin" : "size-5"} />
-          </Button>
-        ) : null}
       </form>
 
       <FavoritesStrip
