@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ChatSendButton } from "@/components/chat-send-button";
 import { ImagineBar } from "@/components/imagine-dice";
 import { Button } from "@/components/ui/button";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { fetchDropboxBlob } from "@/lib/dropbox/client-file";
 import { deleteDropboxFile, deleteDropboxMany, getShtoraMarks, getThumbnails, listEntries, listFolders, moveDropboxFile, moveDropboxMany, setShtoraMarks } from "@/lib/dropbox/functions";
 import { parentDropboxPath, sharedFolder } from "@/lib/dropbox/paths";
@@ -621,16 +622,18 @@ export function DropboxViewer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true">
-      <header className="flex items-center justify-between gap-3 px-3 py-3 sm:px-5">
-        <p className="min-w-0 truncate text-sm text-muted">{item.name}</p>
-        <div className="flex items-center gap-1">
+    <ShtoraMediaViewer
+      eyebrow={`Dropbox · ${chatUsername ? `@${chatUsername}` : "архив"}`}
+      title={item.name}
+      onClose={onClose}
+      actions={
+        <>
           {confirmDel ? (
             <>
-              <Button type="button" variant="subtle" className="h-10 rounded-lg px-3 text-sm text-danger" disabled={busy} onClick={() => void remove()}>
+              <Button type="button" variant="subtle" className="h-10 rounded-full px-3 text-sm text-danger" disabled={busy} onClick={() => void remove()}>
                 {busy ? <LoaderCircle className="size-4 animate-spin" /> : "Удалить"}
               </Button>
-              <Button type="button" variant="ghost" className="h-10 rounded-lg px-3 text-sm" onClick={() => setConfirmDel(false)}>
+              <Button type="button" variant="ghost" className="h-10 rounded-full px-3 text-sm" onClick={() => setConfirmDel(false)}>
                 Нет
               </Button>
             </>
@@ -640,32 +643,43 @@ export function DropboxViewer({
                 <Button
                   type="button"
                   variant={isTagged ? "default" : "subtle"}
-                  className="h-10 rounded-lg px-3 text-sm"
+                  className="h-10 rounded-full px-3 text-sm"
                   disabled={marking}
                   onClick={() => void toggleMark()}
                 >
                   {marking ? <LoaderCircle className="size-4 animate-spin" /> : isTagged ? "В ленте" : "В ленту"}
                 </Button>
               ) : null}
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Переместить" disabled={busy} onClick={() => setMoving(true)}>
-                <FolderInput className="size-5" />
+              <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Переместить" disabled={busy} onClick={() => setMoving(true)}>
+                <FolderInput className="size-4" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Удалить" disabled={busy} onClick={() => setConfirmDel(true)}>
-                <Trash2 className="size-5" />
+              <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Удалить" disabled={busy} onClick={() => setConfirmDel(true)}>
+                <Trash2 className="size-4" />
               </Button>
               <ChatSendButton username={chatUsername || ""} imageUrl={objectUrl} />
-              <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-                <X className="size-5" />
-              </Button>
             </>
           )}
-        </div>
-      </header>
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
+        </>
+      }
+      footer={
+        objectUrl && !item.video ? (
+          <ImagineBar
+            mediaUrl={objectUrl}
+            username={chatUsername || "dropbox"}
+            saveFolder={parentDropboxPath(item.path)}
+            onNeedToken={onNeedToken}
+            onSaved={onSaved}
+          />
+        ) : (
+          <div className="h-3" />
+        )
+      }
+    >
+      <div className="relative flex size-full min-h-0 items-center justify-center">
         {hasPrev ? (
           <button
             type="button"
-            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:left-4"
+            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:left-3"
             aria-label="Назад"
             onClick={onPrev}
           >
@@ -676,21 +690,26 @@ export function DropboxViewer({
           <LoaderCircle className="size-6 animate-spin text-muted" />
         ) : objectUrl ? (
           item.video ? (
-            <video src={objectUrl} className="max-h-full max-w-full rounded-md" controls playsInline autoPlay />
+            <video src={objectUrl} className="max-h-full max-w-full rounded-[18px]" controls playsInline autoPlay />
           ) : (
-            <img src={objectUrl} alt="" className="max-h-full max-w-full rounded-md object-contain" />
+            <img src={objectUrl} alt="" className="max-h-full max-w-full rounded-[18px] object-contain" />
           )
         ) : (
-          <p className="max-w-sm px-4 text-center text-sm text-danger">
-            {fileQuery.error instanceof Error
-              ? fileQuery.error.message
-              : "Не удалось открыть файл. В Permissions включите files.content.read, Submit, затем новый токен."}
-          </p>
+          <div className="max-w-md px-6 text-center">
+            <p className="text-sm text-danger">
+              {fileQuery.error instanceof Error
+                ? fileQuery.error.message
+                : "Не удалось открыть файл."}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              В Permissions включите files.content.read и создайте новый токен.
+            </p>
+          </div>
         )}
         {hasNext ? (
           <button
             type="button"
-            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:right-4"
+            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:right-3"
             aria-label="Дальше"
             onClick={onNext}
           >
@@ -698,23 +717,11 @@ export function DropboxViewer({
           </button>
         ) : null}
       </div>
-      {objectUrl && !item.video ? (
-        <ImagineBar
-          mediaUrl={objectUrl}
-          username={chatUsername || "dropbox"}
-          saveFolder={parentDropboxPath(item.path)}
-          onNeedToken={onNeedToken}
-          onSaved={onSaved}
-        />
-      ) : (
-        <div className="h-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]" />
-      )}
       {moving ? (
         <MovePicker token={token} start={parentDropboxPath(item.path)} onClose={() => setMoving(false)} onPick={(folder) => void moveTo(folder)} />
       ) : null}
-    </div>
-  );
-}
+    </ShtoraMediaViewer>
+  );}
 
 function MovePicker({
   token,
