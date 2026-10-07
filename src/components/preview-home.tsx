@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -238,6 +238,7 @@ export function PreviewHome({ settings, app, username, onOpenChats, onNeedSettin
         names={settings.favorites.length ? settings.favorites : profiles.map((item) => item.username)}
         active=""
         tick={0}
+        previewPictures={{ ellissawe: img1, minsiyaaa: img2, sheptnowa: img3 }}
         onPick={(name) => {
           const found = profiles.find((item) => item.username === name);
           if (found) setView({ username: found.username, tab: "posts" });
@@ -280,7 +281,7 @@ function PreviewAppPage({
   title: string;
   eyebrow: string;
   onBack: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-y-auto bg-bg" role="dialog" aria-modal="true" aria-label={title}>
