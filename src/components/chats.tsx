@@ -1,4 +1,4 @@
-import { ChevronLeft, CircleCheck, Heart, LoaderCircle, NotebookPen, Send, Trash2, X } from "lucide-react";
+import { CircleCheck, Heart, LoaderCircle, NotebookPen, Send, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ChatSetup } from "@/components/chat-setup";
