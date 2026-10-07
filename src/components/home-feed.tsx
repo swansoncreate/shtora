@@ -54,7 +54,7 @@ export function HomeFeed({
   }
 
   return (
-    <div className="mt-7 flex flex-col gap-10">
+    <div className="mt-7 flex flex-col gap-7">
       {items.map((card) => {
         const posts = byUser.get(card.username) ?? (card.dropbox ? [] : [cardAsPost(card)]);
         const self = card.dropbox ? undefined : cardAsPost(card);
@@ -69,8 +69,8 @@ export function HomeFeed({
               <button
                 type="button"
                 className={cn(
-                  "size-10 shrink-0 rounded-full border p-[2px]",
-                  hasStory ? "border-accent" : "border-border",
+                  "size-11 shrink-0 rounded-full p-[2px] bg-white/8",
+                  hasStory ? "bg-[conic-gradient(from_180deg,#7c6bff,#f36b9a,#7c6bff)] shadow-[0_6px_22px_rgba(124,107,255,0.18)]" : "bg-white/8",
                 )}
                 onClick={() => onOpenProfile(card.username)}
                 aria-label={`@${card.username}`}
@@ -101,12 +101,12 @@ export function HomeFeed({
                 else onOpenPost(card.username, posts.length ? posts : [cardAsPost(card)], index);
               }}
             />
-            <div className="mt-2 flex items-center gap-0.5 px-1">
+            <div className="mt-2 flex items-center gap-1 px-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10 rounded-full"
+                className="size-10 rounded-full bg-surface/70"
                 aria-label={card.liked ? "Убрать лайк" : "Лайк"}
                 onClick={() => onLike(card)}
               >
@@ -116,7 +116,7 @@ export function HomeFeed({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-11"
+                className="size-10 rounded-full bg-surface/70"
                 aria-label="Комментарии"
                 onClick={() => onComments(card)}
               >
@@ -174,7 +174,7 @@ function FeedFrame({
     >
       <button
         type="button"
-        className="relative block w-full overflow-hidden rounded-[14px] bg-elevated"
+        className="relative block w-full overflow-hidden rounded-[22px] bg-elevated midnight-glow"
         onClick={onOpen}
         aria-label={card.story ? `Сторис @${card.username}` : `Пост @${card.username}`}
       >
