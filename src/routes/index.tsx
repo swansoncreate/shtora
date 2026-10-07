@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, House, MessageCircle, Settings, Sparkles } from "lucide-react";
+import { AlertCircle, Dices, House, MessageCircle, Search, Settings, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -7,6 +7,7 @@ import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats"
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
 import { PreviewHome } from "@/components/preview-home";
+import { SearchSheet } from "@/components/search-sheet";
 import { bootstrapStaticPreview } from "@/lib/static-preview";
 import { Button } from "@/components/ui/button";
 import { CHAT_OPEN_EVENT } from "@/lib/chat/send";
@@ -109,6 +110,7 @@ function Home() {
     };
   }, []);
   const [chatsOpen, setChatsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [chatUser, setChatUser] = useState<string | null>(null);
   const chatUnread = useChatUnread();
   const chatUnreadMap = useChatUnreadMap();
@@ -158,7 +160,7 @@ function Home() {
       </header>
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-28 pt-5 sm:px-6">
-        {showPreview ? <PreviewHome settings={settings} app={app} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
+        {showPreview ? <PreviewHome settings={settings} app={app} username={username} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
         {!showPreview && (offline || apiOk === false) ? (
           <div
             className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
@@ -207,6 +209,19 @@ function Home() {
           )
         ) : null}
 
+        <SearchSheet
+          open={searchOpen}
+          suggestions={settings.favorites}
+          onClose={() => setSearchOpen(false)}
+          onSearch={(name) => {
+            setSearchOpen(false);
+            void navigate({
+              to: "/",
+              search: { u: name, ...(showPreview ? { preview: "1" as const } : {}) },
+            });
+          }}
+        />
+
         <ChatsSheet
           open={chatsOpen}
           username={chatUser}
@@ -225,7 +240,9 @@ function Home() {
         <BottomNav
           app={app}
           chatsOpen={chatsOpen}
+          searchOpen={searchOpen}
           onHome={() => void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} })}
+          onSearch={() => setSearchOpen(true)}
           onChats={() => {
             setChatUser(null);
             setChatsOpen(true);
@@ -251,14 +268,18 @@ function Home() {
 function BottomNav({
   app,
   chatsOpen,
+  searchOpen,
   onHome,
+  onSearch,
   onChats,
   onDropbox,
   onImagine,
 }: {
   app: AppView;
   chatsOpen: boolean;
+  searchOpen: boolean;
   onHome: () => void;
+  onSearch: () => void;
   onChats: () => void;
   onDropbox: () => void;
   onImagine: () => void;
@@ -275,9 +296,12 @@ function BottomNav({
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-bg/92 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl"
       aria-label="Основная навигация"
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-4 px-4 sm:px-6">
+      <div className="mx-auto grid max-w-3xl grid-cols-5 px-4 sm:px-6">
         <button type="button" className={itemClass(app === "instagram")} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
           <House className={cn("size-6", app === "instagram" && "fill-current")} />
+        </button>
+        <button type="button" className={itemClass(searchOpen)} aria-label="Поиск" aria-current={searchOpen ? "page" : undefined} onClick={onSearch}>
+          <Search className={cn("size-6", searchOpen && "stroke-[2.4]")} />
         </button>
         <button type="button" className={itemClass(chatsOpen)} aria-label="Сообщения" aria-current={chatsOpen ? "page" : undefined} onClick={onChats}>
           <MessageCircle className={cn("size-6", chatsOpen && "fill-current")} />
