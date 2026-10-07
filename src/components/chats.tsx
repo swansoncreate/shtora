@@ -140,13 +140,15 @@ export function ChatsSheet({
   open,
   username,
   onClose,
+  onSettings,
   previewMode = false,
 }: {
   open: boolean;
   username?: string | null;
   onClose: () => void;
+  onSettings?: () => void;
   previewMode?: boolean;
-}) {
+})
   const [threadUser, setThreadUser] = useState<string | null>(null);
 
   useEffect(() => {
@@ -160,15 +162,15 @@ export function ChatsSheet({
   return (
     <div className="fixed inset-0 z-[55] flex min-h-dvh flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
       {threadUser ? (
-        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} previewMode={previewMode} />
+        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} onSettings={onSettings} previewMode={previewMode} />
       ) : (
-        <InboxView onOpen={setThreadUser} onClose={onClose} previewMode={previewMode} />
+        <InboxView onOpen={setThreadUser} onClose={onClose} onSettings={onSettings} previewMode={previewMode} />
       )}
     </div>
   );
 }
 
-function InboxView({ onOpen, onClose, previewMode }: { onOpen: (username: string) => void; onClose: () => void; previewMode: boolean }) {
+function InboxView({ onOpen, onClose, onSettings, previewMode }: { onOpen: (username: string) => void; onClose: () => void; onSettings?: () => void; previewMode: boolean }) {
   const [threads, setThreads] = useState<ChatThread[]>(listThreads());
   useUnseenTick();
   useEffect(() => {
@@ -181,7 +183,7 @@ function InboxView({ onOpen, onClose, previewMode }: { onOpen: (username: string
 
   return (
     <>
-      <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onClose={onClose} />
+      <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onSettings={onSettings} onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         {visibleThreads.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-muted">
@@ -243,11 +245,13 @@ function ThreadView({
   username,
   onBack,
   onClose,
+  onSettings,
   previewMode = false,
 }: {
   username: string;
   onBack: () => void;
   onClose: () => void;
+  onSettings?: () => void;
   previewMode?: boolean;
 }) {
   const [thread, setThread] = useState(() => previewMode ? previewThread(username) : getThread(username));
@@ -388,6 +392,7 @@ function ThreadView({
         }
         title={thread?.fullName || `@${username}`}
         onBack={onBack}
+        onSettings={onSettings}
         actions={
           <div className="flex items-center gap-1">
             <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Настройки чата" onClick={() => setNotesOpen(true)}>
