@@ -49,6 +49,9 @@ jobs:
           fi
           test -f "site/index.html"
           cp "site/index.html" "site/404.html"
+          mkdir -p site/v3
+          cp -R preview/v3/. site/v3/
+          test -f "site/v3/index.html"
           touch site/.nojekyll
           echo "Pages artifact:"
           find site -maxdepth 2 -type f | sort | head -100
