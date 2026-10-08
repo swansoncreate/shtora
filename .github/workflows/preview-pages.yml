@@ -122,3 +122,4 @@ jobs:
       - name: Deploy comparison
         id: deployment
         uses: actions/deploy-pages@v4
+# Trigger Pages publish for the two-variant showroom.
