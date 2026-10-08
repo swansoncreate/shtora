@@ -5,6 +5,7 @@ on:
     branches:
       - "test/vps-grok-imagine"
       - "design/mobile-redesign-v3"
+      - "design/mobile-redesign-v4"
   workflow_dispatch:
 
 permissions:
@@ -22,22 +23,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build real app
         run: npm run build:dev
         env:
           SHTORA_PAGES_PREVIEW: "1"
           VITE_STATIC_PREVIEW: "1"
-
       - name: Prepare Pages artifact
         run: |
           set -euo pipefail
@@ -45,26 +42,23 @@ jobs:
           mkdir -p site
           test -d ".vercel/output/static"
           cp -R .vercel/output/static/. site/
-          if [ -f "site/_shell.html" ]; then
-            cp "site/_shell.html" "site/index.html"
-          fi
+          if [ -f "site/_shell.html" ]; then cp "site/_shell.html" "site/index.html"; fi
           test -f "site/index.html"
           cp "site/index.html" "site/404.html"
-          mkdir -p site/v3
+          mkdir -p site/v3 site/v4
           cp -R preview/v3/. site/v3/
+          cp -R preview/v4/. site/v4/
           test -f "site/v3/index.html"
+          test -f "site/v4/index.html"
           touch site/.nojekyll
           echo "Pages artifact:"
-          find site -maxdepth 2 -type f | sort | head -100
-
+          find site -maxdepth 2 -type f | sort | head -120
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-
       - name: Upload preview artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./site
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
