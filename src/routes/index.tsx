@@ -1,16 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, House, MessageCircle, Search, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
 import { ChatsSheet, useChatUnread, useChatUnreadMap } from "@/components/chats";
 import { InstagramApp } from "@/components/instagram/app";
 import { SettingsSheet } from "@/components/settings-sheet";
-import { PreviewHome } from "@/components/preview-home";
-import { ShtoraPageHeader } from "@/components/shtora-page-header";
-import { WelcomeScreen } from "@/components/welcome-screen";
-import { SearchSheet } from "@/components/search-sheet";
-import { bootstrapStaticPreview } from "@/lib/static-preview";
 import { Button } from "@/components/ui/button";
 import { CHAT_OPEN_EVENT } from "@/lib/chat/send";
 import { useChatEngine } from "@/lib/chat/engine";
@@ -31,7 +26,6 @@ type SearchParams = {
   u?: string;
   tab?: Tab;
   p?: string;
-  preview?: string;
 };
 
 export const Route = createFileRoute("/")({
@@ -43,8 +37,7 @@ export const Route = createFileRoute("/")({
         : undefined;
     const app = search.app === "dropbox" || search.app === "imagine" ? search.app : undefined;
     const p = typeof search.p === "string" && search.p.trim() ? search.p : undefined;
-    const preview = search.preview === "1" ? "1" : undefined;
-    return { app, u, tab, p, preview };
+    return { app, u, tab, p };
   },
   component: Home,
 });
@@ -54,10 +47,6 @@ function Home() {
   const username = search.u ? cleanUsername(search.u) : "";
   const tab: Tab = search.tab ?? "posts";
   const app: AppView = search.app === "dropbox" || search.app === "imagine" ? search.app : "instagram";
-  const preview = search.preview === "1";
-  const staticPreview = import.meta.env.VITE_STATIC_PREVIEW === "1";
-  const showPreview = preview || staticPreview;
-  const clientOnlyPreview = showPreview;
   const navigate = useNavigate({ from: "/" });
   const { settings, patch, setAccountFolder, hydrated } = useShtoraSettings();
   const dropboxPath = search.p || settings.defaultFolder || "/Штора";
@@ -70,15 +59,10 @@ function Home() {
       void caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith("shtora-")).map((k) => caches.delete(k))));
     }
   }, []);
-  useEffect(() => {
-    if (!staticPreview || !ready || !hydrated) return;
-    void bootstrapStaticPreview();
-  }, [staticPreview, ready, hydrated]);
-  useAutoSave(settings, !clientOnlyPreview && ready && hydrated);
-  useServerState(!clientOnlyPreview && ready && hydrated);
+  useAutoSave(settings, ready && hydrated);
+  useServerState(ready && hydrated);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [entryOpen, setEntryOpen] = useState(showPreview);
   const [offline, setOffline] = useState(false);
   const [apiOk, setApiOk] = useState<boolean | null>(null);
   useEffect(() => {
@@ -92,10 +76,6 @@ function Home() {
     };
   }, []);
   useEffect(() => {
-    if (staticPreview) {
-      setApiOk(null);
-      return;
-    }
     let cancelled = false;
     async function ping() {
       try {
@@ -113,13 +93,12 @@ function Home() {
     };
   }, []);
   const [chatsOpen, setChatsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [chatUser, setChatUser] = useState<string | null>(null);
   const chatUnread = useChatUnread();
   const chatUnreadMap = useChatUnreadMap();
-  useChatPings(settings.favorites, !clientOnlyPreview && ready && hydrated, chatsOpen ? chatUser : null);
-  useChatEngine(!clientOnlyPreview && ready && hydrated, chatsOpen ? chatUser : null);
-  useChatDiskSync(!clientOnlyPreview && ready && hydrated);
+  useChatPings(settings.favorites, ready && hydrated, chatsOpen ? chatUser : null);
+  useChatEngine(ready && hydrated, chatsOpen ? chatUser : null);
+  useChatDiskSync(ready && hydrated);
 
   useEffect(() => {
     const onOpen = (e: Event) => {
@@ -133,31 +112,70 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    if (!showPreview || typeof window === "undefined") return;
-    if (window.localStorage.getItem("shtora-entry-seen") === "1") setEntryOpen(false);
-  }, [showPreview]);
-  useEffect(() => {
     if (!settings.dropboxRefreshToken) return;
     void liveDropboxToken(settings.dropboxToken).catch(() => undefined);
   }, [settings.dropboxRefreshToken, settings.dropboxToken]);
-
-  useEffect(() => {
-    if (app !== "instagram") {
-      setSearchOpen(false);
-      setChatsOpen(false);
-      setChatUser(null);
-    }
-  }, [app]);
 
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      {!showPreview ? <ShtoraPageHeader eyebrow={caption} title="Штора" onSettings={() => setSettingsOpen(true)} /> : null}
+      <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md relative">
+        <div className="pointer-events-none absolute inset-0 opacity-25 curtain-wash" aria-hidden />
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-3 sm:px-6">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
+              <p className="mt-1 text-sm text-muted">{caption}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 shrink-0 rounded-full"
+              aria-label="Настройки"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="size-5" />
+            </Button>
+          </div>
+          <nav className="mt-3 flex rounded-xl bg-elevated p-1" aria-label="Разделы">
+            <AppTab
+              label="Instagram"
+              active={app === "instagram"}
+              onClick={() => void navigate({ to: "/", search: {} })}
+            >
+              <Instagram className="size-4" />
+            </AppTab>
+            <AppTab
+              label="Файлы"
+              active={app === "dropbox"}
+              onClick={() =>
+                void navigate({
+                  to: "/",
+                  search: { app: "dropbox", p: dropboxPath, u: username || undefined },
+                })
+              }
+            >
+              <DropboxMark className="size-4" />
+            </AppTab>
+            <AppTab
+              label="Imagine"
+              active={app === "imagine"}
+              onClick={() =>
+                void navigate({
+                  to: "/",
+                  search: { app: "imagine", u: username || undefined },
+                })
+              }
+            >
+              <Dices className="size-4" />
+            </AppTab>
+          </nav>
+        </div>
+      </header>
 
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-28 pt-4 sm:px-6 sm:pt-5">
-        {showPreview ? <PreviewHome settings={settings} app={app} username={username} onOpenChats={(name) => { setChatUser(name ?? null); setChatsOpen(true); }} onNeedSettings={() => setSettingsOpen(true)} /> : null}
-        {!showPreview && (offline || apiOk === false) ? (
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-10 pt-5 sm:px-6">
+        {offline || apiOk === false ? (
           <div
             className="mb-4 flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5 text-sm text-fg shadow-[var(--shadow-border)]"
             role="status"
@@ -166,64 +184,46 @@ function Home() {
             <p className="min-w-0 flex-1">Сервер не отвечает — данные не подтянуть</p>
           </div>
         ) : null}
-        {!showPreview ? (
-          app === "dropbox" ? (
-            <DropboxBrowser
-              settings={settings}
-              path={dropboxPath}
-              onPath={(next) =>
-                void navigate({
-                  to: "/",
-                  search: { app: "dropbox", p: next, u: username || undefined },
-                })
-              }
-              onNeedToken={() => setSettingsOpen(true)}
-            />
-          ) : app === "imagine" ? (
-            <ImagineStudio settings={settings} onNeedToken={() => setSettingsOpen(true)} />
-          ) : (
-            <InstagramApp
-              username={username}
-              tab={tab}
-              settings={settings}
-              ready={ready}
-              hydrated={hydrated}
-              chatUnread={chatUnread}
-              chatUnreadMap={chatUnreadMap}
-              onOpenUser={(name, nextTab) =>
-                void navigate({
-                  to: "/",
-                  search: { u: cleanUsername(name) || undefined, tab: nextTab === "stories" ? "stories" : undefined },
-                })
-              }
-              onOpenChats={(name) => {
-                setChatUser(name ?? null);
-                setChatsOpen(true);
-              }}
-              onNeedToken={() => setSettingsOpen(true)}
-            />
-          )
-        ) : null}
-
-        <SearchSheet
-          open={searchOpen}
-          suggestions={showPreview ? ["ellissawe", "minsiyaaa", "sheptnowa", "sofia"] : settings.favorites}
-          onSettings={() => setSettingsOpen(true)}
-          onClose={() => setSearchOpen(false)}
-          onSearch={(name) => {
-            setSearchOpen(false);
-            void navigate({
-              to: "/",
-              search: { u: name, ...(showPreview ? { preview: "1" as const } : {}) },
-            });
-          }}
-        />
+        {app === "dropbox" ? (
+          <DropboxBrowser
+            settings={settings}
+            path={dropboxPath}
+            onPath={(next) =>
+              void navigate({
+                to: "/",
+                search: { app: "dropbox", p: next, u: username || undefined },
+              })
+            }
+            onNeedToken={() => setSettingsOpen(true)}
+          />
+        ) : app === "imagine" ? (
+          <ImagineStudio settings={settings} onNeedToken={() => setSettingsOpen(true)} />
+        ) : (
+          <InstagramApp
+            username={username}
+            tab={tab}
+            settings={settings}
+            ready={ready}
+            hydrated={hydrated}
+            chatUnread={chatUnread}
+            chatUnreadMap={chatUnreadMap}
+            onOpenUser={(name, nextTab) =>
+              void navigate({
+                to: "/",
+                search: { u: cleanUsername(name) || undefined, tab: nextTab === "stories" ? "stories" : undefined },
+              })
+            }
+            onOpenChats={(name) => {
+              setChatUser(name ?? null);
+              setChatsOpen(true);
+            }}
+            onNeedToken={() => setSettingsOpen(true)}
+          />
+        )}
 
         <ChatsSheet
           open={chatsOpen}
           username={chatUser}
-          onSettings={() => setSettingsOpen(true)}
-          previewMode={showPreview}
           onClose={() => {
             setChatsOpen(false);
             setChatUser(null);
@@ -236,101 +236,36 @@ function Home() {
           onPatch={patch}
           onAccountFolder={setAccountFolder}
         />
-        <BottomNav
-          app={app}
-          chatsOpen={chatsOpen}
-          searchOpen={searchOpen}
-          onHome={() => {
-            setSearchOpen(false);
-            setChatsOpen(false);
-            setChatUser(null);
-            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
-          }}
-          onSearch={() => {
-            setChatsOpen(false);
-            setChatUser(null);
-            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
-            setSearchOpen(true);
-          }}
-          onChats={() => {
-            setSearchOpen(false);
-            setChatUser(null);
-            void navigate({ to: "/", search: showPreview ? { preview: "1" } : {} });
-            setChatsOpen(true);
-          }}
-          onDropbox={() => {
-            setSearchOpen(false);
-            setChatsOpen(false);
-            setChatUser(null);
-            void navigate({
-              to: "/",
-              search: { app: "dropbox", p: dropboxPath, u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
-            });
-          }}
-          onImagine={() => {
-            setSearchOpen(false);
-            setChatsOpen(false);
-            setChatUser(null);
-            void navigate({
-              to: "/",
-              search: { app: "imagine", u: username || undefined, ...(showPreview ? { preview: "1" as const } : {}) },
-            });
-          }}
-        />
       </div>
     </div>
   );
 }
 
-function BottomNav({
-  app,
-  chatsOpen,
-  searchOpen,
-  onHome,
-  onSearch,
-  onChats,
-  onDropbox,
-  onImagine,
+function AppTab({
+  label,
+  active,
+  onClick,
+  children,
 }: {
-  app: AppView;
-  chatsOpen: boolean;
-  searchOpen: boolean;
-  onHome: () => void;
-  onSearch: () => void;
-  onChats: () => void;
-  onDropbox: () => void;
-  onImagine: () => void;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
 }) {
-  const itemClass = (active: boolean) =>
-    cn(
-      "group relative flex h-12 items-center justify-center rounded-2xl text-muted transition-colors duration-[var(--motion-quick)]",
-      "hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
-      active && "text-fg after:absolute after:bottom-1.5 after:size-1 after:rounded-full after:bg-accent",
-    );
-
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-[65] px-3 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none sm:px-4"
-      aria-label="Основная навигация"
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm text-muted transition-colors duration-[var(--motion-quick)]",
+        active && "bg-surface text-fg shadow-[var(--shadow-border)]",
+      )}
     >
-      <div className="pointer-events-auto mx-auto grid max-w-md grid-cols-5 rounded-[24px] border border-border/70 bg-surface/72 px-3 py-2.5 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
-        <button type="button" className={itemClass(app === "instagram" && !searchOpen && !chatsOpen)} aria-label="Главное" aria-current={app === "instagram" ? "page" : undefined} onClick={onHome}>
-          <House className={cn("size-6", app === "instagram" && "fill-current")} />
-        </button>
-        <button type="button" className={itemClass(searchOpen)} aria-label="Поиск" aria-current={searchOpen ? "page" : undefined} onClick={onSearch}>
-          <Search className={cn("size-6", searchOpen && "stroke-[2.4]")} />
-        </button>
-        <button type="button" className={itemClass(chatsOpen)} aria-label="Сообщения" aria-current={chatsOpen ? "page" : undefined} onClick={onChats}>
-          <MessageCircle className={cn("size-6", chatsOpen && "fill-current")} />
-        </button>
-        <button type="button" className={itemClass(app === "dropbox")} aria-label="Dropbox" aria-current={app === "dropbox" ? "page" : undefined} onClick={onDropbox}>
-          <DropboxMark className={cn("size-6", app === "dropbox" && "fill-current")} />
-        </button>
-        <button type="button" className={itemClass(app === "imagine")} aria-label="Imagine" aria-current={app === "imagine" ? "page" : undefined} onClick={onImagine}>
-          <Sparkles className={cn("size-6", app === "imagine" && "fill-current")} />
-        </button>
-      </div>
-    </nav>
+      {children}
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 
