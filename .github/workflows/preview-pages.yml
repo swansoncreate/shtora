@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "test/vps-grok-imagine"
+      - "design/mobile-redesign-v3"
   workflow_dispatch:
 
 permissions:
