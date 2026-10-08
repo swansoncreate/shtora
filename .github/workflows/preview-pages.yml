@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "concept/midnight"
+  pull_request:
+    branches:
+      - "concept/midnight"
   workflow_dispatch:
 
 permissions:
