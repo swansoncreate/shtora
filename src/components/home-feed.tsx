@@ -37,13 +37,8 @@ export function HomeFeed({
       <div className="mt-16 flex flex-col items-center px-2 text-center">
         <p className="font-display text-3xl font-medium tracking-tight text-fg">Пока тихо</p>
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
-          Потяни вниз или обнови — старые посты останутся.
+          Потяни вниз — новые посты загрузятся, старые останутся.
         </p>
-        {onRefresh ? (
-          <Button className="mt-5" type="button" disabled={refreshing} onClick={onRefresh}>
-            Обновить
-          </Button>
-        ) : null}
       </div>
     );
   }
@@ -59,7 +54,7 @@ export function HomeFeed({
   }
 
   return (
-    <div className="mt-5 flex flex-col gap-4">
+    <div className="mt-7 flex flex-col gap-10">
       {items.map((card) => {
         const posts = byUser.get(card.username) ?? (card.dropbox ? [] : [cardAsPost(card)]);
         const self = card.dropbox ? undefined : cardAsPost(card);
@@ -69,18 +64,18 @@ export function HomeFeed({
         const video = Boolean(card.dropbox?.video || card.post?.type === "video" || isVideoMediaUrl(card.post?.videoUrl || image));
         const hasStory = storiesUnseen(card.username);
         return (
-          <article key={card.id} className="min-w-0 rounded-xl bg-surface p-3 shadow-[var(--shadow-border)]">
-            <header className="mb-3 flex items-center gap-3">
+          <article key={card.id} className="min-w-0">
+            <header className="mb-3 flex items-center gap-3 px-1">
               <button
                 type="button"
                 className={cn(
-                  "size-10 shrink-0 rounded-full p-[2px]",
-                  hasStory ? "bg-danger" : "bg-border",
+                  "size-10 shrink-0 rounded-full border p-[2px]",
+                  hasStory ? "border-accent" : "border-border",
                 )}
                 onClick={() => onOpenProfile(card.username)}
                 aria-label={`@${card.username}`}
               >
-                <span className="block size-full overflow-hidden rounded-full border-2 border-surface bg-elevated">
+                <span className="block size-full overflow-hidden rounded-full border-2 border-bg bg-elevated">
                   <MediaImg src={card.avatar} alt="" className="size-full object-cover" />
                 </span>
               </button>
@@ -106,12 +101,12 @@ export function HomeFeed({
                 else onOpenPost(card.username, posts.length ? posts : [cardAsPost(card)], index);
               }}
             />
-            <div className="mt-1 flex items-center gap-1">
+            <div className="mt-2 flex items-center gap-0.5 px-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-11"
+                className="size-10 rounded-full"
                 aria-label={card.liked ? "Убрать лайк" : "Лайк"}
                 onClick={() => onLike(card)}
               >
@@ -127,7 +122,7 @@ export function HomeFeed({
               >
                 <MessageCircle className="size-5" />
               </Button>
-              <button type="button" className="px-1 text-xs text-subtle" onClick={() => onComments(card)}>
+              <button type="button" className="ml-1 px-1 text-xs text-subtle" onClick={() => onComments(card)}>
                 {(card.comments ?? 0) > 0 ? card.comments : "Комментарий"}
               </button>
             </div>
@@ -179,7 +174,7 @@ function FeedFrame({
     >
       <button
         type="button"
-        className="relative block w-full overflow-hidden rounded-lg bg-elevated"
+        className="relative block w-full overflow-hidden rounded-[14px] bg-elevated"
         onClick={onOpen}
         aria-label={card.story ? `Сторис @${card.username}` : `Пост @${card.username}`}
       >
@@ -220,7 +215,7 @@ function FeedCaption({
   const [open, setOpen] = useState(false);
   const long = caption.length > 90;
   return (
-    <div className="mt-1">
+    <div className="mt-2 px-1">
       <p className={cn("text-sm leading-relaxed text-fg", !open && long && "line-clamp-2")}>
         <button type="button" className="mr-1.5 font-medium" onClick={onOpenProfile}>
           {username}

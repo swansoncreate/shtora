@@ -49,12 +49,12 @@ export async function writeGrokOrigin(origin: string) {
   return true;
 }
 
-export async function callGrokApp<T>(op: "reply" | "ping", data: unknown): Promise<T> {
+export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unknown): Promise<T> {
   const origin = await readGrokOrigin();
   if (!origin) {
     return {
       ok: false,
-      error: "Чат идёт через публикацию Grok, как Imagine. Открой штору на grok.me один раз.",
+      error: "Shtora не видит опубликованный Grok Build. Укажи SHTORA_GROK_ORIGIN.",
     } as T;
   }
   try {

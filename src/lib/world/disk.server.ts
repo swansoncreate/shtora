@@ -14,6 +14,7 @@ export type WorldSnap = {
   mood?: WorldField;
   clothes?: WorldField;
   with?: WorldField;
+  sceneId?: WorldField;
 };
 export type WorldEvent = {
   id: string;
@@ -77,7 +78,7 @@ function fresh(key: keyof Omit<WorldSnap, "username">, row: WorldField | undefin
 
 export function expireSnap(snap: WorldSnap, now = Date.now()): WorldSnap {
   const next: WorldSnap = { username: snap.username };
-  for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with"] as const) {
+  for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with", "sceneId"] as const) {
     const kept = fresh(key, snap[key], now);
     if (kept) next[key] = kept;
   }
@@ -131,10 +132,14 @@ async function migrateFromThread(username: string): Promise<WorldSnap> {
   const place = world?.placeRu || world?.place || "";
   const clothes = world?.clothesRu || world?.clothes || "";
   const mood = thread?.mood || "";
+  const activity = world?.activity || "";
+  const sceneId = world?.sceneId || "";
   const snap: WorldSnap = { username };
   if (place) snap.place = { value: place.slice(0, 80), at };
   if (clothes) snap.clothes = { value: clothes.slice(0, 80), at };
   if (mood) snap.mood = { value: mood.slice(0, 40), at };
+  if (activity) snap.activity = { value: activity.slice(0, 80), at };
+  if (sceneId) snap.sceneId = { value: sceneId.slice(0, 120), at };
   await writeJson(await worldPath(username), snap);
   if (place || clothes || mood) {
     const events = await readEvents(username);
@@ -168,7 +173,7 @@ export async function commitWorld(username: string, patch: Partial<WorldSnap>, e
     withFile(async () => {
       const prev = (await readSnap(user)) || { username: user };
       const next: WorldSnap = { ...prev, username: user };
-      for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with"] as const) {
+      for (const key of ["time", "place", "activity", "availability", "energy", "mood", "clothes", "with", "sceneId"] as const) {
         const incoming = field(patch[key]);
         if (incoming) next[key] = incoming;
       }

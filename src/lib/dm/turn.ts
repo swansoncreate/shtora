@@ -8,6 +8,7 @@ import { asBond } from "@/lib/chat/bond";
 import { appendMessage, asWarmth, getThread, markThreadRead } from "@/lib/chat/store";
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
+import type { ChatWorld } from "@/lib/chat/world";
 
 export async function runLiveTurn(username: string, messageId: string, viewing: boolean, stamp?: number) {
   const live = getThread(username);
@@ -114,6 +115,7 @@ async function commitPhoto(
   }
   const angle = photoKind === "back" || photoKind === "side" || photoKind === "full";
   const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => item.role === "assistant" && item.imageUrl);
+  const world = (getThread(username)?.world || {}) as ChatWorld;
   const media = await sendChatMedia({
     ready: true,
     kind: photoKind === "circle" ? "selfie" : photoKind,
@@ -123,12 +125,16 @@ async function commitPhoto(
     clothes,
     place,
     hair,
+    activity: world.activity,
+    timeContext: world.timeContext,
+    weather: world.weather,
     userText: "",
     dropboxToken,
     dropboxFolder,
     dropboxSeed: `${username}-${Date.now()}`,
     instagramUrls: identityUrls(username),
     lastPhotoUrl: angle ? lastPic?.imageUrl : undefined,
+    username,
   });
   if (!media.ok) {
     if (!media.skipped) toast.error(media.error);
@@ -160,7 +166,7 @@ function cut(v: unknown, max: number) {
   return s ? s.slice(0, max) : undefined;
 }
 
-function wireWorld(world: { place?: string; clothes?: string; hair?: string; placeRu?: string; clothesRu?: string; hairRu?: string; clothesNamed?: boolean; memAbout?: string; memOpen?: string; memDodged?: string } | null | undefined) {
+function wireWorld(world: ChatWorld | null | undefined) {
   if (!world || typeof world !== "object") return undefined;
   return {
     place: cut(world.place, 160),
@@ -173,6 +179,10 @@ function wireWorld(world: { place?: string; clothes?: string; hair?: string; pla
     memAbout: cut(world.memAbout, 160),
     memOpen: cut(world.memOpen, 160),
     memDodged: cut(world.memDodged, 140),
+    activity: cut(world.activity, 160),
+    timeContext: cut(world.timeContext, 80),
+    weather: cut(world.weather, 80),
+    sceneId: cut(world.sceneId, 120),
   };
 }
 

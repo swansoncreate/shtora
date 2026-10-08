@@ -1,4 +1,4 @@
-import { asBond, photoTier, pullOf, stageFrom, type AffairStage, type ChatBond } from "./bond";
+import { asBond, photoTier, pullOf, stageFrom, type AffairStage, type ChatBond } from "./bond.ts";
 import {
   looksLikeCameraAsk,
   looksLikeCatalogAsk,
@@ -8,8 +8,8 @@ import {
   looksLikeGalleryAsk,
   looksLikeLookPoseAsk,
   looksLikePhotoAsk,
-} from "./functions";
-import { cameraKindFromText } from "./world";
+} from "./functions.ts";
+import { cameraKindFromText } from "./world.ts";
 
 export type ChatMove = "catalog" | "camera" | "look" | "gallery" | "circle" | "talk";
 export type ChatTone = "snap" | "ice" | "dry" | "warm" | "flirt" | "hot";

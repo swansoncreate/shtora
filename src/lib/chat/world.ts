@@ -6,6 +6,10 @@ export type ChatWorld = {
   clothesRu?: string;
   clothesNamed?: boolean;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   memAbout?: string;
   memOpen?: string;
   memDodged?: string;
@@ -33,6 +37,10 @@ export function mergeWorld(prev: ChatWorld | undefined, next: ChatWorld | undefi
   if (clean(next?.place)) out.place = clean(next?.place);
   if (clean(next?.clothes)) out.clothes = clean(next?.clothes);
   if (clean(next?.hair)) out.hair = clean(next?.hair);
+  if (clean(next?.activity)) out.activity = clean(next?.activity);
+  if (clean(next?.timeContext)) out.timeContext = clean(next?.timeContext);
+  if (clean(next?.weather)) out.weather = clean(next?.weather);
+  if (clean(next?.sceneId)) out.sceneId = clean(next?.sceneId);
   return out;
 }
 
@@ -375,11 +383,11 @@ export function rebuildWorld(lines: ChatLine[] | undefined, now = Date.now(), pr
     lastAt = at;
   }
   clockFit(fit, now, lastAt);
-  const out = worldFromFit(fit);
+  const out: ChatWorld = { ...(prev || {}), ...worldFromFit(fit) };
   const clothes = preferClothes(out.clothes, prev?.clothes) || out.clothes;
   const place = out.place || prev?.place;
   const hair = out.hair || prev?.hair;
-  return clockWorld({ place, clothes, hair }, now, lastAt, fit.namedAt);
+  return clockWorld({ place, clothes, hair, sceneId: prev?.sceneId }, now, lastAt, fit.namedAt);
 }
 
 export type WorldAdvance = {
@@ -406,7 +414,7 @@ export function advanceWorld(input: WorldAdvance): ChatWorld {
   if (input.herText) applySpeech(fit, input.herText, "assistant", now);
   const lastAt = input.lastAt || now;
   clockFit(fit, now, lastAt);
-  let world = worldFromFit(fit);
+  let world: ChatWorld = { ...(input.prev || {}), ...worldFromFit(fit) };
   world = mergeNamed(world, input.model, input.herText, now);
   if (!world.place) world.place = (input.slotWorld || defaultWorld(slot)).place;
   if (!specificClothes(world.clothes)) {
@@ -421,7 +429,7 @@ function mergeNamed(world: ChatWorld, model?: ChatWorld, herText?: string, now =
   const clothes = preferClothes(fromHer, preferClothes(model?.clothes, world.clothes));
   const place = clean(model?.place) && !staleWork(model?.place, now, world.place) ? clean(model?.place) : world.place;
   const hair = clean(model?.hair) || world.hair;
-  return { place, clothes: clothes || world.clothes, hair };
+  return { ...world, place, clothes: clothes || world.clothes, hair };
 }
 
 function staleWork(place: string | undefined, now: number, current?: string) {
@@ -495,7 +503,7 @@ function clockWorld(world: ChatWorld, now: number, lastAt: number, namedAt = 0):
   if (!place) place = def.place || "at home, apartment";
   if (!clothes) clothes = clothesFor(place, def.clothes);
   if (!hair) hair = def.hair || "as usual";
-  return { place, clothes, hair };
+  return { ...world, place, clothes, hair };
 }
 
 function slotFromHour(hour: number, at = Date.now()): DaySlot {

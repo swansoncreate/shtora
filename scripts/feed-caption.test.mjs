@@ -12,9 +12,9 @@ test("own caption does not fall back to the stock list, and Instagram captions s
   const imagine = readFileSync(new URL("../src/lib/imagine/functions.ts", import.meta.url), "utf8");
   assert.equal(daily.includes("generatedLine("), false);
   assert.match(daily, /ownCaption/);
-  assert.match(daily, /4:5 frame, 1080x1350/);
-  assert.match(viewer, /frame === "feed" \? "aspect-\[4\/5\]/);
-  assert.match(imagine, /4:5\|1080x1350/);
+  assert.match(daily, /composeChatPhoto/);
+  assert.match(viewer, /frame === "feed" \? "aspect-square/);
+  assert.match(imagine, /aspectRatio === "1:1"/);
   assert.match(imagine, /: "9:16"/);
 });
 

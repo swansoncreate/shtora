@@ -48,6 +48,10 @@ export type DiskThread = {
     placeRu?: string;
     clothesRu?: string;
     hairRu?: string;
+    activity?: string;
+    timeContext?: string;
+    weather?: string;
+    sceneId?: string;
     clothesNamed?: boolean;
     memAbout?: string;
     memOpen?: string;

@@ -212,12 +212,16 @@ async function deliverDm(
       clothes: world.clothes,
       place: world.place,
       hair: world.hair,
+      activity: world.activity,
+      timeContext: world.timeContext,
+      weather: world.weather,
       userText: "",
       dropboxToken,
       dropboxFolder,
       dropboxSeed: `${username}-${Date.now()}`,
       instagramUrls: identityUrls(username),
       lastPhotoUrl: angle ? lastPic?.imageUrl : undefined,
+      username,
     });
     if (media.ok) {
       await appendMessage(
@@ -466,6 +470,9 @@ async function reply(username: string, lastId: string, stamp?: number) {
         clothes: here.clothes,
         place: here.place,
         hair: here.hair,
+        activity: here.activity,
+        timeContext: here.timeContext,
+        weather: here.weather,
         userText: last.text,
         dropboxToken,
         dropboxFolder,
@@ -473,6 +480,7 @@ async function reply(username: string, lastId: string, stamp?: number) {
         dropboxSeed: `${username}-${Date.now()}-${sentPhotos}`,
         instagramUrls: identityUrls(username),
         lastPhotoUrl: cameraAsk ? lastPic?.imageUrl : undefined,
+        username,
       });
       if (media.ok) {
         const lastOnce = getThread(username)?.onceSentAt || 0;

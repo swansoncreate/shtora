@@ -1,5 +1,5 @@
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
-import { assertRpc } from "./remote";
+import { assertRpc } from "./remote.ts";
 
 export class RpcDenied extends Error {
   readonly status: number;

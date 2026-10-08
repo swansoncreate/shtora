@@ -1,5 +1,5 @@
-import { runImageEdit } from "./functions";
-import { PHONE_RAW, keepPreset, withPhoneRaw } from "./prompt";
+import { runImageEdit } from "./functions.ts";
+import { PHONE_RAW, keepPreset, withPhoneRaw } from "./prompt.ts";
 
 function lookFromAsk(raw: string) {
   const t = (raw || "").toLowerCase();
@@ -175,14 +175,14 @@ export async function runStill(job: StillJob) {
     (/сзад|задом|со спин|from behind|нагн|по(пу|пку) лучше/.test(asked) && !/сиськ|грудь/.test(asked)) ||
     /боком|сбоку/.test(asked);
   const pic = await runImageEdit(job.source, prompt, extras, mode, job.kind === "feed" ? "1:1" : undefined);
-  if (pic.ok) return { ok: true as const, url: pic.url, prompt };
+  if (pic.ok) return { ok: true as const, url: pic.url, prompt, provider: pic.provider };
   if (job.kind === "feed") return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
   if (cam) {
     const retryPrompt = keepPreset(
       "Same adult woman, same clothes, same room. She is facing away from the camera. Over-the-shoulder or from behind: we see her back, hair from behind, the outfit from the rear. Not a front selfie. Vertical candid phone photo.",
     );
     const retry = await runImageEdit(job.source, retryPrompt, extras, mode);
-    if (retry.ok) return { ok: true as const, url: retry.url, prompt: retryPrompt };
+    if (retry.ok) return { ok: true as const, url: retry.url, prompt: retryPrompt, provider: retry.provider };
     return { ok: false as const, url: undefined, error: pic.error || "Imagine не собрал кадр.", prompt };
   }
   if (/422|не принял|unprocessable|фильтр/i.test(pic.error || "")) {

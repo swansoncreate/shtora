@@ -1,4 +1,4 @@
-import { ChevronLeft, CircleCheck, Heart, LoaderCircle, NotebookPen, Send, Trash2, X } from "lucide-react";
+import { CircleCheck, Heart, LoaderCircle, NotebookPen, Send, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ChatSetup } from "@/components/chat-setup";
@@ -34,6 +34,8 @@ import { chatBackstoryFor } from "@/lib/shtora-settings";
 import { isChatTyping, resetChatEngine, subscribeTyping } from "@/lib/chat/engine";
 import { herAsk } from "@/lib/chat/life";
 import { cn } from "@/lib/utils";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
+import { ShtoraPageHeader } from "@/components/shtora-page-header";
 
 export function UnreadBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
@@ -82,14 +84,71 @@ export function useChatUnread() {
   return n;
 }
 
+const PREVIEW_AVATARS = {
+  ellissawe: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80",
+  sofia: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=240&q=80",
+  mira: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80",
+};
+
+const PREVIEW_THREADS: ChatThread[] = [
+  {
+    username: "ellissawe",
+    fullName: "Lisa",
+    avatar: PREVIEW_AVATARS.ellissawe,
+    updatedAt: Date.now() - 4 * 60_000,
+    unread: 2,
+    warmth: 72,
+    mood: "тихо и тепло",
+    messages: [
+      { id: "preview-chat-1", role: "assistant", text: "Ты сегодня совсем пропала.", at: Date.now() - 12 * 60_000, kind: "text" },
+      { id: "preview-chat-2", role: "user", text: "Я здесь. Просто разбираю архив.", at: Date.now() - 9 * 60_000, kind: "text" },
+      { id: "preview-chat-3", role: "assistant", text: "Покажешь потом самый красивый кадр?", at: Date.now() - 6 * 60_000, kind: "text" },
+      { id: "preview-chat-4", role: "user", text: "Может быть 🤍", at: Date.now() - 4 * 60_000, kind: "text", heartByUser: true },
+    ],
+  },
+  {
+    username: "sofia",
+    fullName: "Sofia",
+    avatar: PREVIEW_AVATARS.sofia,
+    updatedAt: Date.now() - 48 * 60_000,
+    unread: 0,
+    warmth: 51,
+    mood: "вечерний свет",
+    messages: [
+      { id: "preview-chat-5", role: "assistant", text: "Ты уже посмотрела ту фотографию?", at: Date.now() - 55 * 60_000, kind: "text" },
+      { id: "preview-chat-6", role: "user", text: "Да. Оставила её в Избранном.", at: Date.now() - 48 * 60_000, kind: "text" },
+    ],
+  },
+  {
+    username: "mira",
+    fullName: "Mira",
+    avatar: PREVIEW_AVATARS.mira,
+    updatedAt: Date.now() - 3 * 60 * 60_000,
+    unread: 1,
+    warmth: 63,
+    mood: "архивный день",
+    messages: [
+      { id: "preview-chat-7", role: "assistant", text: "Случайный кадр оказался лучшим.", at: Date.now() - 3 * 60 * 60_000, kind: "text" },
+    ],
+  },
+];
+
+function previewThread(username: string) {
+  return PREVIEW_THREADS.find((item) => item.username === username) || PREVIEW_THREADS[0];
+}
+
 export function ChatsSheet({
   open,
   username,
   onClose,
+  onSettings,
+  previewMode = false,
 }: {
   open: boolean;
   username?: string | null;
   onClose: () => void;
+  onSettings?: () => void;
+  previewMode?: boolean;
 }) {
   const [threadUser, setThreadUser] = useState<string | null>(null);
 
@@ -102,17 +161,17 @@ export function ChatsSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
+    <div className="fixed inset-0 z-[55] flex min-h-dvh flex-col bg-bg pointer-events-auto" role="dialog" aria-modal="true" aria-label="Чаты">
       {threadUser ? (
-        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} />
+        <ThreadView username={threadUser} onBack={() => setThreadUser(null)} onClose={onClose} onSettings={onSettings} previewMode={previewMode} />
       ) : (
-        <InboxView onOpen={setThreadUser} onClose={onClose} />
+        <InboxView onOpen={setThreadUser} onClose={onClose} onSettings={onSettings} previewMode={previewMode} />
       )}
     </div>
   );
 }
 
-function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; onClose: () => void }) {
+function InboxView({ onOpen, onClose, onSettings, previewMode }: { onOpen: (username: string) => void; onClose: () => void; onSettings?: () => void; previewMode: boolean }) {
   const [threads, setThreads] = useState<ChatThread[]>(listThreads());
   useUnseenTick();
   useEffect(() => {
@@ -121,63 +180,30 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
     return subscribeChats(sync);
   }, []);
 
+  const visibleThreads = previewMode ? PREVIEW_THREADS : threads;
+
   return (
     <>
-      <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-        <p className="flex items-center gap-2 font-display text-xl">
-          Чаты
-          <UnreadBadge count={threads.reduce((sum, t) => sum + (t.unread || 0), 0)} />
-        </p>
-        <div className="flex items-center gap-1">
-          {threads.length ? (
-            <>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 px-3 text-xs text-muted"
-              onClick={() => void markAllChatsRead()}
-            >
-              прочитано
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 px-3 text-xs text-muted"
-              onClick={() => {
-                if (window.confirm("Удалить все переписки? Предыстории в настройках останутся.")) {
-                  resetChatEngine();
-                  void clearAllChats();
-                }
-              }}
-            >
-              очистить
-            </Button>
-            </>
-          ) : null}
-          <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-            <X className="size-5" />
-          </Button>
-        </div>
-      </header>
+      <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onSettings={onSettings} onClose={onClose} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {threads.length === 0 ? (
+        {visibleThreads.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-muted">
             На профиле нажми «Написать» — переписка сохранится здесь.
           </p>
         ) : (
-          threads.map((thread) => {
+          visibleThreads.map((thread) => {
             const last = thread.messages[thread.messages.length - 1];
             return (
-              <div key={thread.username} className="flex items-center gap-1 pr-2 hover:bg-elevated">
+              <div key={thread.username} className="flex items-center gap-1 border-b border-border/45 pr-2 transition-colors hover:bg-elevated/45">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left"
+                className="flex min-w-0 flex-1 items-center gap-4 px-6 py-4 text-left"
                 onClick={() => onOpen(thread.username)}
               >
                 <span
                   className={cn(
-                    "size-12 shrink-0 rounded-full p-[2px]",
-                    storiesUnseen(thread.username) ? "bg-danger" : "bg-transparent",
+                    "size-13 shrink-0 rounded-full border p-[2px]",
+                    storiesUnseen(thread.username) ? "border-accent" : "border-border",
                   )}
                 >
                   <span className="block size-full overflow-hidden rounded-full border-2 border-bg bg-elevated">
@@ -198,7 +224,7 @@ function InboxView({ onOpen, onClose }: { onOpen: (username: string) => void; on
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10 shrink-0"
+                className="size-10 shrink-0 rounded-full"
                 aria-label="Удалить чат"
                 onClick={() => {
                   resetChatEngine(thread.username);
@@ -220,12 +246,16 @@ function ThreadView({
   username,
   onBack,
   onClose,
+  onSettings,
+  previewMode = false,
 }: {
   username: string;
   onBack: () => void;
   onClose: () => void;
+  onSettings?: () => void;
+  previewMode?: boolean;
 }) {
-  const [thread, setThread] = useState(() => getThread(username));
+  const [thread, setThread] = useState(() => previewMode ? previewThread(username) : getThread(username));
   const [draft, setDraft] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
   const [openPhoto, setOpenPhoto] = useState<string | null>(null);
@@ -234,6 +264,7 @@ function ThreadView({
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (previewMode) return;
     let cancelled = false;
     const profile = getCachedProfile(username)?.data;
     void (async () => {
@@ -270,17 +301,19 @@ function ThreadView({
     return () => {
       cancelled = true;
     };
-  }, [username]);
+  }, [username, previewMode]);
 
   useEffect(() => {
+    if (previewMode) return;
     return subscribeChats(() => setThread(getThread(username)));
   }, [username]);
 
   useEffect(() => {
+    if (previewMode) return;
     const sync = () => setTyping(isChatTyping(username));
     sync();
     return subscribeTyping(sync);
-  }, [username]);
+  }, [username, previewMode]);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
@@ -296,10 +329,40 @@ function ThreadView({
     const text = draft.trim();
     if (!text) return;
     setDraft("");
+    if (previewMode) {
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                { id: `preview-${Date.now()}`, role: "user", text, kind: "text", at: Date.now() },
+              ],
+              updatedAt: Date.now(),
+            }
+          : prev,
+      );
+      return;
+    }
     await appendMessage(username, { role: "user", text, kind: "text" });
   }
 
   async function sendHeart() {
+    if (previewMode) {
+      setThread((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                { id: `preview-heart-${Date.now()}`, role: "user", text: "", kind: "heart", at: Date.now(), heartByUser: true },
+              ],
+              updatedAt: Date.now(),
+            }
+          : prev,
+      );
+      return;
+    }
     await appendMessage(username, { role: "user", text: "", kind: "heart", heartByUser: true });
     await bumpWarmth(username, 1);
   }
@@ -322,51 +385,42 @@ function ThreadView({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center gap-1 px-2 py-2 sm:px-4">
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onBack} aria-label="К чатам">
-          <ChevronLeft className="size-5" />
-        </Button>
-        <span className="size-9 overflow-hidden rounded-full bg-elevated">
-          {thread?.avatar ? <MediaImg src={thread.avatar} alt="" className="size-full object-cover" /> : null}
-        </span>
-        <div className="min-w-0 flex-1 px-2">
-          <p className="truncate text-sm font-medium">{thread?.fullName || username}</p>
-          <p className="truncate text-xs text-muted">
-            {metrics
-              ? `${thread?.mood || `@${username}`} · ${metrics.head} · ${metrics.pullLine}`
-              : thread?.mood || `@${username}`}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-10"
-          aria-label="Настройки чата"
-          onClick={() => setNotesOpen(true)}
-        >
-          <NotebookPen className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-10"
-          aria-label="Удалить чат"
-          onClick={() => {
-            void deleteThread(username).then(() => {
-              resetChatEngine(username);
-              toast.message("Переписка стёрта. Предыстория и метрики на месте");
-              onBack();
-            });
-          }}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-          <X className="size-5" />
-        </Button>
-      </header>
+      <ShtoraPageHeader
+        eyebrow={
+          metrics
+            ? `${thread?.mood || `@${username}`} · ${metrics.head}`
+            : thread?.mood || `@${username}`
+        }
+        title={thread?.fullName || `@${username}`}
+        onBack={onBack}
+        onSettings={onSettings}
+        actions={
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Настройки чата" onClick={() => setNotesOpen(true)}>
+              <NotebookPen className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-10 rounded-full"
+              aria-label="Удалить чат"
+              onClick={() => {
+                void deleteThread(username).then(() => {
+                  resetChatEngine(username);
+                  toast.message("Переписка стёрта. Предыстория и метрики на месте");
+                  onBack();
+                });
+              }}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={onClose} aria-label="Закрыть">
+              <X className="size-4" />
+            </Button>
+          </div>
+        }
+      />
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted">Напиши первым. Может прислать фото.</p>
@@ -550,6 +604,7 @@ function ThreadView({
 function OncePhoto({ url, username, onClose }: { url: string; username: string; onClose: () => void }) {
   const [src, setSrc] = useState<string | undefined>();
   const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     let live = true;
     void resolveChatImage(url).then((next) => {
@@ -559,27 +614,23 @@ function OncePhoto({ url, username, onClose }: { url: string; username: string; 
       live = false;
     };
   }, [url]);
+
   return (
-    <div
-      className="fixed inset-0 z-[80] flex flex-col bg-bg"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Фото один раз"
-      onClick={onClose}
+    <ShtoraMediaViewer
+      eyebrow={`Приватное фото · @${username}`}
+      title="1 просмотр"
+      backdropSrc={src || url}
+      meta={<span>{`Сообщение · одноразовый кадр · @${username}`}</span>}
+      onClose={onClose}
+      footer={<p className="px-4 py-3 text-center text-[10px] uppercase tracking-[0.2em] text-subtle">После закрытия фото будет отмечено как просмотренное</p>}
     >
-      <header className="flex items-center justify-between px-3 py-3">
-        <p className="text-sm text-muted">@{username} · 1 просмотр</p>
-        <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-          <X className="size-5" />
-        </Button>
-      </header>
-      <div className="flex min-h-0 flex-1 items-center justify-center px-2">
+      <div className="relative flex size-full min-h-0 items-center justify-center">
         {!src && !failed ? <LoaderCircle className="size-6 animate-spin text-muted" /> : null}
         {src && !failed ? (
           <img
             src={src}
             alt=""
-            className="max-h-full max-w-full rounded-md object-contain"
+            className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
             referrerPolicy="no-referrer"
             onError={() => {
               if (src !== url) setSrc(url);
@@ -589,7 +640,7 @@ function OncePhoto({ url, username, onClose }: { url: string; username: string; 
         ) : null}
         {failed ? <p className="text-sm text-muted">не загрузилось</p> : null}
       </div>
-    </div>
+    </ShtoraMediaViewer>
   );
 }
 
@@ -667,9 +718,7 @@ function ChatPic({ url }: { url: string }) {
 }
 
 function CircleNote({ url }: { url: string }) {
-  const wrap = useRef<HTMLButtonElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const [wide, setWide] = useState(false);
+  const [open, setOpen] = useState(false);
   const [src, setSrc] = useState("");
   const [clip, setClip] = useState(() => /\.(mp4|webm|mov)(\?|$)/i.test(url) || /id=.*\.mp4/i.test(url));
 
@@ -695,50 +744,50 @@ function CircleNote({ url }: { url: string }) {
     };
   }, [url]);
 
-  useEffect(() => {
-    if (!wide) return;
-    const onDoc = (e: PointerEvent) => {
-      const root = wrap.current;
-      if (root && e.target instanceof Node && root.contains(e.target)) return;
-      setWide(false);
-      if (video.current) video.current.muted = true;
-    };
-    document.addEventListener("pointerdown", onDoc, true);
-    return () => document.removeEventListener("pointerdown", onDoc, true);
-  }, [wide]);
-
   return (
-    <button
-      ref={wrap}
-      type="button"
-      className={cn(
-        "relative block shrink-0 overflow-hidden rounded-full bg-black transition-[width,height] duration-200",
-        wide ? "size-64" : "size-36",
-      )}
-      aria-label="Кружок"
-      onClick={() => {
-        setWide(true);
-        const el = video.current;
-        if (!el) return;
-        el.muted = false;
-        void el.play();
-      }}
-    >
-      {clip && src ? (
-        <video
-          ref={video}
-          src={src}
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onError={() => setClip(false)}
-        />
-      ) : src ? (
-        <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+    <>
+      <button
+        type="button"
+        className="relative block size-36 shrink-0 overflow-hidden rounded-full border border-border/50 bg-black shadow-[0_14px_40px_rgba(0,0,0,0.25)] transition-transform duration-200 hover:scale-[1.02]"
+        aria-label="Открыть кружок"
+        onClick={() => setOpen(true)}
+      >
+        {clip && src ? (
+          <video src={src} className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline preload="auto" />
+        ) : src ? (
+          <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
+        <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#070605]/65 px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-fg backdrop-blur-md">
+          кружок
+        </span>
+      </button>
+
+      {open ? (
+        <ShtoraMediaViewer
+          eyebrow="Сообщение · кружок"
+          title="Момент"
+          backdropSrc={src || url}
+          meta={<span>Сообщение · видео/фото-кружок · личный архив</span>}
+          onClose={() => setOpen(false)}
+        >
+          <div className="relative flex size-full min-h-0 items-center justify-center">
+            {clip && src ? (
+              <video
+                src={src}
+                className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : src ? (
+              <img src={src} alt="" className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]" />
+            ) : (
+              <LoaderCircle className="size-6 animate-spin text-muted" />
+            )}
+          </div>
+        </ShtoraMediaViewer>
       ) : null}
-    </button>
+    </>
   );
 }
+

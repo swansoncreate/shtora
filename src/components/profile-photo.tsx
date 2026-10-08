@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ChatSendButton } from "@/components/chat-send-button";
 import { ImagineBar } from "@/components/imagine-dice";
 import { MediaImg } from "@/components/media-img";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { Button } from "@/components/ui/button";
 import { uploadMediaJob } from "@/lib/dropbox/client-upload";
 import { destFor } from "@/lib/dropbox/paths";
@@ -52,31 +53,30 @@ export function ProfilePhotoViewer({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Аватар">
-      <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-        <p className="text-sm text-muted">@{username}</p>
-        <div className="flex items-center gap-1">
+    <ShtoraMediaViewer
+      eyebrow={`Аватар · @${username}`}
+      title="Портрет"
+      backdropSrc={url}
+      meta={<span>Профиль · личная фотография · источник сохранения: Dropbox</span>}
+      onClose={onClose}
+      actions={
+        <>
           <ChatSendButton username={username} imageUrl={url} />
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="size-10"
+            className="size-10 rounded-full text-muted hover:text-fg"
             aria-label={saved ? "Сохранено" : "Сохранить в Dropbox"}
             onClick={() => void save()}
             disabled={saving || saved}
           >
             {saving ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-            <X className="size-5" />
-          </Button>
-        </div>
-      </header>
-      <div className="flex min-h-0 flex-1 items-center justify-center px-2">
-        <MediaImg src={url} alt="" className="max-h-full max-w-full rounded-md object-contain" />
-      </div>
-      <ImagineBar mediaUrl={url} username={username} onNeedToken={onNeedToken} />
-    </div>
-  );
-}
+        </>
+      }
+      footer={<ImagineBar mediaUrl={url} username={username} onNeedToken={onNeedToken} />}
+    >
+      <MediaImg src={url} alt="" className="max-h-full max-w-full rounded-[18px] object-contain" />
+    </ShtoraMediaViewer>
+  );}

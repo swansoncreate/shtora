@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ChatSendButton } from "@/components/chat-send-button";
 import { ImagineBar } from "@/components/imagine-dice";
 import { Button } from "@/components/ui/button";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { fetchDropboxBlob } from "@/lib/dropbox/client-file";
 import { deleteDropboxFile, deleteDropboxMany, getShtoraMarks, getThumbnails, listEntries, listFolders, moveDropboxFile, moveDropboxMany, setShtoraMarks } from "@/lib/dropbox/functions";
 import { parentDropboxPath, sharedFolder } from "@/lib/dropbox/paths";
@@ -16,11 +17,13 @@ export function DropboxBrowser({
   path,
   onPath,
   onNeedToken,
+  previewMode = false,
 }: {
   settings: ShtoraSettings;
   path: string;
   onPath: (path: string) => void;
   onNeedToken: () => void;
+  previewMode?: boolean;
 }) {
   const token = settings.dropboxToken.trim();
   useEffect(() => {
@@ -182,6 +185,79 @@ export function DropboxBrowser({
   const viewerIndex = viewer ? media.findIndex((entry) => entry.path === viewer.path) : -1;
 
   if (!token) {
+    if (previewMode) {
+      const previewFolders = [
+        { name: "2026", meta: "24 файла", note: "архив года" },
+        { name: "София", meta: "18 файлов", note: "личное" },
+        { name: "Общее", meta: "42 файла", note: "доступное всем" },
+        { name: "Избранное", meta: "9 файлов", note: "для Шторы" },
+      ];
+      const previewPhotos = [
+        { name: "IMG_2041.jpg", url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=82" },
+        { name: "IMG_1988.jpg", url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=700&q=82" },
+        { name: "VID_1022.mp4", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=82" },
+      ];
+      return (
+        <div className="mt-2 pb-12">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-subtle">пример структуры</p>
+              <p className="mt-1 truncate text-sm text-muted">/Штора</p>
+            </div>
+            <span className="rounded-full bg-elevated px-3 py-1.5 text-[11px] text-muted">токен не нужен</span>
+          </div>
+
+          <section className="mt-7">
+            <div className="flex items-end justify-between">
+              <p className="font-display text-xl text-fg">Папки</p>
+              <p className="text-xs text-subtle">как будут выглядеть</p>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {previewFolders.map((folder) => (
+                <button
+                  key={folder.name}
+                  type="button"
+                  className="group flex min-h-28 flex-col justify-between rounded-2xl bg-surface p-4 text-left shadow-[var(--shadow-border)] transition-colors hover:bg-elevated"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <Folder className="size-6 text-accent" />
+                    <span className="text-[10px] uppercase tracking-[0.16em] text-subtle">{folder.meta}</span>
+                  </div>
+                  <div className="mt-6 min-w-0">
+                    <p className="truncate text-sm font-medium text-fg">{folder.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted">{folder.note}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-9">
+            <div className="flex items-end justify-between">
+              <p className="font-display text-xl text-fg">Последние файлы</p>
+              <p className="text-xs text-subtle">фото и видео</p>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {previewPhotos.map((photo) => (
+                <div key={photo.name} className="overflow-hidden rounded-xl bg-elevated">
+                  <img src={photo.url} alt="" className="aspect-square w-full object-cover" referrerPolicy="no-referrer" />
+                  <p className="truncate px-2 py-2 text-[10px] text-muted">{photo.name}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="mt-8 border-t border-border/50 pt-4">
+            <p className="text-xs leading-5 text-muted">
+              После подключения Dropbox эти карточки заменятся реальными папками и файлами. Внутри папки остаётся такая же сетка и просмотрщик.
+            </p>
+            <Button className="mt-4 h-11 rounded-xl" variant="subtle" onClick={onNeedToken}>
+              Подключить Dropbox
+            </Button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="mt-6 rounded-2xl bg-surface px-4 py-10 text-center shadow-[var(--shadow-border)]">
         <p className="font-display text-2xl text-fg">Нет токена Dropbox</p>
@@ -546,16 +622,20 @@ export function DropboxViewer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true">
-      <header className="flex items-center justify-between gap-3 px-3 py-3 sm:px-5">
-        <p className="min-w-0 truncate text-sm text-muted">{item.name}</p>
-        <div className="flex items-center gap-1">
+    <ShtoraMediaViewer
+      eyebrow={`Dropbox · ${chatUsername ? `@${chatUsername}` : "архив"}`}
+      title={item.name}
+      backdropSrc={objectUrl}
+      meta={<span>/{item.path.split("/").slice(0, -1).join("/")} · {item.video ? "видео" : "фото"} · личный архив</span>}
+      onClose={onClose}
+      actions={
+        <>
           {confirmDel ? (
             <>
-              <Button type="button" variant="subtle" className="h-10 rounded-lg px-3 text-sm text-danger" disabled={busy} onClick={() => void remove()}>
+              <Button type="button" variant="subtle" className="h-10 rounded-full px-3 text-sm text-danger" disabled={busy} onClick={() => void remove()}>
                 {busy ? <LoaderCircle className="size-4 animate-spin" /> : "Удалить"}
               </Button>
-              <Button type="button" variant="ghost" className="h-10 rounded-lg px-3 text-sm" onClick={() => setConfirmDel(false)}>
+              <Button type="button" variant="ghost" className="h-10 rounded-full px-3 text-sm" onClick={() => setConfirmDel(false)}>
                 Нет
               </Button>
             </>
@@ -565,32 +645,43 @@ export function DropboxViewer({
                 <Button
                   type="button"
                   variant={isTagged ? "default" : "subtle"}
-                  className="h-10 rounded-lg px-3 text-sm"
+                  className="h-10 rounded-full px-3 text-sm"
                   disabled={marking}
                   onClick={() => void toggleMark()}
                 >
                   {marking ? <LoaderCircle className="size-4 animate-spin" /> : isTagged ? "В ленте" : "В ленту"}
                 </Button>
               ) : null}
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Переместить" disabled={busy} onClick={() => setMoving(true)}>
-                <FolderInput className="size-5" />
+              <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Переместить" disabled={busy} onClick={() => setMoving(true)}>
+                <FolderInput className="size-4" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Удалить" disabled={busy} onClick={() => setConfirmDel(true)}>
-                <Trash2 className="size-5" />
+              <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label="Удалить" disabled={busy} onClick={() => setConfirmDel(true)}>
+                <Trash2 className="size-4" />
               </Button>
               <ChatSendButton username={chatUsername || ""} imageUrl={objectUrl} />
-              <Button type="button" variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Закрыть">
-                <X className="size-5" />
-              </Button>
             </>
           )}
-        </div>
-      </header>
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
+        </>
+      }
+      footer={
+        objectUrl && !item.video ? (
+          <ImagineBar
+            mediaUrl={objectUrl}
+            username={chatUsername || "dropbox"}
+            saveFolder={parentDropboxPath(item.path)}
+            onNeedToken={onNeedToken}
+            onSaved={onSaved}
+          />
+        ) : (
+          <div className="h-3" />
+        )
+      }
+    >
+      <div className="relative flex size-full min-h-0 items-center justify-center">
         {hasPrev ? (
           <button
             type="button"
-            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:left-4"
+            className="absolute left-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:left-3"
             aria-label="Назад"
             onClick={onPrev}
           >
@@ -601,21 +692,26 @@ export function DropboxViewer({
           <LoaderCircle className="size-6 animate-spin text-muted" />
         ) : objectUrl ? (
           item.video ? (
-            <video src={objectUrl} className="max-h-full max-w-full rounded-md" controls playsInline autoPlay />
+            <video src={objectUrl} className="max-h-full max-w-full rounded-[18px]" controls playsInline autoPlay />
           ) : (
-            <img src={objectUrl} alt="" className="max-h-full max-w-full rounded-md object-contain" />
+            <img src={objectUrl} alt="" className="max-h-full max-w-full rounded-[18px] object-contain" />
           )
         ) : (
-          <p className="max-w-sm px-4 text-center text-sm text-danger">
-            {fileQuery.error instanceof Error
-              ? fileQuery.error.message
-              : "Не удалось открыть файл. В Permissions включите files.content.read, Submit, затем новый токен."}
-          </p>
+          <div className="max-w-md px-6 text-center">
+            <p className="text-sm text-danger">
+              {fileQuery.error instanceof Error
+                ? fileQuery.error.message
+                : "Не удалось открыть файл."}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              В Permissions включите files.content.read и создайте новый токен.
+            </p>
+          </div>
         )}
         {hasNext ? (
           <button
             type="button"
-            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full bg-surface/80 text-fg sm:right-4"
+            className="absolute right-1 z-10 flex size-11 items-center justify-center rounded-full border border-border/60 bg-bg/65 text-fg shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-md sm:right-3"
             aria-label="Дальше"
             onClick={onNext}
           >
@@ -623,23 +719,11 @@ export function DropboxViewer({
           </button>
         ) : null}
       </div>
-      {objectUrl && !item.video ? (
-        <ImagineBar
-          mediaUrl={objectUrl}
-          username={chatUsername || "dropbox"}
-          saveFolder={parentDropboxPath(item.path)}
-          onNeedToken={onNeedToken}
-          onSaved={onSaved}
-        />
-      ) : (
-        <div className="h-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]" />
-      )}
       {moving ? (
         <MovePicker token={token} start={parentDropboxPath(item.path)} onClose={() => setMoving(false)} onPick={(folder) => void moveTo(folder)} />
       ) : null}
-    </div>
-  );
-}
+    </ShtoraMediaViewer>
+  );}
 
 function MovePicker({
   token,

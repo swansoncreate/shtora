@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { isAllowedMediaHost, mediaFetchHeaders } from "@/lib/media-host";
-import { DEFAULT_VARIATION_PROMPT } from "./prompt";
+import { isAllowedMediaHost, mediaFetchHeaders } from "../media-host.ts";
+import { DEFAULT_VARIATION_PROMPT } from "./prompt.ts";
+import { generateImage } from "./gateway.ts";
 
 export { DEFAULT_VARIATION_PROMPT };
 
@@ -86,10 +87,6 @@ async function runImageEditOnce(
   aspectRatio?: string,
 ) {
   if (imagineCooling()) return { ok: false as const, error: imagineRateMessage() };
-  const apiKey = typeof process === "undefined" ? "" : process.env.XAI_API_KEY;
-  if (!apiKey) {
-    return { ok: false as const, error: "Imagine сейчас недоступен в этой среде." };
-  }
 
   const image = trimDataUrl(imageDataUrl);
   if (!image) return { ok: false as const, error: "Кадр слишком тяжёлый для Imagine." };
@@ -134,71 +131,12 @@ async function runImageEditOnce(
 
   let last = "Imagine не ответил";
   for (const payload of payloads) {
-    const hit = await postEdit(apiKey, payload);
-    if (hit.ok) return hit;
+    const hit = await generateImage(payload as Parameters<typeof generateImage>[0]);
+    if (hit.ok) return { ok: true as const, url: hit.url, provider: hit.provider };
     last = hit.error;
-    if (/подождать|слишком часто|credit|spend|quota|Нет доступа/i.test(last)) return hit;
+    if (/подождать|слишком часто|credit|spend|quota|нет доступа/i.test(last)) return { ok: false as const, error: last };
   }
   return { ok: false as const, error: last };
-}
-
-type EditHit = { ok: true; url: string } | { ok: false; error: string };
-
-async function postEdit(apiKey: string, payload: unknown): Promise<EditHit> {
-  let last = "Imagine не ответил";
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    if (imagineCooling()) return { ok: false, error: imagineRateMessage() };
-    if (attempt) await sleep(900);
-    try {
-      const res = await fetch("https://api.x.ai/v1/images/edits", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(55_000),
-      });
-      const text = await res.text();
-      let parsed: unknown = null;
-      try {
-        parsed = text ? JSON.parse(text) : null;
-      } catch {
-        parsed = null;
-      }
-      if (res.status === 429) {
-        noteLimit(res);
-        const { slog } = await import("@/lib/server/log.server");
-        slog("imagine", "image-fail", { http: 429 });
-        return { ok: false, error: imagineRateMessage() };
-      }
-      if (res.status >= 500) {
-        last = imagineError(parsed, res.status);
-        continue;
-      }
-      if (!res.ok) {
-        const err = imagineError(parsed, res.status);
-        const { slog } = await import("@/lib/server/log.server");
-        slog("imagine", "image-fail", { http: res.status, err });
-        return { ok: false, error: err };
-      }
-      const url = imageUrlFrom(parsed);
-      if (!url) {
-        if (wasFiltered(parsed)) return { ok: false, error: "Imagine не принял этот кадр. Другое фото или промпт." };
-        last = "Imagine вернул пустую картинку.";
-        continue;
-      }
-      const { slog } = await import("@/lib/server/log.server");
-      slog("imagine", "image-ok", { http: res.status });
-      return { ok: true, url };
-    } catch (err) {
-      last =
-        err instanceof Error && /timeout|abort/i.test(err.message)
-          ? "Imagine не успел. Ещё раз."
-          : "Сеть до Imagine оборвалась.";
-    }
-  }
-  return { ok: false, error: last };
 }
 
 export const imagineVariation = createServerFn({ method: "POST" })
@@ -212,10 +150,7 @@ export const imagineVariation = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const { runningOnVps, proxyOr } = await import("@/lib/server/remote");
-    if (runningOnVps()) {
-      return { ok: false as const, error: "Imagine считается на публикации Grok, не на VPS." };
-    }
+    const { proxyOr } = await import("@/lib/server/remote");
     const extras = data.extraImages?.length ? data.extraImages : data.identityDataUrl;
     const mode = data.mode || (Array.isArray(extras) ? "compose" : "identity");
     const out = await runImageEdit(data.imageDataUrl, data.prompt, extras, mode);

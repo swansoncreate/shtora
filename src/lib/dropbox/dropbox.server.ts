@@ -474,22 +474,35 @@ async function thumbnailOneByOne(
 }
 
 export async function latestDropboxImageDataUrl(token: string, folder: string, skip = 0, seed?: string) {
+  const found = await pickDropboxImageSource(token, folder, { skip, seed });
+  return found?.image;
+}
+
+export async function pickDropboxImageSource(
+  token: string,
+  folder: string,
+  opts: { skip?: number; seed?: string; excludePaths?: string[] } = {},
+) {
   const t = assertToken(token);
   const clean = normalizeDropboxPath(folder);
   if (!clean || clean === "/") return undefined;
   const tagged = await taggedDropboxImages(t, clean);
   if (!tagged.length) return undefined;
+
+  const excluded = new Set((opts.excludePaths || []).map((p) => p.trim().toLowerCase()).filter(Boolean));
   const faces = tagged.filter((f) => isFaceLikelyPath(f.path));
   const pool = faces.length ? faces : tagged.filter((f) => !/_cover|\/видео\/|\/video\//i.test(f.path));
-  const list = pool.length ? pool : tagged;
-  const shuffled = seed ? seededShuffle(list, seed) : [...list].sort((a, b) => b.at.localeCompare(a.at));
-  const start = seed ? 0 : Math.abs(skip) % shuffled.length;
-  const tries = Math.min(shuffled.length, 10);
+  const usable = pool.length ? pool : tagged;
+  const filtered = usable.filter((f) => !excluded.has(f.path.toLowerCase()));
+  const list = filtered.length ? filtered : usable;
+  const shuffled = opts.seed ? seededShuffle(list, opts.seed) : [...list].sort((a, b) => b.at.localeCompare(a.at));
+  const start = opts.seed ? 0 : Math.abs(opts.skip || 0) % shuffled.length;
+  const tries = Math.min(shuffled.length, 16);
   for (let i = 0; i < tries; i += 1) {
     const pick = shuffled[(start + i) % shuffled.length];
     if (!pick) continue;
     const thumb = await dropboxJpegThumb(t, pick.path);
-    if (thumb) return thumb;
+    if (thumb) return { image: thumb, path: pick.path, at: pick.at };
   }
   return undefined;
 }

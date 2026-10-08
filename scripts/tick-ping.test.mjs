@@ -23,7 +23,7 @@ function thread(username) {
     fullName: "Inna",
     warmth: 80,
     bond: { warmth: 80, trust: 70, heat: 20, irrit: 5, spark: 40 },
-    world: { place: "home" },
+    world: { place: "home", memOpen: "open thread" },
     updatedAt: now - 60_000,
     messages: [
       { role: "user", text: "ты тут", at: now - 10 * 60_000 },
@@ -76,6 +76,8 @@ test("with front origin the ping is appended from publication, not api.x.ai", as
       { status: 200, headers: { "content-type": "application/json" } },
     );
   };
+  const realDateNow = Date.now;
+  Date.now = () => Date.parse("2026-10-07T17:00:00Z"); // 20:00 Moscow: deterministic evening slot.
   try {
     await writeDiskThread(thread("front"));
     const out = await runTick({ chats: true, instagram: false, dropbox: false });
@@ -92,6 +94,7 @@ test("with front origin the ping is appended from publication, not api.x.ai", as
     assert.ok(row.lastPingAt > 0);
   } finally {
     globalThis.fetch = prev;
+    Date.now = realDateNow;
     delete process.env.SHTORA_FRONT_ORIGIN;
   }
 });

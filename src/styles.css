@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0e0d0c;
-  --color-surface: #171614;
-  --color-elevated: #1f1d1b;
-  --color-fg: #f4efe6;
-  --color-muted: #9c958a;
-  --color-subtle: #6f6a62;
-  --color-accent: #d7cfc3;
-  --color-accent-fg: #0e0d0c;
+  --color-bg: #0a0908;
+  --color-surface: #12110f;
+  --color-elevated: #191613;
+  --color-fg: #f1eae1;
+  --color-muted: #a39a90;
+  --color-subtle: #716960;
+  --color-accent: #a96868;
+  --color-accent-fg: #160d0e;
   --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
   --color-border-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
-  --color-danger: #c45c4a;
-  --color-ring: #d7cfc3;
+  --color-danger: #b76666;
+  --color-ring: #a96868;
+  --color-warm: #c8b8a5;
 
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -26,8 +27,8 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  --shadow-border: 0 0 0 1px rgba(244, 239, 230, 0.16);
-  --shadow-border-hover: 0 0 0 1px rgba(244, 239, 230, 0.28);
+  --shadow-border: 0 0 0 1px rgba(241, 234, 225, 0.09);
+  --shadow-border-hover: 0 0 0 1px rgba(241, 234, 225, 0.16);
 
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -108,19 +109,19 @@
   background-image:
     linear-gradient(
       90deg,
-      #0e0d0c 0%,
-      #1c1916 9%,
-      #2a2520 16%,
-      #141210 24%,
-      #24201c 32%,
-      #0e0d0c 40%,
-      #1a1714 48%,
-      #3a342c 54%,
-      #161412 62%,
-      #221e1a 72%,
-      #121110 82%,
-      #1f1b18 92%,
-      #0e0d0c 100%
+      #0b0a09 0%,
+      #241916 9%,
+      #34211d 16%,
+      #161210 24%,
+      #2b1d19 32%,
+      #0b0a09 40%,
+      #1b1412 48%,
+      #4a2c27 54%,
+      #171211 62%,
+      #2a1b18 72%,
+      #12100f 82%,
+      #241815 92%,
+      #0b0a09 100%
     );
 }
 

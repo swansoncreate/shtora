@@ -5,6 +5,10 @@ import { pollImagineVideo, startImagineVideo } from "@/lib/imagine/video";
 import { videoPrompt } from "@/lib/imagine/prompt";
 import { worldPrompt } from "./world";
 import { looksLikeCameraAsk } from "./functions";
+import type { PhotoIntent, CameraMode } from "@/lib/visual/types";
+import { deterministicPhotoIntent } from "@/lib/visual/intent";
+import { listVisualMemoryFn } from "@/lib/visual/functions";
+import { getThread, patchThread } from "./store";
 
 export type MediaPlan = {
   ready: boolean;
@@ -18,6 +22,9 @@ export type MediaAsk = MediaPlan & {
   clothes?: string;
   place?: string;
   hair?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
   userText?: string;
   dropboxToken?: string;
   dropboxFolder?: string;
@@ -25,10 +32,12 @@ export type MediaAsk = MediaPlan & {
   dropboxSeed?: string;
   instagramUrls?: string[];
   lastPhotoUrl?: string;
+  username?: string;
+  visualIntent?: PhotoIntent;
 };
 
 export type MediaOut =
-  | { ok: true; kind: "photo" | "circle"; url: string; prompt: string }
+  | { ok: true; kind: "photo" | "circle"; url: string; prompt: string; sceneId?: string; jobId?: string }
   | { ok: false; skipped: true; reason: string }
   | { ok: false; skipped: false; error: string };
 
@@ -106,12 +115,33 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   if (!ask.ready || ask.kind === "none") return { ok: false, skipped: true, reason: ask.reason || "not-ready" };
   let imageUrl = "";
   let prompt = "";
+  let sceneId: string | undefined;
+  let jobId: string | undefined;
+  if (ask.gallery && ask.username) {
+    try {
+      const query = (ask.userText || "").trim();
+      const result = await listVisualMemoryFn({ data: { username: ask.username, query } });
+      const rows = result.memories || [];
+      const first = rows[0];
+      if (first?.imageUrl) {
+        return { ok: true, kind: "photo", url: first.imageUrl, prompt: first.prompt || "", sceneId: first.sceneId };
+      }
+    } catch {
+      /* fall through to legacy generation if memory is unavailable */
+    }
+  }
   try {
     let sourceDataUrl: string | undefined;
+    const inferredIntent: PhotoIntent =
+      ask.visualIntent ||
+      (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
+        ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
+        : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl)));
     const reuse =
       Boolean(ask.lastPhotoUrl) &&
       !ask.gallery &&
-      (/back|side|full/.test(ask.kind || "") || looksLikeCameraAsk(ask.userText || ""));
+      inferredIntent.mode === "continue" ||
+      ("reference" in inferredIntent && inferredIntent.reference === "last_photo");
     if (reuse && ask.lastPhotoUrl) {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
@@ -121,18 +151,40 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
         userText: (ask.userText || "").slice(0, 400),
         scene: ask.gallery ? "" : (ask.place || "").slice(0, 80),
-        world: ask.gallery ? "" : worldPrompt({ clothes: ask.clothes, place: ask.place, hair: ask.hair }),
+        world: ask.gallery
+          ? ""
+          : worldPrompt({ clothes: ask.clothes, place: ask.place, hair: ask.hair }),
         dropboxToken: sourceDataUrl ? undefined : ask.dropboxToken,
         dropboxFolder: sourceDataUrl ? undefined : ask.dropboxFolder,
         dropboxSkip: sourceDataUrl ? 0 : ask.dropboxSkip,
         dropboxSeed: ask.dropboxSeed,
         instagramUrls: ask.instagramUrls,
         sourceDataUrl,
+        username: ask.username,
+        visualIntent: inferredIntent.mode === "none" ? undefined : inferredIntent,
+        hair: ask.hair,
+        activity: ask.activity,
+        timeContext: ask.timeContext,
+        weather: ask.weather,
       },
     });
     prompt = pic.prompt || "";
-    if (pic.ok && pic.url) imageUrl = pic.url;
-    else {
+    if (pic.ok && pic.url) {
+      imageUrl = pic.url;
+      sceneId = pic.sceneId;
+      jobId = pic.jobId;
+      if (ask.username && pic.sceneId) {
+        const live = getThread(ask.username);
+        if (live) {
+          await patchThread(ask.username, {
+            world: {
+              ...(live.world || {}),
+              sceneId: pic.sceneId,
+            },
+          });
+        }
+      }
+    } else {
       const raw = pic.error || "Imagine не собрал кадр";
       return {
         ok: false,
@@ -168,7 +220,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
             if (poll.status === "done" && poll.url) {
               const id = crypto.randomUUID();
               const media = await stashChatPhoto(id, poll.url);
-              return { ok: true, kind: "circle", url: media, prompt };
+              return { ok: true, kind: "circle", url: media, prompt, sceneId, jobId };
             }
           }
         }
@@ -176,14 +228,14 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     } catch {
       /* still falls through — never silent-skip a promised circle */
     }
-    return persistStill(imageUrl, prompt, "photo");
+    return persistStill(imageUrl, prompt, "photo", sceneId, jobId);
   }
-  return persistStill(imageUrl, prompt, "photo");
+  return persistStill(imageUrl, prompt, "photo", sceneId, jobId);
 }
 
-async function persistStill(imageUrl: string, prompt: string, kind: "photo" | "circle"): Promise<MediaOut> {
+async function persistStill(imageUrl: string, prompt: string, kind: "photo" | "circle", sceneId?: string, jobId?: string): Promise<MediaOut> {
   const id = crypto.randomUUID();
   const stable = await persistChatImage(imageUrl);
   const cached = await stashChatPhoto(id, stable);
-  return { ok: true, kind, url: cached.startsWith("/") || cached.startsWith("blob:") ? cached : stable, prompt };
+  return { ok: true, kind, url: cached.startsWith("/") || cached.startsWith("blob:") ? cached : stable, prompt, sceneId, jobId };
 }

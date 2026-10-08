@@ -1,7 +1,8 @@
-import { CloudUpload, Dices, Eye, EyeOff, LoaderCircle, X } from "lucide-react";
+import { CloudUpload, Dices, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useRef, useState, type FormEvent, type MouseEvent, type PointerEvent } from "react";
 import { toast } from "sonner";
 import { ChatSendButton } from "@/components/chat-send-button";
+import { ShtoraMediaViewer } from "@/components/shtora-media-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendToChat } from "@/lib/chat/send";
@@ -143,8 +144,11 @@ export function ImagineBar({
   function renderForm(chain: boolean) {
     const withReply = Boolean(replyKind) && !chain;
     return (
-      <div className="shrink-0 border-t border-border/60 bg-bg pt-2">
-        <form className="flex gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5" onSubmit={(e) => onPromptSubmit(e, chain)}>
+      <div className="relative shrink-0 px-3 pb-[max(0.8rem,env(safe-area-inset-bottom))] pt-2.5 sm:px-5">
+        <form
+          className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-[18px] border border-border/60 bg-surface/92 p-1.5 shadow-[0_14px_44px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+          onSubmit={(e) => onPromptSubmit(e, chain)}
+        >
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -153,26 +157,34 @@ export function ImagineBar({
               if (!busy && !open && !sending) onBusy?.(false);
             }}
             placeholder={
-              chain ? "Докрутить этот кадр" : withReply ? "Ответить или свой промпт" : "Свой промпт"
+              chain ? "Докрутить кадр…" : withReply ? "Ответить или написать промпт…" : "Что изменить в кадре…"
             }
             maxLength={800}
             aria-label={withReply ? "Ответ или промпт Imagine" : "Промпт Imagine"}
             disabled={busy || sending}
+            className="h-11 min-w-0 flex-1 rounded-[14px] border-0 bg-transparent px-3 text-sm shadow-none focus-visible:ring-0"
           />
-          <Button type="submit" size="lg" className="h-12 w-12 shrink-0 rounded-lg px-0" disabled={busy} aria-label="Сгенерировать">
-            {busy ? <LoaderCircle className="size-4 animate-spin" /> : <Dices className="size-5" />}
-          </Button>
           {withReply ? (
             <Button
               type="button"
-              size="lg"
-              className="h-12 shrink-0 rounded-lg px-4"
+              size="sm"
+              className="h-11 shrink-0 rounded-[14px] px-3"
               disabled={sending || busy || !draft.trim()}
               onClick={() => void sendReply()}
             >
               {sending ? "…" : "Ответ"}
             </Button>
-          ) : null}
+          ) : (
+            <Button
+              type="submit"
+              size="icon"
+              className="h-11 w-11 shrink-0 rounded-[14px]"
+              disabled={busy}
+              aria-label="Сгенерировать"
+            >
+              {busy ? <LoaderCircle className="size-4 animate-spin" /> : <Dices className="size-5" />}
+            </Button>
+          )}
         </form>
       </div>
     );
@@ -182,15 +194,19 @@ export function ImagineBar({
     <>
       {renderForm(false)}
       {open ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Imagine">
-          <header className="flex items-center justify-between px-3 py-3 sm:px-5">
-            <p className="text-sm text-muted">{busy ? "Крутим кадр" : result ? "Imagine" : "Imagine"}</p>
-            <div className="flex items-center gap-1">
+        <ShtoraMediaViewer
+          eyebrow="Imagine · вариация"
+          title={busy ? "Генерирую…" : result ? "Новая версия" : "Подготовка"}
+          backdropSrc={current || source}
+          meta={<span>{result ? "оригинал → новая версия" : "исходный кадр · готов к преобразованию"}</span>}
+          onClose={closeSheet}
+          actions={
+            <>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10"
+                className="size-10 rounded-full"
                 aria-label={compare ? "Скрыть сравнение" : "Было / стало"}
                 disabled={!original || !current}
                 onClick={() => setCompare((v) => !v)}
@@ -202,38 +218,41 @@ export function ImagineBar({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-10"
+                className="size-10 rounded-full"
                 aria-label="Сохранить в Dropbox"
                 onClick={(e) => void saveToDropbox(e)}
                 disabled={saving || busy || !current}
               >
                 {saving ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
               </Button>
-              <Button type="button" variant="ghost" size="icon" className="size-10" aria-label="Закрыть" onClick={closeSheet}>
-                <X className="size-5" />
-              </Button>
-            </div>
-          </header>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1">
-              {current ? (
-                compare && original ? (
-                  <CompareSlide original={original} generated={current} />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center px-3">
-                    <img src={current} alt="" className="max-h-full max-w-full rounded-md object-contain" referrerPolicy="no-referrer" />
-                  </div>
-                )
+            </>
+          }
+          footer={renderForm(true)}
+        >
+          <div className="relative flex size-full min-h-0 items-center justify-center">
+            {current ? (
+              compare && original ? (
+                <CompareSlide original={original} generated={current} />
               ) : (
-                <p className="flex h-full items-center justify-center gap-2 text-sm text-muted">
-                  <LoaderCircle className="size-4 animate-spin" />
-                  Крутим кадр
-                </p>
-              )}
-            </div>
+                <div className="flex h-full w-full items-center justify-center px-2">
+                  <img
+                    src={current}
+                    alt=""
+                    className="max-h-full max-w-full rounded-[22px] object-contain shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 text-sm text-muted">
+                <span className="flex size-12 items-center justify-center rounded-full border border-accent/35 bg-accent/10">
+                  <LoaderCircle className="size-5 animate-spin text-accent" />
+                </span>
+                <span className="uppercase tracking-[0.18em]">Крутим кадр</span>
+              </div>
+            )}
           </div>
-          {renderForm(true)}
-        </div>
+        </ShtoraMediaViewer>
       ) : null}
     </>
   );

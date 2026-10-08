@@ -1,5 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { deterministicPhotoIntent, photoIntentSchema } from "@/lib/visual/intent";
+import type { VisualContext } from "@/lib/visual/types";
+import { planLifeScene, planPrompt } from "@/lib/visual/planner";
+import { makeSceneId, resolveScene } from "@/lib/visual/scene";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -31,11 +35,45 @@ export async function makePhoto(
   });
 }
 
+async function sourceReferenceJpeg(raw?: string) {
+  const value = (raw || "").trim();
+  const direct = trimDataImage(value);
+  if (direct) return direct;
+  if (!value) return "";
+  try {
+    const { readPersistedImage } = await import("@/lib/imagine/persist.server");
+    if (value.startsWith("/chat-media/")) {
+      const name = decodeURIComponent(value.split("/").pop() || "");
+      const hit = await readPersistedImage(name);
+      if (hit) return "data:" + hit.mime + ";base64," + hit.buf.toString("base64");
+    }
+    const parsed = new URL(value);
+    if (parsed.pathname.startsWith("/chat-media/")) {
+      const name = decodeURIComponent(parsed.pathname.split("/").pop() || "");
+      const hit = await readPersistedImage(name);
+      if (hit) return "data:" + hit.mime + ";base64," + hit.buf.toString("base64");
+    }
+  } catch {
+    /* continue with network fetch */
+  }
+  try {
+    const { fetchSourceImage } = await import("@/lib/imagine/functions");
+    const hit = await fetchSourceImage(value);
+    return hit.ok ? hit.url : "";
+  } catch {
+    return "";
+  }
+}
+
 async function identityJpeg(data: {
   dropboxToken?: string;
   dropboxFolder?: string;
   dropboxSkip?: number;
   dropboxSeed?: string;
+  username?: string;
+  visualIntent?: import("@/lib/visual/types").PhotoIntent;
+  sceneId?: string;
+  parentId?: string;
   instagramUrls?: string[];
   identityUrl?: string;
   sourceDataUrl?: string;
@@ -45,27 +83,34 @@ async function identityJpeg(data: {
   const portrait = data.noIdentity
     ? { image: "", error: "" }
     : await firstInstagram([data.identityUrl, ...(data.instagramUrls ?? [])].filter(Boolean) as string[], 0);
-  const reuse = trimDataImage(data.sourceDataUrl);
-  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "" };
+  const reuse = await sourceReferenceJpeg(data.sourceDataUrl);
+  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "", sourcePath: "" };
   if (data.dropboxToken && data.dropboxFolder) {
     try {
-      const { latestDropboxImageDataUrl } = await import("@/lib/dropbox/dropbox.server");
-      const dbx = await latestDropboxImageDataUrl(data.dropboxToken, data.dropboxFolder, skip, data.dropboxSeed);
-      if (dbx) return { image: dbx, identity: portrait.image, error: "" };
+      const { pickDropboxImageSource } = await import("@/lib/dropbox/dropbox.server");
+      const { recentSourcePaths } = await import("@/lib/visual/source-history.server");
+      const excluded = data.username ? await recentSourcePaths(data.username) : [];
+      const dbx = await pickDropboxImageSource(data.dropboxToken, data.dropboxFolder, {
+        skip,
+        seed: data.dropboxSeed,
+        excludePaths: excluded,
+      });
+      if (dbx) return { image: dbx.image, identity: portrait.image, error: "", sourcePath: dbx.path };
       return {
         image: "",
         identity: portrait.image,
         error: "Нет фото с меткой shtora. В Dropbox отметь кадры для ленты и лички.",
+        sourcePath: "",
       };
     } catch (err) {
       const error = err instanceof Error ? err.message : "Dropbox не отдал кадр.";
-      return { image: "", identity: portrait.image, error };
+      return { image: "", identity: portrait.image, error, sourcePath: "" };
     }
   }
   const ig = await firstInstagram(data.instagramUrls, skip);
-  if (ig.image) return { image: ig.image, identity: portrait.image || ig.image, error: "" };
-  if (portrait.image) return { image: portrait.image, identity: portrait.image, error: "" };
-  return { image: "", identity: "", error: ig.error || portrait.error || "Нет исходного кадра." };
+  if (ig.image) return { image: ig.image, identity: portrait.image || ig.image, error: "", sourcePath: "" };
+  if (portrait.image) return { image: portrait.image, identity: portrait.image, error: "", sourcePath: "" };
+  return { image: "", identity: "", error: ig.error || portrait.error || "Нет исходного кадра.", sourcePath: "" };
 }
 
 async function firstInstagram(urls: string[] | undefined, skip: number) {
@@ -91,6 +136,10 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       userText: z.string().max(400).optional(),
       context: z.string().max(500).optional(),
       scene: z.string().max(300).optional(),
+      hair: z.string().max(120).optional(),
+      activity: z.string().max(160).optional(),
+      timeContext: z.string().max(80).optional(),
+      weather: z.string().max(120).optional(),
       dropboxToken: z.string().min(8).max(8000).optional(),
       dropboxFolder: z.string().max(1000).optional(),
       dropboxSkip: z.number().min(0).max(400).optional(),
@@ -101,12 +150,115 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       sourceDataUrl: z.string().min(32).max(8_000_000).optional(),
       prompt: z.string().max(1200).optional(),
       noIdentity: z.boolean().optional(),
+       username: z.string().min(1).max(40).optional(),
+       visualIntent: photoIntentSchema.optional(),
+       sceneId: z.string().max(120).optional(),
+       parentId: z.string().max(120).optional(),
     }),
   )
   .handler(async ({ data }) => {
+    let job: { id: string } | undefined;
     try {
-      const found = await identityJpeg(data);
-      if (!found.image) return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
+      const { latestVisualMemory, listVisualMemory, saveVisualMemory } = await import("@/lib/visual/memory.server");
+      const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
+      const { rememberSourcePath } = await import("@/lib/visual/source-history.server");
+      const username = data.username?.trim().toLowerCase();
+      const previous = username ? await latestVisualMemory(username) : undefined;
+      const intent =
+        data.visualIntent ||
+        (data.kind === "feed"
+          ? { mode: "new_scene" as const, camera: "candid" as const, reference: "identity" as const }
+          : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
+
+      if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
+        const query = intent.mode === "memory" ? intent.memoryQuery : intent.query;
+        const memories = await listVisualMemory(username, query || "");
+        const first = memories[0];
+        if (first?.imageUrl) {
+          return {
+            ok: true as const,
+            url: first.imageUrl,
+            prompt: first.prompt || "",
+            kind: data.kind,
+            sceneId: first.sceneId,
+          };
+        }
+      }
+
+      const intentScene =
+        intent.mode === "new_scene" || intent.mode === "pov" ? intent.scene : undefined;
+      const intentClothes = intent.mode === "new_scene" ? intent.clothes : undefined;
+      const baseContext: VisualContext = {
+        place: data.scene || intentScene || previous?.scene?.place,
+        clothes: intentClothes || previous?.scene?.clothes,
+        hair: data.hair || previous?.scene?.hair,
+        activity: data.activity || previous?.scene?.activity,
+        timeContext: data.timeContext || previous?.scene?.timeContext,
+        weather: data.weather || previous?.scene?.weather,
+        sceneId: data.sceneId || previous?.sceneId || undefined,
+      };
+
+      let plan = undefined;
+      let finalPrompt = data.prompt;
+      if (intent.mode === "new_scene") {
+        const extras = [
+          intent.scene ? "New scene: " + intent.scene : "",
+          intent.clothes ? "Outfit: " + intent.clothes : "",
+          ...(intent.changes || []).map((value) => "Change: " + value),
+        ].filter(Boolean);
+        if (extras.length) {
+          finalPrompt = [data.prompt || "", ...extras].filter(Boolean).join(" ").slice(0, 1800);
+        }
+      }
+
+      if (data.kind === "feed" && username && !data.sourceDataUrl) {
+        const memories = await listVisualMemory(username);
+        plan = planLifeScene({
+          username,
+          world: baseContext,
+          recentPlaces: memories.map((m) => m.scene.place).filter((v): v is string => Boolean(v)).slice(0, 10),
+          recentOutfits: memories.map((m) => m.scene.clothes).filter((v): v is string => Boolean(v)).slice(0, 10),
+        });
+        finalPrompt = planPrompt(data.prompt || "", plan);
+      }
+
+      if (username) {
+        try {
+          job = await createGenerationJob({
+            username,
+            status: "queued",
+            intent,
+            sceneId: data.sceneId,
+            scenePlan: plan,
+            worldSnapshot: baseContext,
+            parentId: data.parentId || previous?.id,
+            provider: "pending",
+          });
+          await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
+        } catch {
+          job = undefined;
+        }
+      }
+
+      const found = await identityJpeg({ ...data, username });
+      if (!found.image) {
+        if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: found.error || "Нет кадра.", retryable: true });
+        return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
+      }
+
+      if (username && job) {
+        try {
+          await updateGenerationJob(username, job.id, {
+            status: "source_selected",
+            sourcePath: found.sourcePath || undefined,
+            sourceImageUrl: found.image,
+          });
+          await updateGenerationJob(username, job.id, { status: "generating", finalPrompt: finalPrompt || undefined });
+        } catch {
+          /* image generation must not fail because job bookkeeping is unavailable */
+        }
+      }
+
       const out = await makePhoto(
         found.image,
         data.kind,
@@ -115,22 +267,123 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         data.scene || "",
         data.world || "",
         data.noIdentity ? undefined : found.identity || undefined,
-        data.prompt,
+        finalPrompt,
       );
-      if (out.ok && out.url) {
-        let url = out.url;
-        if (data.kind === "feed") {
-          const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
-          url = (await persistRemoteImage(out.url)) || out.url;
-        }
-        return { ok: true as const, url, prompt: out.prompt, kind: data.kind };
+      if (!out.ok || !out.url) {
+        if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: out.error || "Imagine не собрал кадр.", retryable: true });
+        return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
       }
-      return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
+
+      const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
+      const url = (await persistRemoteImage(out.url)) || out.url;
+      if (found.sourcePath && username) await rememberSourcePath(username, found.sourcePath);
+
+      let sceneId = data.sceneId || previous?.sceneId;
+      if (username) {
+        const current: VisualContext = {
+          ...baseContext,
+            place: plan?.place || baseContext.place || previous?.scene?.place,
+          clothes: plan?.outfit || baseContext.clothes || previous?.scene?.clothes,
+          hair: baseContext.hair || previous?.scene?.hair,
+          activity: plan?.activity || baseContext.activity || previous?.scene?.activity,
+          timeContext: plan?.timeContext || baseContext.timeContext || previous?.scene?.timeContext,
+          weather: plan?.weather || baseContext.weather || previous?.scene?.weather,
+          sceneId,
+        };
+        const scene = resolveScene({
+          username,
+          intent,
+          previous: previous
+            ? {
+                id: previous.sceneId || makeSceneId(username, previous.createdAt),
+                username,
+                createdAt: previous.createdAt,
+                ...previous.scene,
+              }
+            : undefined,
+          current,
+        });
+        sceneId = scene.id;
+        try {
+          if (job) await updateGenerationJob(username, job.id, { sceneId, worldSnapshot: current });
+          await saveVisualMemory({
+            id: (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function" ? globalThis.crypto.randomUUID() : makeSceneId(username, Date.now())),
+            username,
+            imageUrl: url,
+            createdAt: Date.now(),
+            scene: { ...current, sceneId },
+            camera: {
+              mode: cameraModeFromKind(
+                (data.visualIntent && "camera" in data.visualIntent ? data.visualIntent.camera : undefined) ||
+                  plan?.camera ||
+                  data.kind ||
+                  "selfie",
+              ),
+            },
+            source: "generated",
+            parentId: data.parentId || previous?.id,
+            sceneId,
+            prompt: out.prompt || finalPrompt,
+            worldSnapshot: current,
+            sourcePath: found.sourcePath || undefined,
+            tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
+          });
+          if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: out.provider || "image-gateway" });
+          try {
+            const { commitWorld } = await import("@/lib/world/disk.server");
+            const at = Date.now();
+            const wf = (value?: string) => {
+              const clean = (value || "").trim();
+              return clean ? { value: clean.slice(0, 80), at } : undefined;
+            };
+            await commitWorld(
+              username,
+              {
+                place: wf(current.place),
+                activity: wf(current.activity),
+                clothes: wf(current.clothes),
+                sceneId: wf(sceneId),
+              },
+              {
+                type: "visual-photo",
+                source: data.kind === "feed" ? "feed" : "her",
+                text: "визуальный кадр: " + (current.place || "текущая сцена"),
+              },
+            );
+          } catch {
+            /* world disk can be unavailable on ephemeral publication runtimes */
+          }
+        } catch {
+          /* persistence is best-effort; the generated image remains usable */
+        }
+      }
+
+      return { ok: true as const, url, prompt: out.prompt || finalPrompt || "", kind: data.kind, jobId: job?.id, sceneId };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Imagine не собрал кадр.";
       const clean = /var\/task|EACCES|EROFS|ENOENT|permission/i.test(msg)
         ? "Не удалось сохранить кадр. Попробуй ещё раз."
         : msg;
+      try {
+        if (data.username && job) {
+          const { updateGenerationJob } = await import("@/lib/visual/jobs.server");
+          await updateGenerationJob(data.username, job.id, { status: "failed", error: clean, retryable: true });
+        }
+      } catch {
+        /* best effort */
+      }
       return { ok: false as const, url: undefined, error: clean, prompt: "", kind: data.kind };
     }
   });
+
+function cameraModeFromKind(raw: string): import("@/lib/visual/types").CameraMode {
+  const value = raw.toLowerCase();
+  if (value === "mirror") return "mirror";
+  if (value === "side") return "side";
+  if (value === "back") return "back";
+  if (value === "full") return "full";
+  if (value === "pov") return "pov";
+  if (value === "candid") return "candid";
+  if (value === "gallery") return "gallery";
+  return "selfie";
+}
