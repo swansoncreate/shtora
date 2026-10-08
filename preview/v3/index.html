@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shtora — Mobile Redesign V3</title>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+:root{
+  --bg:#090a0c;--surface:#111318;--surface2:#171a20;--surface3:#20242c;
+  --text:#f7f8fa;--muted:#9ca3af;--line:rgba(255,255,255,.09);
+  --accent:#d9ff68;--accent2:#a9f3ff;--pink:#ff7aa8;--danger:#ff647c;
+  --radius:22px;--shadow:0 24px 70px rgba(0,0,0,.38);
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#050608;color:var(--text);font-family:var(--sans)}
+button,input,textarea{font:inherit}button{border:0;color:inherit;cursor:pointer}
+body{display:flex;justify-content:center}
+.app{width:min(100%,430px);min-height:100dvh;background:var(--bg);position:relative;overflow:hidden}
+.top{position:sticky;top:0;z-index:20;padding:calc(14px + env(safe-area-inset-top)) 18px 12px;background:linear-gradient(180deg,rgba(9,10,12,.98),rgba(9,10,12,.88));backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px}.between{justify-content:space-between}
+.brand{font-size:25px;font-weight:800;letter-spacing:-.04em}.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.icon{width:40px;height:40px;border-radius:14px;background:var(--surface2);display:grid;place-items:center}.icon i{width:19px;height:19px}
+.main{padding:14px 16px calc(104px + env(safe-area-inset-bottom));min-height:calc(100dvh - 75px)}
+.stories{display:flex;gap:14px;overflow:auto;padding:3px 2px 16px}.stories::-webkit-scrollbar{display:none}
+.story{width:64px;flex:0 0 64px;text-align:center}.story .avatar{width:58px;height:58px;margin:auto;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--accent),var(--pink));}.story img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--bg)}.story span{display:block;margin-top:6px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}.post-head{padding:12px;display:flex;align-items:center;gap:10px}.avatar-sm{width:36px;height:36px;border-radius:50%;object-fit:cover}.grow{flex:1;min-width:0}.name{font-size:13px;font-weight:750}.meta{font-size:11px;color:var(--muted);margin-top:2px}.post-img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#181a20}.post-actions{display:flex;gap:8px;padding:11px 12px 4px}.pill{height:38px;padding:0 13px;border-radius:13px;background:var(--surface2);display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700}.pill.accent{background:var(--accent);color:#10120c}.caption{padding:4px 13px 14px;font-size:13px;line-height:1.45}.caption b{font-weight:800}
+.bottom{position:fixed;z-index:30;bottom:0;width:min(100%,430px);padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(9,10,12,.55),rgba(9,10,12,.98) 28%);backdrop-filter:blur(20px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.nav{height:50px;border-radius:16px;background:transparent;color:var(--muted);display:grid;place-items:center;gap:2px;font-size:9px;font-weight:700}.nav.active{color:var(--text);background:var(--surface2)}.nav i{width:19px;height:19px}
+.section-title{font-size:21px;font-weight:800;letter-spacing:-.035em}.sub{color:var(--muted);font-size:12px;line-height:1.45}
+.chat-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line)}.chat-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover}.chat-last{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:12px;margin-top:4px}.badge{min-width:20px;height:20px;border-radius:10px;background:var(--accent);color:#10120c;display:grid;place-items:center;font-size:10px;font-weight:900}
+.chatbar{position:sticky;top:0;z-index:25;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:rgba(9,10,12,.94);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.bubble{max-width:78%;padding:11px 13px;border-radius:19px;margin:7px 0;font-size:13px;line-height:1.4}.bubble.them{background:var(--surface2);border-bottom-left-radius:6px}.bubble.me{margin-left:auto;background:var(--accent);color:#11150b;border-bottom-right-radius:6px}
+.chat-img{width:76%;margin:8px 0;border-radius:20px;display:block}.composer{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 25%);display:flex;gap:8px}.composer input{flex:1;min-width:0;height:48px;border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:17px;padding:0 15px;outline:none}.send{width:48px;height:48px;border-radius:17px;background:var(--accent);color:#11150b;display:grid;place-items:center}
+.profile-hero{display:grid;grid-template-columns:82px 1fr;gap:14px;align-items:center;padding:8px 0 18px}.profile-avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);padding:3px;background:var(--bg)}.stats{display:flex;gap:18px;margin-top:10px}.stat b{display:block;font-size:15px}.stat span{display:block;font-size:10px;color:var(--muted);margin-top:2px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}.grid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.viewer{position:fixed;inset:0;z-index:100;background:#050608;display:none;flex-direction:column}.viewer.open{display:flex}.viewer-top{padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;justify-content:space-between}.viewer-stage{flex:1;min-height:0;display:grid;place-items:center;padding:8px 10px}.viewer-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:20px}.viewer-actions{padding:10px 14px calc(14px + env(safe-area-inset-bottom));display:flex;gap:8px;flex-wrap:wrap}
+.studio-card{padding:16px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,var(--surface2),#101217)}textarea{width:100%;min-height:105px;resize:none;border:1px solid var(--line);background:#0d0f13;color:var(--text);border-radius:18px;padding:13px;outline:none;line-height:1.45}.chips{display:flex;gap:7px;overflow:auto;margin:11px 0}.chip{white-space:nowrap;padding:8px 11px;border-radius:12px;background:var(--surface3);font-size:11px;color:var(--muted)}.chip.on{background:var(--accent);color:#10120c;font-weight:800}.result{margin-top:14px;border-radius:22px;overflow:hidden;position:relative}.result img{width:100%;display:block;aspect-ratio:4/5;object-fit:cover}.result-label{position:absolute;left:10px;top:10px;background:rgba(5,6,8,.72);backdrop-filter:blur(8px);padding:7px 9px;border-radius:10px;font-size:10px;font-weight:800}
+.folder{padding:14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;gap:12px}.folder i{color:var(--accent)}.folder small{display:block;color:var(--muted);margin-top:3px}
+.setting{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}.setting i{width:20px;color:var(--muted)}.switch{margin-left:auto;width:42px;height:24px;border-radius:20px;background:var(--surface3);padding:3px}.switch:after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:#737984}.switch.on{background:var(--accent)}.switch.on:after{background:#11150b;transform:translateX(18px)}
+.empty{padding:48px 18px;text-align:center;border:1px dashed var(--line);border-radius:24px;color:var(--muted)}.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#f7f8fa;color:#111;padding:10px 14px;border-radius:14px;font-size:12px;font-weight:750;z-index:120;display:none;box-shadow:var(--shadow)}
+@media(min-width:600px){body{padding:18px}.app{border:1px solid var(--line);border-radius:30px;min-height:calc(100dvh - 36px);box-shadow:var(--shadow)}.bottom{border-radius:0 0 30px 30px}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="viewer" id="viewer"></div>
+<div class="toast" id="toast"></div>
+<script>
+const photos={
+  lisa:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=88",
+  sea:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=88",
+  city:"https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1000&q=88",
+  coffee:"https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1000&q=88",
+  night:"https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1000&q=88"
+};
+const state={screen:"feed",chat:null,liked:false};
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function icon(n){return '<i data-lucide="'+n+'"></i>'}
+function shell(content,title=""){return '<header class="top"><div class="row between"><div><div class="eyebrow">SHTORA · '+(title||"WORLD")+'</div><div class="brand">Shtora</div></div><button class="icon" onclick="go(\'settings\')">'+icon("sliders-horizontal")+'</button></div></header><main class="main">'+content+'</main>'+nav()}
+function nav(){const items=[["feed","home","Лента"],["chat","message-circle","Личка"],["imagine","sparkles","Imagine"],["dropbox","folder","Dropbox"],["settings","settings-2","Настройки"]];return '<nav class="bottom">'+items.map(x=>'<button class="nav '+(state.screen===x[0]?'active':'')+'" onclick="go(\''+x[0]+'\')">'+icon(x[1])+'<span>'+x[2]+'</span></button>').join("")+'</nav>'}
+function avatar(url){return '<img class="avatar-sm" src="'+url+'" alt="">'}
+function feed(){
+ return shell('<div class="stories">'+[['lisa','Лиза'],['sea','сегодня'],['city','архив'],['coffee','утро'],['night','ночь']].map(x=>'<button class="story" onclick="openViewer(\''+photos[x[0]]+'\')"><div class="avatar">'+avatar(photos[x[0]])+'</div><span>'+x[1]+'</span></button>').join("")+'</div>'+
+ '<div class="row between" style="margin:2px 2px 14px"><div><div class="section-title">Лента</div><div class="sub">Жизнь персонажа — здесь.</div></div><button class="icon" onclick="toast(\'Лента обновлена\')">'+icon("refresh-cw")+'</button></div>'+
+ postCard("lisa","Lisa","сегодня · 18:42",photos.lisa,"Немного тишины между делами. Ты бы оставил этот кадр?")+
+ postCard("city","Lisa","вчера · 21:08",photos.city,"Я снова вышла без плана. Иногда так получается лучше.")+
+ postCard("sea","Lisa","пн · 10:16",photos.sea,"Нашла место, где хочется задержаться.") );
+}
+function postCard(user,name,time,img,cap){return '<article class="card"><div class="post-head">'+avatar(img)+'<div class="grow"><div class="name">'+name+'</div><div class="meta">@ellissawe · '+time+'</div></div><button class="icon" style="width:34px;height:34px;background:transparent">'+icon("more-horizontal")+'</button></div><button onclick="openViewer(\''+img+'\')" style="display:block;width:100%;padding:0;background:none"><img class="post-img" src="'+img+'" alt=""></button><div class="post-actions"><button class="pill" onclick="this.classList.toggle(\'accent\');toast(\'Сохранено в избранное\')">'+icon("heart")+'Нравится</button><button class="pill" onclick="go(\'chat\')">'+icon("message-circle")+'Ответить</button><button class="pill" onclick="go(\'imagine\')">'+icon("sparkles")+'Imagine</button></div><div class="caption"><b>@ellissawe</b> '+esc(cap)+'</div></article>'}
+function chats(){return shell('<div class="row between" style="margin-bottom:16px"><div><div class="section-title">Личка</div><div class="sub">Продолжение мира персонажа в разговоре.</div></div><button class="icon" onclick="toast(\'Новый диалог\')">'+icon("square-pen")+'</button></div>'+
+ chatRow("lisa","Lisa","Ты сегодня совсем пропала.","2")+
+ chatRow("city","Lisa","Покажешь потом самый красивый кадр?","")+
+ chatRow("coffee","Lisa","Я сохранила то утро.","1")+
+ '<div style="margin-top:18px" class="studio-card"><div class="eyebrow">Связь с Instagram</div><div class="section-title" style="margin-top:5px;font-size:18px">Открывай посты прямо из диалога</div><div class="sub" style="margin-top:5px">Фото из переписки остаются частью той же визуальной истории и могут попасть в архив.</div></div>');}
+function chatRow(img,name,last,badge){return '<button class="chat-row" style="width:100%;background:none;text-align:left" onclick="openChat()">'+avatar(photos[img])+'<div class="grow"><div class="name">'+name+'</div><div class="chat-last">'+esc(last)+'</div></div>'+(badge?'<span class="badge">'+badge+'</span>':"")+'</button>'}
+function openChat(){state.chat=true;render()}
+function chat(){
+ if(!state.chat)return chats();
+ return '<div class="chatbar"><div class="row between"><button class="icon" onclick="state.chat=false;render()">'+icon("chevron-left")+'</button><div style="text-align:center"><div class="name">Lisa</div><div class="meta">сейчас онлайн · рядом</div></div><button class="icon" onclick="openViewer(\''+photos.lisa+'\')">'+icon("image")+'</button></div></div><main class="main" style="padding-top:16px">'+
+ '<div class="eyebrow" style="text-align:center;margin-bottom:14px">сегодня</div><div class="bubble them">Ты сегодня совсем пропала.</div><div class="bubble me">Я здесь. Просто разбираю архив.</div><div class="bubble them">Покажешь потом самый красивый кадр?</div><img class="chat-img" src="'+photos.city+'" onclick="openViewer(\''+photos.city+'\')" alt=""><div class="bubble them">Я думала, этот кадр тебе понравится 🤍</div><div class="bubble me">Он правда очень живой.</div><div class="bubble them">Тогда оставь его. А если хочешь — можем сделать ещё один через Imagine.</div>'+
+ '<div class="composer"><input id="msg" placeholder="Написать сообщение…" onkeydown="if(event.key===\'Enter\')sendMsg()"><button class="send" onclick="sendMsg()">'+icon("arrow-up")+'</button></div></main>';
+}
+function imagine(){return shell('<div class="row between" style="margin-bottom:14px"><div><div class="section-title">Imagine Studio</div><div class="sub">Измени или создай кадр внутри мира Shtora.</div></div><button class="icon" onclick="toast(\'История открыта\')">'+icon("history")+'</button></div>'+
+ '<div class="studio-card"><div class="eyebrow">Новый кадр</div><textarea id="prompt">Та же девушка, естественный свет, случайная городская улица, raw smartphone photo, живой момент</textarea><div class="chips"><button class="chip on">Realistic</button><button class="chip">Candid</button><button class="chip">Selfie</button><button class="chip">POV</button></div><div class="row between" style="margin-top:14px"><div><div class="name">Источник</div><div class="meta">последнее фото из чата</div></div><button class="pill" onclick="openViewer(\''+photos.city+'\')">'+icon("image")+'Выбрать</button></div><button class="pill accent" style="width:100%;justify-content:center;margin-top:12px;height:48px" onclick="generate()">'+icon("sparkles")+'Создать кадр</button></div>'+
+ '<div id="result" class="result"><img src="'+photos.city+'" alt=""><div class="result-label">последний результат · из чата</div></div>'+
+ '<div class="row" style="margin-top:10px"><button class="pill" onclick="toast(\'Сохранено в Dropbox\')">'+icon("download")+'Сохранить</button><button class="pill" onclick="toast(\'Открыто в viewer\');openViewer(\''+photos.city+'\')">'+icon("maximize-2")+'Открыть</button></div>');}
+function dropbox(){return shell('<div class="row between" style="margin-bottom:16px"><div><div class="section-title">Dropbox</div><div class="sub">Архив мира Shtora, а не отдельная галерея.</div></div><button class="icon" onclick="toast(\'Синхронизация\')">'+icon("refresh-cw")+'</button></div>'+
+ '<div style="display:grid;gap:9px">'+folder("Избранное","9 фото · для Shtora","heart")+' '+folder("Lisa","38 файлов · персонаж","user-round")+' '+folder("Imagine","17 файлов · результаты","sparkles")+'</div>'+
+ '<div class="row between" style="margin:24px 0 10px"><div class="section-title" style="font-size:18px">Последние</div><span class="eyebrow">фото</span></div><div class="grid">'+[photos.lisa,photos.city,photos.sea,photos.coffee,photos.night,photos.lisa].map(x=>'<button onclick="openViewer(\''+x+'\')" style="padding:0;background:none"><img src="'+x+'" alt=""></button>').join("")+'</div>');}
+function folder(title,meta,ico){return '<button class="folder" style="width:100%;text-align:left" onclick="toast(\''+title+'\')">'+icon(ico)+'<div><div class="name">'+title+'</div><small>'+meta+'</small></div><span style="margin-left:auto;color:var(--muted)">'+icon("chevron-right")+'</span></button>'}
+function settings(){return shell('<div style="margin-bottom:18px"><div class="section-title">Настройки</div><div class="sub">Все существующие настройки остаются в одном месте.</div></div>'+
+ '<div class="studio-card"><div class="profile-hero"><img class="profile-avatar" src="'+photos.lisa+'"><div><div class="name">Lisa / ellissawe</div><div class="sub">текущий персонаж</div><div class="stats"><div class="stat"><b>48</b><span>подписчики</span></div><div class="stat"><b>21</b><span>подписки</span></div></div></div></div></div>'+
+ setting("bell","Уведомления","Ответы, новые сообщения",true)+setting("cloud","Dropbox","Подключён · /Штора",true)+setting("sparkles","Imagine","Провайдер и генерация",false)+setting("shield-check","Приватность","Локальные данные и сессия",false)+setting("palette","Внешний вид","Mobile Shtora · V3",false)+
+ '<div class="studio-card" style="margin-top:18px"><div class="eyebrow">О Shtora</div><div class="sub" style="margin-top:6px">Instagram simulator + communication with a character. Feed, personal chat, visual memory and Imagine share one world.</div></div>');}
+function setting(ic,title,meta,on){return '<button class="setting" style="width:100%;background:none;text-align:left" onclick="toast(\''+esc(title)+'\')">'+icon(ic)+'<div><div class="name">'+title+'</div><div class="meta">'+meta+'</div></div><span class="switch '+(on?"on":"")+'"></span></button>'}
+function openViewer(src){document.getElementById("viewer").innerHTML='<div class="viewer-top"><div><div class="eyebrow">PHOTO VIEWER</div><div class="name">Lisa · визуальная память</div></div><button class="icon" onclick="closeViewer()">'+icon("x")+'</button></div><div class="viewer-stage"><img src="'+src+'" alt=""></div><div class="viewer-actions"><button class="pill" onclick="toast(\'Сохранено\')">'+icon("download")+'Сохранить</button><button class="pill accent" onclick="closeViewer();go(\'imagine\')">'+icon("sparkles")+'Изменить через Imagine</button><button class="pill" onclick="toast(\'Отправлено в личку\')">'+icon("send")+'В чат</button></div>';document.getElementById("viewer").classList.add("open");lucide.createIcons()}
+function closeViewer(){document.getElementById("viewer").classList.remove("open")}
+function generate(){const r=document.getElementById("result");if(r){r.innerHTML='<div style="aspect-ratio:4/5;display:grid;place-items:center;background:linear-gradient(135deg,#1b2027,#2b3420)"><div style="text-align:center"><div style="font-size:30px">✦</div><div class="name" style="margin-top:8px">Генерация…</div><div class="meta">сохраняем сцену и идентичность</div></div></div>';setTimeout(()=>{r.innerHTML='<img src="'+photos.night+'" alt=""><div class="result-label">новый результат · ready</div>';lucide.createIcons()},900)}}
+function sendMsg(){const input=document.getElementById("msg");if(input&&input.value.trim()){toast("Сообщение отправлено");input.value=""}}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>e.style.display="none",1500)}
+function go(s){state.screen=s;state.chat=false;closeViewer();render()}
+function render(){let c=state.screen==="feed"?feed():state.screen==="chat"?chat():state.screen==="imagine"?imagine():state.screen==="dropbox"?dropbox():settings();document.getElementById("app").innerHTML=c;lucide.createIcons();window.scrollTo({top:0,behavior:"instant"})}
+render();
+</script>
+</body>
+</html>
