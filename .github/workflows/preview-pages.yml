@@ -1,12 +1,9 @@
-name: preview-pages
+name: SHTORA two-variant showroom
 
 on:
   push:
     branches:
-      - "concept/midnight"
-  pull_request:
-    branches:
-      - "concept/midnight"
+      - "main"
   workflow_dispatch:
 
 permissions:
@@ -22,7 +19,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Midnight branch
+      - name: Checkout workflow branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -33,33 +30,40 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Fetch classic branch
-        run: git fetch origin test/vps-grok-imagine:test/vps-grok-imagine
+      - name: Fetch app branches
+        run: |
+          git fetch origin refs/heads/concept/midnight:refs/remotes/origin/concept/midnight
+          git fetch origin refs/heads/test/vps-grok-imagine:refs/remotes/origin/test/vps-grok-imagine
+
+      - name: Prepare Midnight worktree
+        run: git worktree add --detach .midnight refs/remotes/origin/concept/midnight
 
       - name: Install Midnight dependencies
+        working-directory: .midnight
         run: npm ci
 
       - name: Build Midnight
+        working-directory: .midnight
         run: |
           npm run build:dev
           test -d ".vercel/output/static"
-          rm -rf site
-          mkdir -p site/midnight
-          cp -R .vercel/output/static/. site/midnight/
-          if [ -f "site/midnight/_shell.html" ]; then
-            cp "site/midnight/_shell.html" "site/midnight/index.html"
+          rm -rf ../site
+          mkdir -p ../site/midnight
+          cp -R .vercel/output/static/. ../site/midnight/
+          if [ -f "../site/midnight/_shell.html" ]; then
+            cp "../site/midnight/_shell.html" "../site/midnight/index.html"
           fi
-          test -f "site/midnight/index.html"
-          cp "site/midnight/index.html" "site/midnight/404.html"
+          test -f "../site/midnight/index.html"
+          cp "../site/midnight/index.html" "../site/midnight/404.html"
         env:
           SHTORA_PAGES_PREVIEW: "1"
           SHTORA_PAGES_PREVIEW_PATH: "/shtora/midnight/"
           VITE_STATIC_PREVIEW: "1"
 
-      - name: Checkout classic worktree
-        run: git worktree add --detach .classic test/vps-grok-imagine
+      - name: Prepare Classic worktree
+        run: git worktree add --detach .classic refs/remotes/origin/test/vps-grok-imagine
 
-      - name: Install classic dependencies
+      - name: Install Classic dependencies
         working-directory: .classic
         run: npm ci
 
@@ -125,4 +129,3 @@ jobs:
       - name: Deploy comparison
         id: deployment
         uses: actions/deploy-pages@v4
-# Trigger Pages publish for the two-variant showroom.
