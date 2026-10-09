@@ -52,7 +52,19 @@ export async function writeGrokOrigin(origin: string) {
 
 export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unknown): Promise<T> {
   const startedAt = Date.now();
-  await serverDiagnostic("info", "grok", "upstream request started", { operation: op });
+  const input = data && typeof data === "object" ? data as Record<string, unknown> : {};
+  const payload = input.payload && typeof input.payload === "object" ? input.payload as Record<string, unknown> : {};
+  const prompt = op === "imagine" && typeof payload.prompt === "string" ? payload.prompt : undefined;
+  await serverDiagnostic("info", "grok", "upstream request started", {
+    operation: op,
+    ...(prompt ? { promptPreview: prompt } : {}),
+    ...(op === "imagine" ? {
+      model: typeof payload.model === "string" ? payload.model.slice(0, 120) : "unknown",
+      aspectRatio: typeof payload.aspect_ratio === "string" ? payload.aspect_ratio.slice(0, 20) : "default",
+      hasImageReference: Boolean(payload.image),
+      imageReferenceCount: Array.isArray(payload.images) ? payload.images.length : 0,
+    } : {}),
+  });
   const origin = await readGrokOrigin();
   if (!origin) {
     await serverDiagnostic("error", "grok", "upstream origin missing", { operation: op }, Date.now() - startedAt);
