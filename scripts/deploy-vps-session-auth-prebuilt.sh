@@ -114,7 +114,6 @@ if [[ "$session_json" != *'"enabled":true'* ]]; then
 fi
 
 echo "New build is responding. Configuring password/session and Nginx media protection."
-# Use the setup script from the exact same release commit as the new build.
 if ! bash "$work/source/scripts/configure-vps-session-auth.sh"; then
   echo "Application build is deployed, but session/Nginx setup reported an error." >&2
   echo "Do not rerun blindly; inspect the error and service/Nginx state first." >&2
@@ -122,9 +121,37 @@ if ! bash "$work/source/scripts/configure-vps-session-auth.sh"; then
   exit 1
 fi
 
+echo "Installing bounded VPS health/latency sampling."
+install -m 0750 "$work/source/scripts/shtora-host-diagnostics.sh" /usr/local/sbin/shtora-host-diagnostics
+cat > /etc/systemd/system/shtora-diagnostics.service <<'UNIT'
+[Unit]
+Description=Shtora lightweight VPS diagnostics sample
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/shtora-host-diagnostics
+UNIT
+cat > /etc/systemd/system/shtora-diagnostics.timer <<'UNIT'
+[Unit]
+Description=Sample Shtora health and latency every minute
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=shtora-diagnostics.service
+
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now shtora-diagnostics.timer
+systemctl start shtora-diagnostics.service
+
 echo
-echo "Deployment and session configuration completed."
+echo "Deployment, session configuration, and VPS diagnostics setup completed."
 echo "Open https://${DOMAIN}/login on your phone."
-echo "Test feed, chats, Dropbox, Imagine, and signed-out media access before deleting any backups."
+echo "Host logs: $ROOT/data/diagnostics/host.jsonl (rotates at 3 MB; keeps 3 backups)."
+echo "Application logs: $ROOT/data/diagnostics/server.jsonl (rotates at 3 MB; keeps 3 backups)."
 echo "Previous build directory: $rollback_dir"
 echo "Rollback archive: $output_backup"
