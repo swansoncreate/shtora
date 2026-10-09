@@ -10,13 +10,8 @@ function safeDetails(input?: Record<string, unknown>) {
   if (!input) return undefined;
   const output: Record<string, SafeValue> = {};
   for (const [key, value] of Object.entries(input).slice(0, 30)) {
-    // Only the explicitly named preview field may contain prompt text.
     if (key === "promptPreview" && typeof value === "string") {
-      output.promptPreview = value
-        .replace(/https?:\/\/\S+/gi, "[url]")
-        .replace(/(api[_-]?key|token|password|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]")
-        .replace(/[\r\n\t]/g, " ")
-        .slice(0, 1800);
+      output.promptPreview = value.replace(/https?:\/\/\S+/gi, "[url]").replace(/(api[_-]?key|token|password|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]").replace(/[\r\n\t]/g, " ").slice(0, 1800);
       continue;
     }
     if (/token|secret|password|prompt|message|text|url|image|cookie|auth|body|content|email|username|path|origin/i.test(key)) continue;
@@ -26,8 +21,7 @@ function safeDetails(input?: Record<string, unknown>) {
       const code = (value as Error & { code?: unknown }).code;
       if (typeof code === "string" && /^[A-Z0-9_-]{1,40}$/i.test(code)) output[`${key}Code`] = code;
     } else if (typeof value === "string") {
-      if (/https?:\/\//i.test(value)) output[key] = value.replace(/https?:\/\/\S+/gi, "[url]").slice(0, 100);
-      else output[key] = value.replace(/[\r\n\t]/g, " ").slice(0, 120);
+      output[key] = value.replace(/[\r\n\t]/g, " ").slice(0, 120);
     }
   }
   return Object.keys(output).length ? output : undefined;
