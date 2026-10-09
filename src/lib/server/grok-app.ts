@@ -1,5 +1,6 @@
 import { rpcKey, runningOnVps } from "./remote";
 import { dataRoot } from "./data-dir.server";
+import { serverDiagnostic } from "./diagnostics.server";
 
 const FILE = "grok-origin.txt";
 let cached = "";
@@ -50,13 +51,16 @@ export async function writeGrokOrigin(origin: string) {
 }
 
 export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unknown): Promise<T> {
+  const started = Date.now();
   const origin = await readGrokOrigin();
   if (!origin) {
+    serverDiagnostic("error", "grok", "origin missing", { op });
     return {
       ok: false,
       error: "Shtora не видит опубликованный Grok Build. Укажи SHTORA_GROK_ORIGIN.",
     } as T;
   }
+  serverDiagnostic("info", "grok", "request started", { op });
   try {
     const res = await fetch(`${origin}/api/grok-chat`, {
       method: "POST",
@@ -68,11 +72,27 @@ export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unk
       signal: AbortSignal.timeout(90_000),
     });
     const text = await res.text();
+    const duration = Date.now() - started;
     if (!res.ok) {
+      serverDiagnostic("error", "grok", "request HTTP error", { op, status: res.status, responseBytes: Buffer.byteLength(text) }, duration);
       return { ok: false, error: text.slice(0, 220) || `Grok app HTTP ${res.status}` } as T;
     }
-    return (text ? JSON.parse(text) : { ok: false, error: "пустой ответ Grok" }) as T;
+    try {
+      const parsed = text ? JSON.parse(text) : { ok: false, error: "пустой ответ Grok" };
+      serverDiagnostic(parsed?.ok === false ? "warn" : "info", "grok", "request finished", {
+        op,
+        status: res.status,
+        responseBytes: Buffer.byteLength(text),
+        resultOk: parsed?.ok !== false,
+      }, duration);
+      return parsed as T;
+    } catch (error) {
+      serverDiagnostic("error", "grok", "invalid JSON response", { op, status: res.status, responseBytes: Buffer.byteLength(text), error }, duration);
+      return { ok: false, error: "Grok вернул некорректный ответ" } as T;
+    }
   } catch (err) {
+    const duration = Date.now() - started;
+    serverDiagnostic("error", "grok", "request failed or timed out", { op, error: err instanceof Error ? err.name : "unknown" }, duration);
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Публикация Grok не ответила",
