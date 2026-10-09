@@ -20,9 +20,15 @@ export const Route = createFileRoute("/api/session")({
       POST: async ({ request }) => {
         const { runningOnVps } = await import("@/lib/server/remote");
         if (!runningOnVps()) return Response.json({ ok: false }, { status: 404 });
+        const contentLength = Number(request.headers.get("content-length") || "0");
+        if (contentLength > 4096) {
+          return Response.json({ ok: false, error: "Слишком большой запрос." }, { status: 413 });
+        }
         let body: unknown;
         try {
-          body = await request.json();
+          const raw = await request.text();
+          if (raw.length > 4096) return Response.json({ ok: false, error: "Слишком большой запрос." }, { status: 413 });
+          body = JSON.parse(raw);
         } catch {
           return Response.json({ ok: false, error: "Некорректный запрос." }, { status: 400 });
         }
