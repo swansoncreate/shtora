@@ -6,9 +6,11 @@ on:
       - main
       - "test/**"
       - "release/**"
+      - "fix/**"
   pull_request:
     branches:
       - main
+      - "release/**"
 
 jobs:
   quality:
