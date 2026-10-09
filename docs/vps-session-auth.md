@@ -13,6 +13,18 @@ Keep the existing `SHTORA_RPC_KEY`, `SHTORA_GROK_ORIGIN`, `SHTORA_SELF=1`, and `
 
 The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cookie. The RPC key remains a server-to-server credential and is not sent to the browser.
 
+## Automated setup on the VPS
+
+After the updated application build is running on port 8080, copy/run the repository script as root:
+
+```bash
+sudo bash scripts/configure-vps-session-auth.sh
+```
+
+The script identifies the systemd unit behind port 8080, asks for an app password without echoing it, creates a protected env file, restarts the service, adds the session check to the existing Nginx server, runs `nginx -t`, reloads Nginx, and verifies that unauthenticated API/media requests return 401. It backs up the Nginx config outside `sites-enabled`. It does not change or delete `/opt/shtora/data`.
+
+The script intentionally stops if the new `/api/session` route is not already present in the running app. It configures the server and Nginx only; it does not fetch/build/deploy application code automatically.
+
 ## Static media must use the same session check
 
 The application API and server functions check the session in code. Static files served directly by Nginx do not pass through that code, so any existing Nginx location that serves private files such as `/chat-media/` (and `/ig-media/`, if it is served directly) must also use Nginx `auth_request`.
