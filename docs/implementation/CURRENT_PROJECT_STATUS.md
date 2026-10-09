@@ -174,3 +174,10 @@ Commit с этим изменением: 3e7622f.
 - Зафиксирован текущий статус VPS/Grok/Imagine: архитектура собрана, end-to-end ещё требует фактического теста.
 - Зафиксировано состояние GitHub Actions: workflow для release/** существует, но фактических runs пока нет.
 - Зафиксированы ближайшие проверки: quality, build, E2E VPS/Grok/Imagine и consistency состояния.
+
+## 2026-10-09
+
+- Архитектурный обзор: релиз не готов к публикации, пока typecheck красный и нет живого Imagine.
+- Quality на 4c4ffdc падал на отсутствующем `@/components/shtora-media-viewer` в chats, dropbox-browser, imagine-dice, profile-photo. lint и test не запускались.
+- Файл оболочки возвращён на release/grok-build-functional, потому что экраны уже его вызывают. Showroom не возвращался. main и test/vps-grok-imagine не менялись.
+- Сквозной VPS → Build → Imagine по-прежнему не подтверждён живым вызовом.
