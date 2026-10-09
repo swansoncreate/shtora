@@ -6,8 +6,7 @@ import { ProfilePhotoViewer } from "@/components/profile-photo";
 import { MediaImg } from "@/components/media-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buildPersona, stripChatMeta, storyFacts } from "@/lib/chat/functions";
-import { dumpBond } from "@/lib/chat/bond";
+import { buildPersona, stripChatMeta } from "@/lib/chat/functions";
 import {
   appendMessage,
   bumpWarmth,
@@ -30,7 +29,6 @@ import {
 import { getCachedProfile } from "@/lib/instagram/cache";
 import { storiesUnseen, useUnseenTick } from "@/lib/instagram/unseen";
 import { resolveChatImage } from "@/lib/instagram/media-cache";
-import { chatBackstoryFor } from "@/lib/shtora-settings";
 import { isChatTyping, resetChatEngine, subscribeTyping } from "@/lib/chat/engine";
 import { herAsk } from "@/lib/chat/life";
 import { cn } from "@/lib/utils";
@@ -379,18 +377,10 @@ function ThreadView({
 
   const messages = thread?.messages ?? [];
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  const metrics = thread
-    ? dumpBond(thread.bond, thread.warmth, storyFacts(chatBackstoryFor(username)).girlfriend)
-    : null;
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <ShtoraPageHeader
-        eyebrow={
-          metrics
-            ? `${thread?.mood || `@${username}`} · ${metrics.head}`
-            : thread?.mood || `@${username}`
-        }
+        eyebrow={thread?.mood || `@${username}`}
         title={thread?.fullName || `@${username}`}
         onBack={onBack}
         onSettings={onSettings}
@@ -494,7 +484,7 @@ function ThreadView({
                   ) : item.kind === "circle" && item.imageUrl ? (
                     <CircleNote url={item.imageUrl} />
                   ) : item.imageUrl ? (
-                    <button type="button" className="mb-1 block w-full" onClick={() => {
+                    <button type="button" className="mb-1 flex max-w-full justify-start" onClick={() => {
                       void resolveChatImage(item.imageUrl!).then((url) => setOpenPhoto(url || item.imageUrl!));
                     }}>
                       <ChatPic url={item.imageUrl} />
@@ -710,7 +700,7 @@ function ChatPic({ url }: { url: string }) {
     <img
       src={src}
       alt=""
-      className="max-h-72 w-full rounded-md object-cover"
+      className="max-h-[min(58dvh,460px)] max-w-full rounded-xl object-contain"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
     />

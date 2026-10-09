@@ -14,6 +14,20 @@ const KEY = "shtora-feed-v7";
 const LEGACY_KEY = "shtora-daily-feed-v6";
 const MAX_POSTS = 160;
 
+/** Canonicalize image URLs so CDN resize/signature query parameters don't make the same asset look unique. */
+export function feedImageKey(value: string | undefined): string {
+  const raw = (value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    url.hash = "";
+    url.search = "";
+    return url.toString().replace(/\/$/, "").toLowerCase();
+  } catch {
+    return raw.split("#", 1)[0].split("?", 1)[0].replace(/\/$/, "").toLowerCase();
+  }
+}
+
 export type FeedSlot = "morning" | "evening";
 
 export type DailyPost = {
