@@ -122,6 +122,11 @@ if ! bash "$work/source/scripts/configure-vps-session-auth.sh"; then
   exit 1
 fi
 
+if ! bash "$work/source/scripts/install-vps-diagnostics.sh"; then
+  echo "WARNING: app deployed, but periodic diagnostics timer could not be installed." >&2
+  echo "Install later with scripts/install-vps-diagnostics.sh from the release source." >&2
+fi
+
 echo
 echo "Deployment and session configuration completed."
 echo "Open https://${DOMAIN}/login on your phone."

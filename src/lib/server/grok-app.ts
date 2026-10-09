@@ -1,5 +1,6 @@
 import { rpcKey, runningOnVps } from "./remote";
 import { dataRoot } from "./data-dir.server";
+import { serverDiagnostic } from "./diagnostics";
 
 const FILE = "grok-origin.txt";
 let cached = "";
@@ -50,8 +51,23 @@ export async function writeGrokOrigin(origin: string) {
 }
 
 export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unknown): Promise<T> {
+  const startedAt = Date.now();
+  const input = data && typeof data === "object" ? data as Record<string, unknown> : {};
+  const payload = input.payload && typeof input.payload === "object" ? input.payload as Record<string, unknown> : {};
+  const prompt = op === "imagine" && typeof payload.prompt === "string" ? payload.prompt : undefined;
+  await serverDiagnostic("info", "grok", "upstream request started", {
+    operation: op,
+    ...(prompt ? { promptPreview: prompt } : {}),
+    ...(op === "imagine" ? {
+      model: typeof payload.model === "string" ? payload.model.slice(0, 120) : "unknown",
+      aspectRatio: typeof payload.aspect_ratio === "string" ? payload.aspect_ratio.slice(0, 20) : "default",
+      hasImageReference: Boolean(payload.image),
+      imageReferenceCount: Array.isArray(payload.images) ? payload.images.length : 0,
+    } : {}),
+  });
   const origin = await readGrokOrigin();
   if (!origin) {
+    await serverDiagnostic("error", "grok", "upstream origin missing", { operation: op }, Date.now() - startedAt);
     return {
       ok: false,
       error: "Shtora не видит опубликованный Grok Build. Укажи SHTORA_GROK_ORIGIN.",
@@ -68,11 +84,13 @@ export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unk
       signal: AbortSignal.timeout(90_000),
     });
     const text = await res.text();
+    await serverDiagnostic(res.ok ? "info" : "warn", "grok", "upstream response received", { operation: op, status: res.status, responseBytes: Buffer.byteLength(text) }, Date.now() - startedAt);
     if (!res.ok) {
       return { ok: false, error: text.slice(0, 220) || `Grok app HTTP ${res.status}` } as T;
     }
     return (text ? JSON.parse(text) : { ok: false, error: "пустой ответ Grok" }) as T;
   } catch (err) {
+    await serverDiagnostic("error", "grok", "upstream request failed", { operation: op, error: err instanceof Error ? err : String(err) }, Date.now() - startedAt);
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Публикация Grok не ответила",
