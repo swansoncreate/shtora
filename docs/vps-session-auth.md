@@ -13,6 +13,16 @@ Keep the existing `SHTORA_RPC_KEY`, `SHTORA_GROK_ORIGIN`, `SHTORA_SELF=1`, and `
 
 The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cookie. The RPC key remains a server-to-server credential and is not sent to the browser.
 
+## One-command deployment on the VPS
+
+From the VPS terminal, run the deployment helper from the published release branch:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/swansoncreate/shtora/release/grok-build-functional/scripts/deploy-vps-session-auth.sh | bash
+```
+
+It proceeds only if `/opt/shtora` is a clean Git checkout already on `release/grok-build-functional`. It saves the current build under `/root`, fast-forwards that branch, rebuilds, restarts the detected systemd service, then invokes the setup below. If the current branch differs or the working tree has local changes, it stops without switching branches or overwriting them. The helper does not touch `/opt/shtora/data`.
+
 ## Automated setup on the VPS
 
 After the updated application build is running on port 8080, copy/run the repository script as root:
