@@ -17,16 +17,16 @@ function safeDetails(input?: Record<string, unknown>) {
       const code = (value as Error & { code?: unknown }).code;
       if (typeof code === "string" && /^[A-Z0-9_\\-]{1,40}$/i.test(code)) output[`${key}Code`] = code;
     } else if (typeof value === "string") {
-      if (/https?:\\/\\//i.test(value)) output[key] = value.replace(/https?:\\/\\/\\S+/gi, "[url]").slice(0, 100);
+      if (typeof code === "string" && /^[A-Z0-9_-]{1,40}$/i.test(code)) output[`${key}Code`] = code;
       else output[key] = value.replace(/[\\r\\n\\t]/g, " ").slice(0, 120);
-    }
+      if (/https?:\/\//i.test(value)) output[key] = value.replace(/https?:\/\/\S+/gi, "[url]").slice(0, 100);
   }
   return Object.keys(output).length ? output : undefined;
 }
 
 export async function serverDiagnostic(level: Level, area: string, event: string, details?: Record<string, unknown>, durationMs?: number) {
   const entry = {
-    at: new Date().toISOString(), level, source: "server",
+  const line = JSON.stringify(entry) + "\n";
     area: area.slice(0, 40), event: event.slice(0, 100),
     ...(Number.isFinite(durationMs) ? { durationMs: Math.max(0, Math.round(durationMs!)) } : {}),
     ...(safeDetails(details) ? { details: safeDetails(details) } : {}),
