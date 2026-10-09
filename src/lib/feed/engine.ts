@@ -5,6 +5,7 @@ import { dailyToCards, feedImageKey, generateExtraPost, generateNextDaily, isSam
 import { isFeedLiked, toggleFeedLike } from "./likes";
 import { liveTodayCard } from "./live";
 import type { FeedCard } from "./simulate";
+import { diagnosticLog } from "@/lib/diagnostics";
 
 export type FeedHydrateInput = {
   favorites: string[];
@@ -100,6 +101,8 @@ export class FeedEngine {
     const gen = ++this.fillGen;
     this.filling = true;
     this.emit();
+    const startedAt = Date.now();
+    diagnosticLog("info", "feed", "fill started", { force, favorites: favorites.length });
     let added = 0;
     try {
       let tries = 0;
@@ -112,6 +115,7 @@ export class FeedEngine {
           post = await withFeedDeadline(generateNextDaily(favorites), "feed generation");
         } catch (error) {
           console.warn("[shtora:feed] generation stopped; keeping existing posts", error);
+          diagnosticLog("error", "feed", "generation failed or timed out", { error: error instanceof Error ? error.message : String(error), tries }, Date.now() - startedAt);
           break;
         }
         if (!post) break;
@@ -127,6 +131,7 @@ export class FeedEngine {
       if (this.fillGen === gen) {
         this.filling = false;
         this.emit();
+        diagnosticLog("info", "feed", "fill finished", { added, visiblePosts: this.cards.length }, Date.now() - startedAt);
       }
     }
     return added;
@@ -138,6 +143,8 @@ export class FeedEngine {
     const gen = ++this.fillGen;
     this.filling = true;
     this.emit();
+    const startedAt = Date.now();
+    diagnosticLog("info", "feed", "regeneration started", { favorites: names.length });
     let added = 0;
     try {
       for (const name of names) {
@@ -147,6 +154,7 @@ export class FeedEngine {
           post = await withFeedDeadline(generateExtraPost(name, names), "feed regeneration");
         } catch (error) {
           console.warn("[shtora:feed] regeneration stopped; keeping existing posts", error);
+          diagnosticLog("error", "feed", "regeneration failed or timed out", { error: error instanceof Error ? error.message : String(error), username: name }, Date.now() - startedAt);
           continue;
         }
         if (!post) continue;
@@ -162,6 +170,7 @@ export class FeedEngine {
       if (this.fillGen === gen) {
         this.filling = false;
         this.emit();
+        diagnosticLog("info", "feed", "regeneration finished", { added, visiblePosts: this.cards.length }, Date.now() - startedAt);
       }
     }
     return added;
