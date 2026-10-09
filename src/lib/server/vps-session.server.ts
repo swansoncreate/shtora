@@ -2,6 +2,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const SESSION_COOKIE = "shtora_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 14;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
 function env(name: string): string {
   return (process.env[name] ?? "").trim();
@@ -57,6 +60,32 @@ export function sessionStatus(request: Request) {
   };
 }
 
+function clientKey(request: Request): string {
+  return (request.headers.get("x-real-ip") || "unknown").slice(0, 80);
+}
+
+function tooManyAttempts(request: Request): boolean {
+  const now = Date.now();
+  if (loginAttempts.size > 5000) {
+    for (const [key, value] of loginAttempts) if (value.resetAt <= now) loginAttempts.delete(key);
+  }
+  const key = clientKey(request);
+  const current = loginAttempts.get(key);
+  if (!current || current.resetAt <= now) {
+    loginAttempts.set(key, { count: 0, resetAt: now + LOGIN_WINDOW_MS });
+    return false;
+  }
+  return current.count >= LOGIN_MAX_ATTEMPTS;
+}
+
+function recordFailedAttempt(request: Request): void {
+  const now = Date.now();
+  const key = clientKey(request);
+  const current = loginAttempts.get(key);
+  if (!current || current.resetAt <= now) loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+  else current.count += 1;
+}
+
 export function createSessionResponse(request: Request, body: unknown): Response {
   if (!configReady()) {
     return Response.json(
@@ -68,12 +97,20 @@ export function createSessionResponse(request: Request, body: unknown): Response
   if (origin && origin !== new URL(request.url).origin) {
     return Response.json({ ok: false, error: "Недопустимый источник запроса." }, { status: 403 });
   }
+  if (tooManyAttempts(request)) {
+    return Response.json(
+      { ok: false, error: "Слишком много попыток. Подождите 15 минут и попробуйте снова." },
+      { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": "900" } },
+    );
+  }
   const password = body && typeof body === "object"
     ? String((body as Record<string, unknown>).password ?? "")
     : "";
-  if (!safeEqual(password, env("SHTORA_LOGIN_PASSWORD"))) {
-    return Response.json({ ok: false, error: "Неверный пароль." }, { status: 401 });
+  if (password.length > 512 || !safeEqual(password, env("SHTORA_LOGIN_PASSWORD"))) {
+    recordFailedAttempt(request);
+    return Response.json({ ok: false, error: "Неверный пароль." }, { status: 401, headers: { "Cache-Control": "no-store" } });
   }
+  loginAttempts.delete(clientKey(request));
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
   const payload = String(expiresAt);
   const token = payload + "." + signature(payload, env("SHTORA_SESSION_SECRET"));
