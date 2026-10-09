@@ -110,11 +110,30 @@ servers = []
 for match in re.finditer(r"\bserver\s*\{", text):
     end = block_end(text, text.find("{", match.start()))
     block = text[match.start():end + 1]
-    if re.search(r"\bserver_name\b[^;]*" + re.escape(domain), block):
-        servers.append((match.start(), end))
-if len(servers) != 1:
-    sys.exit(f"Expected exactly one server block for {domain}; found {len(servers)}. No Nginx changes written.")
-start, end = servers[0]
+    names = []
+    for name_match in re.finditer(r"(?m)^\s*server_name\s+([^;]+);", block):
+        names.extend(name_match.group(1).split())
+    if domain in names:
+        servers.append((match.start(), end, block))
+
+# The same hostname commonly has an HTTP redirect server on port 80 and
+# the actual application server on HTTPS/443. Only edit the HTTPS block.
+https_servers = [
+    (start, end, block)
+    for start, end, block in servers
+    if re.search(r"(?m)^\s*listen\s+(?:\[::\]:)?443(?:\s|;)", block)
+]
+if len(https_servers) != 1:
+    ports = []
+    for _, _, block in servers:
+        listens = re.findall(r"(?m)^\s*listen\s+([^;]+);", block)
+        ports.append(", ".join(listens) if listens else "listen directive not found")
+    sys.exit(
+        f"Expected exactly one HTTPS server block for {domain}; found {len(https_servers)} "
+        f"(matching blocks: {len(servers)}; listen directives: {' | '.join(ports)}). "
+        "No Nginx changes written."
+    )
+start, end, _ = https_servers[0]
 server = text[start:end + 1]
 
 if "location = /_shtora_session_check" not in server:
