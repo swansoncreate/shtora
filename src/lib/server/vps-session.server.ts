@@ -94,8 +94,19 @@ export function createSessionResponse(request: Request, body: unknown): Response
     );
   }
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
-    return Response.json({ ok: false, error: "Недопустимый источник запроса." }, { status: 403 });
+  if (origin) {
+    // Behind Nginx, request.url may describe the internal HTTP hop rather than
+    // the public HTTPS URL seen by the browser. Reconstruct the public origin
+    // from proxy headers, falling back to the request URL for local/dev use.
+    const url = new URL(request.url);
+    const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+    const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+    const host = forwardedHost || request.headers.get("host") || url.host;
+    const proto = forwardedProto || url.protocol.replace(/:$/, "");
+    const expectedOrigin = `${proto}://${host}`;
+    if (origin !== expectedOrigin) {
+      return Response.json({ ok: false, error: "Недопустимый источник запроса." }, { status: 403 });
+    }
   }
   if (tooManyAttempts(request)) {
     return Response.json(
