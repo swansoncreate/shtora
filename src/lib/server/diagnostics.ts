@@ -10,7 +10,15 @@ function safeDetails(input?: Record<string, unknown>) {
   if (!input) return undefined;
   const output: Record<string, SafeValue> = {};
   for (const [key, value] of Object.entries(input).slice(0, 30)) {
-    if (key === "promptPreview" && typeof value === "string") {\n      output.promptPreview = value.replace(/https?:\\/\\/\\S+/gi, "[url]").replace(/(api[_-]?key|token|password|secret)\\s*[:=]\\s*[^\\s,;]+/gi, "$1=[redacted]").slice(0, 1800);\n      continue;\n    }
+    // Only the explicitly named preview field may contain prompt text.
+    if (key === "promptPreview" && typeof value === "string") {
+      output.promptPreview = value
+        .replace(/https?:\/\/\S+/gi, "[url]")
+        .replace(/(api[_-]?key|token|password|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]")
+        .replace(/[\r\n\t]/g, " ")
+        .slice(0, 1800);
+      continue;
+    }
     if (/token|secret|password|prompt|message|text|url|image|cookie|auth|body|content|email|username|path|origin/i.test(key)) continue;
     if (typeof value === "number" || typeof value === "boolean" || value === null) output[key] = value;
     else if (value instanceof Error) {
