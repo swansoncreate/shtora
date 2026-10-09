@@ -73,7 +73,7 @@ fi
 
 # Edit the real target, preserving the sites-enabled symlink if one exists.
 nginx_file="$(readlink -f "$NGINX_LINK")"
-backup="${nginx_file}.bak-session-auth-$(date +%Y%m%d%H%M%S)"
+backup="/root/shtora-nginx-session-auth-$(date +%Y%m%d%H%M%S).bak"
 cp -a "$nginx_file" "$backup"
 export NGINX_FILE="$nginx_file" DOMAIN
 python3 <<'PY'
