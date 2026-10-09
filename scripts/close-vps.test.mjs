@@ -165,7 +165,7 @@ test("rpc and grok-chat no longer allow every origin", () => {
     const text = source(rel);
     assert.equal(text.includes("Access-Control-Allow-Origin"), false, rel);
     assert.equal(text.includes('"*"'), false, rel);
-    assert.match(text, /assertRpc\(request\)/);
+    assert.match(text, rel.endsWith("grok-chat.ts") ? /assertRpc\(request\)/ : /assertAppOrRpc\(request\)/);
   }
   withEnv({ SHTORA_FRONT_ORIGIN: "https://front.example", SHTORA_PUBLIC_ORIGIN: undefined }, () => {
     const matched = corsHeaders(req("/api/rpc", { origin: "https://front.example" }), "POST, OPTIONS");
@@ -179,12 +179,12 @@ test("rpc and grok-chat no longer allow every origin", () => {
 test("media url bypass and grok-chat call assertRpc before local work", () => {
   const media = source("src/routes/api/media.ts");
   const grok = source("src/routes/api/grok-chat.ts");
-  assert.equal(media.includes("assertRpc(request)"), true);
+  assert.equal(media.includes("assertAppOrRpc(request)"), true);
   const mediaGet = media.slice(media.indexOf("GET: async"));
-  assert.ok(mediaGet.indexOf("assertRpc(request)") < mediaGet.indexOf("fetchUpstream"));
+  assert.ok(mediaGet.indexOf("assertAppOrRpc(request)") < mediaGet.indexOf("fetchUpstream"));
   assert.ok(grok.indexOf("assertRpc(request)") < grok.indexOf("runningOnVps()"));
   const rpc = source("src/routes/api/rpc.ts");
-  assert.ok(rpc.indexOf("assertRpc(request)") < rpc.indexOf("body ="));
+  assert.ok(rpc.indexOf("assertAppOrRpc(request)") < rpc.indexOf("body ="));
 });
 
 test("safeEqual always calls timingSafeEqual before the length check", () => {
