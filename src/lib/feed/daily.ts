@@ -22,9 +22,9 @@ export function feedImageKey(value: string | undefined): string {
     const url = new URL(raw);
     url.hash = "";
     url.search = "";
-    return url.toString().replace(/\\/$/, "").toLowerCase();
+    return url.toString().replace(/\/$/, "").toLowerCase();
   } catch {
-    return raw.split("#", 1)[0].split("?", 1)[0].replace(/\\/$/, "").toLowerCase();
+    return raw.split("#", 1)[0].split("?", 1)[0].replace(/\/$/, "").toLowerCase();
   }
 }
 
