@@ -1,5 +1,5 @@
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
-import { assertRpc } from "./remote.ts";
+import { assertAppOrRpc } from "./remote.ts";
 
 export class RpcDenied extends Error {
   readonly status: number;
@@ -18,12 +18,12 @@ export function assertVpsServerFn(): void {
   } catch {
     request = undefined;
   }
-  const denied = request ? assertRpc(request) : Response.json({ error: "no rpc key" }, { status: 401 });
+  const denied = request ? assertAppOrRpc(request) : Response.json({ error: "no rpc key" }, { status: 401 });
   if (!denied) return;
   try {
     setResponseStatus(denied.status);
   } catch {
     /* no response context in a unit test */
   }
-  throw new RpcDenied(denied.status, denied.status === 503 ? "rpc key not configured" : "no rpc key");
+  throw new RpcDenied(denied.status, denied.status === 503 ? "rpc key not configured" : "no rpc key or valid Shtora session");
 }
