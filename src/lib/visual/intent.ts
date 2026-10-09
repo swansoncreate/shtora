@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CameraMode, PhotoIntent } from "./types";
+import { diagnosticLog } from "@/lib/diagnostics";
 
 const cameraSchema = z.enum(["selfie", "mirror", "side", "back", "full", "pov", "candid", "gallery"]);
 
@@ -99,6 +100,17 @@ export function deterministicPhotoIntent(raw: string, previousPhoto = false): Ph
     };
   }
 
+  const continuationAsk = /друг(ую|ой|ое) поз|позу|поменяй поз|измени поз|повернись|развернись|друг(ой|ой) ракурс|ракурс|поближе|подальше|сверху|снизу|переоденься|переодень|смени одеж|другую одеж|другой наряд|в этой же одеж|так же но|теперь иначе|ещ[её] вариант|another pose|different pose|change (the )?pose|different angle|change outfit/i.test(t);
+  if (continuationAsk && previousPhoto && !explicitSceneChange(text)) {
+    const changes: string[] = [];
+    if (/поз|повернись|развернись/.test(t)) changes.push("change pose");
+    if (/ракурс|поближе|подальше|сверху|снизу/.test(t)) changes.push("change camera angle");
+    if (/переод|одеж|наряд/.test(t)) changes.push("change outfit");
+    diagnosticLog("info", "photo-intent", "continuation phrase matched", { mode: "continue", changesCount: changes.length });
+    return { mode: "continue", camera: camera || "selfie", changes, reference: "last_photo" };
+  }
+
+  diagnosticLog("info", "photo-intent", "no deterministic photo intent", { previousPhoto, sceneChange: explicitSceneChange(text) });
   return { mode: "none" };
 }
 

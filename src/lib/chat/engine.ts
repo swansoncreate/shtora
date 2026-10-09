@@ -21,6 +21,7 @@ import { turnPolicy } from "./policy";
 import { dayNow, isHeatNight } from "./day";
 import { runLiveTurn } from "@/lib/dm/turn";
 import { marksFromTurn } from "./life";
+import { diagnosticLog } from "@/lib/diagnostics";
 import { decideChatMedia, sendChatMedia } from "./media";
 import {
   appendMessage,
@@ -236,7 +237,10 @@ async function deliverDm(
         },
         { incrementUnread: unreadOnce },
       );
-    } else if (!media.skipped) toast.error(media.error);
+    } else if (!media.skipped) {
+      diagnosticLog("error", "chat", "DM photo failed", { kind: out.photoKind, error: media.error });
+      toast.error(media.error);
+    }
   }
   if (stillViewing) await markThreadRead(username);
   else if (bubbles[0]) toast.message(`@${username}`, { description: bubbles[0].slice(0, 90) });
@@ -507,12 +511,14 @@ async function reply(username: string, lastId: string, stamp?: number) {
         if (makeOnce) await patchThread(username, { onceSentAt: Date.now(), onceDeleteAsked: false });
         if (plan.kind === "spicy" || plan.kind === "pov") await applyBond(username, { heat: 3, spark: 2, guilt: factsGf ? 2 : 0 });
       } else if (!media.skipped && !refused) {
+        diagnosticLog("error", "chat", "reply photo failed", { kind: plan.kind, error: media.error });
         toast.error(media.error);
       }
     }
     if (stillViewing) await markThreadRead(username);
     else toast.message(profile?.fullName || `@${username}`, { description: bubbles[0]?.slice(0, 90) });
   } catch (err) {
+    diagnosticLog("error", "chat", "reply processing failed", { error: err instanceof Error ? err.message : String(err) });
     handled.delete(last.id);
     failedAt.set(last.id, Date.now());
     toast.error(err instanceof Error ? err.message : "Чат не ответил");
