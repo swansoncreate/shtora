@@ -183,7 +183,7 @@ function InboxView({ onOpen, onClose, onSettings, previewMode }: { onOpen: (user
   return (
     <>
       <ShtoraPageHeader eyebrow="Сообщения" title="Чаты" onSettings={onSettings} onClose={onClose} />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,var(--color-elevated),transparent_58%)]">
         {visibleThreads.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-muted">
             На профиле нажми «Написать» — переписка сохранится здесь.
@@ -192,15 +192,15 @@ function InboxView({ onOpen, onClose, onSettings, previewMode }: { onOpen: (user
           visibleThreads.map((thread) => {
             const last = thread.messages[thread.messages.length - 1];
             return (
-              <div key={thread.username} className="flex items-center gap-1 border-b border-border/45 pr-2 transition-colors hover:bg-elevated/45">
+              <div key={thread.username} className="mx-3 my-1 flex items-center gap-1 rounded-2xl border border-border/50 bg-surface/90 pr-2 shadow-[var(--shadow-border)] transition-colors hover:bg-elevated/45">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-center gap-4 px-6 py-4 text-left"
+                className="flex min-w-0 flex-1 items-center gap-3 px-4 py-4 text-left"
                 onClick={() => onOpen(thread.username)}
               >
                 <span
                   className={cn(
-                    "size-13 shrink-0 rounded-full border p-[2px]",
+                    "size-14 shrink-0 rounded-full border-2 p-[2px] shadow-sm",
                     storiesUnseen(thread.username) ? "border-accent" : "border-border",
                   )}
                 >
@@ -428,10 +428,10 @@ function ThreadView({
               <div className={cn(circle ? "max-w-none" : "max-w-[80%]")}>
                 <div
                   className={cn(
-                    "relative text-sm",
+                    "relative text-sm leading-relaxed",
                     circle
                       ? "overflow-visible bg-transparent px-0 py-0"
-                      : "overflow-hidden rounded-lg px-3 py-2",
+                      : "overflow-hidden rounded-2xl px-4 py-3 shadow-sm",
                     circle
                       ? ""
                       : heartOnly
@@ -439,8 +439,8 @@ function ThreadView({
                       : actionDone
                         ? "bg-accent/20 text-fg ring-1 ring-accent/40"
                         : item.role === "user"
-                        ? "bg-accent text-accent-fg"
-                        : "bg-elevated text-fg",
+                        ? "rounded-br-md bg-accent text-accent-fg"
+                        : "rounded-bl-md bg-surface text-fg ring-1 ring-border/50",
                   )}
                   onDoubleClick={() => void toggleHeart(item.id, item.heartByUser)}
                 >
