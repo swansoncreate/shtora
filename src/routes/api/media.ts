@@ -117,9 +117,9 @@ export const Route = createFileRoute("/api/media")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const { runningOnVps, vpsOrLocal, assertRpc } = await import("@/lib/server/remote");
+        const { runningOnVps, vpsOrLocal, assertAppOrRpc } = await import("@/lib/server/remote");
         if (runningOnVps()) {
-          const denied = assertRpc(request);
+          const denied = assertAppOrRpc(request);
           if (denied) return denied;
         }
         const byId = new URL(request.url).searchParams.get("id") || "";
