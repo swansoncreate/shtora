@@ -1,7 +1,7 @@
 import { getCachedProfile, subscribeCache } from "@/lib/instagram/cache";
 import type { IgProfile } from "@/lib/instagram/types";
 import { commentCount, seedPostCrowd } from "./comments";
-import { dailyToCards, generateExtraPost, generateNextDaily, isSameFeedDay, loadDaily, needsToday, saveDaily, toggleDailyLike } from "./daily";
+import { dailyToCards, feedImageKey, generateExtraPost, generateNextDaily, isSameFeedDay, loadDaily, needsToday, saveDaily, toggleDailyLike } from "./daily";
 import { isFeedLiked, toggleFeedLike } from "./likes";
 import { liveTodayCard } from "./live";
 import type { FeedCard } from "./simulate";
@@ -94,7 +94,8 @@ export class FeedEngine {
         const post = await generateNextDaily(favorites);
         if (!post) break;
         const cur = loadDaily();
-        if (cur.posts.some((row) => row.id === post.id || row.imageUrl === post.imageUrl)) continue;
+        const candidateImage = feedImageKey(post.imageUrl);
+        if (cur.posts.some((row) => row.id === post.id || (candidateImage && feedImageKey(row.imageUrl) === candidateImage))) continue;
         cur.posts.unshift(post);
         saveDaily(cur);
         added += 1;
@@ -122,7 +123,8 @@ export class FeedEngine {
         const post = await generateExtraPost(name, names);
         if (!post) continue;
         const cur = loadDaily();
-        if (cur.posts.some((row) => row.imageUrl === post.imageUrl)) continue;
+        const candidateImage = feedImageKey(post.imageUrl);
+        if (cur.posts.some((row) => candidateImage && feedImageKey(row.imageUrl) === candidateImage)) continue;
         cur.posts.unshift(post);
         saveDaily(cur);
         added += 1;
