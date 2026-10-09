@@ -2,66 +2,45 @@
 
 This change adds a password login for the self-hosted Shtora instance. It does not move, rewrite, or migrate anything in `/opt/shtora/data`.
 
-## Required environment on the VPS service
+## Important: this VPS uses a prebuilt deployment directory
 
-Set these values in the existing systemd service environment (do not commit them, put them in browser code, or paste them into chat):
+The live application runs from `/opt/shtora/.vercel/output`; `/opt/shtora` is **not** a Git checkout. User data lives separately in `/opt/shtora/data` (about 1 GB). Do not clone the repository over `/opt/shtora`, delete that directory, or replace `data/`.
 
-- `SHTORA_LOGIN_PASSWORD`: a long, unique password for Shtora.
-- `SHTORA_SESSION_SECRET`: at least 32 characters of random secret material. Generate one on the VPS with `openssl rand -hex 32`.
-
-Keep the existing `SHTORA_RPC_KEY`, `SHTORA_GROK_ORIGIN`, `SHTORA_SELF=1`, and `SHTORA_DATA_DIR=/opt/shtora/data` unchanged. Restart the existing service after adding the two new variables. Do not change the data directory.
-
-The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cookie. The RPC key remains a server-to-server credential and is not sent to the browser.
+Use the prebuilt deployment helper below. It clones the release source into a temporary directory, builds there, verifies the expected Vercel output files, archives the current output, stages the new output, and switches only `/opt/shtora/.vercel/output`. The existing service and data directory stay where they are. If the service or new session endpoint fails to start, the helper restores the previous output. It keeps rollback copies under `/opt/shtora/.vercel/` and `/root/`.
 
 ## One-command deployment on the VPS
 
-From the VPS terminal, run the deployment helper from the published release branch:
+From the VPS terminal, run:
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/swansoncreate/shtora/release/grok-build-functional/scripts/deploy-vps-session-auth.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/swansoncreate/shtora/release/grok-build-functional/scripts/deploy-vps-session-auth-prebuilt.sh)"
 ```
 
-It proceeds only if `/opt/shtora` is a clean Git checkout already on `release/grok-build-functional`. It saves the current build under `/root`, fast-forwards that branch, rebuilds, restarts the detected systemd service, then invokes the setup below. If the current branch differs or the working tree has local changes, it stops without switching branches or overwriting them. The helper does not touch `/opt/shtora/data`.
+The script requires the current `/opt/shtora/.vercel/output`, `/opt/shtora/data`, and a running systemd service detected from port 8080. It does not require Git metadata in `/opt/shtora`. It builds with `VITE_AUTH_ENABLED=true` and deliberately unsets database connection variables for the build, so it does not run deployment-time SQL migrations against an inherited database URL. It never removes or copies over `/opt/shtora/data`.
 
-## Automated setup on the VPS
+If app code deploys but the password/Nginx setup reports an error, **do not rerun the deployment command blindly**. Keep the rollback copies and share the exact error output (without secrets) so the failed step can be fixed safely.
 
-After the updated application build is running on port 8080, copy/run the repository script as root:
+## What the script changes
 
-```bash
-sudo bash scripts/configure-vps-session-auth.sh
-```
+- Creates a temporary source checkout and builds a new `.vercel/output`.
+- Saves the current build as a tar archive under `/root`.
+- Stops the existing systemd service briefly, swaps only the `.vercel/output` directory, and starts the service again.
+- Checks that `GET http://127.0.0.1:8080/api/session` reports `enabled:true`.
+- Runs `configure-vps-session-auth.sh` from the same release source to configure the password/session and protect direct media paths in Nginx.
 
-The script identifies the systemd unit behind port 8080, asks for an app password without echoing it, creates a protected env file, restarts the service, adds the session check to the existing Nginx server, runs `nginx -t`, reloads Nginx, and verifies that unauthenticated API/media requests return 401. It backs up the Nginx config outside `sites-enabled`. It does not change or delete `/opt/shtora/data`.
+The setup script creates `/etc/shtora/session-auth.env` with mode 600, containing `SHTORA_LOGIN_PASSWORD` and a generated `SHTORA_SESSION_SECRET`. It adds a systemd drop-in to load that file, restarts the app, backs up the real Nginx config outside `sites-enabled`, adds the internal session check to existing media locations, tests Nginx config, reloads it, and verifies that unauthenticated API/media requests return 401.
 
-The script intentionally stops if the new `/api/session` route is not already present in the running app. It configures the server and Nginx only; it does not fetch/build/deploy application code automatically.
+Keep these existing environment values unchanged: `SHTORA_RPC_KEY`, `SHTORA_GROK_ORIGIN`, `SHTORA_SELF=1`, and `SHTORA_DATA_DIR=/opt/shtora/data`. The RPC key remains server-to-server only and is never sent to browser code.
+
+## Manual setup script
+
+`scripts/configure-vps-session-auth.sh` is also available if the updated app build is already running on port 8080 and you need to configure auth separately. It does not fetch or build application code.
 
 ## Static media must use the same session check
 
-The application API and server functions check the session in code. Static files served directly by Nginx do not pass through that code, so any existing Nginx location that serves private files such as `/chat-media/` (and `/ig-media/`, if it is served directly) must also use Nginx `auth_request`.
+The application API and server functions check the session in code. Static files served directly by Nginx do not pass through that code, so any existing Nginx location serving private files such as `/chat-media/` or `/ig-media/` must use Nginx `auth_request`.
 
-Add this internal check location to the existing HTTPS server block. Keep the existing media aliases and paths; do not create a second server block:
-
-```nginx
-location = /_shtora_session_check {
-    internal;
-    proxy_pass http://127.0.0.1:8080/api/session?check=1;
-    proxy_pass_request_body off;
-    proxy_set_header Content-Length "";
-    proxy_set_header Cookie $http_cookie;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
-
-Then add this one directive inside each existing Nginx location that serves private media from disk, without replacing its current `alias`, cache, or content-type directives:
-
-```nginx
-auth_request /_shtora_session_check;
-```
-
-Do not apply this directive to the login route, `/api/session`, or `/api/health`; otherwise login or health checks can become inaccessible. Keep `/dropbox-oauth`'s existing protection unless its flow is deliberately redesigned.
-
-Before reloading Nginx, run `nginx -t`. Keep the existing backup outside `sites-enabled`.
+The setup script adds this internal check location to the existing HTTPS server block and adds `auth_request /_shtora_session_check;` to existing private media locations. It preserves the existing aliases and does not create a second server block. Before reloading Nginx, it runs `nginx -t`. Nginx backups are kept outside `sites-enabled`.
 
 ## Acceptance checks
 

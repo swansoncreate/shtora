@@ -25,6 +25,7 @@ jobs:
       - run: npm ci
       - run: bash -n scripts/configure-vps-session-auth.sh
       - run: bash -n scripts/deploy-vps-session-auth.sh
+      - run: bash -n scripts/deploy-vps-session-auth-prebuilt.sh
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
