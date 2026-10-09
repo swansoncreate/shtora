@@ -11,7 +11,11 @@ export const Route = createFileRoute("/api/session")({
           });
         }
         const { sessionStatus } = await import("@/lib/server/vps-session.server");
-        return Response.json(sessionStatus(request), { headers: { "Cache-Control": "no-store" } });
+        const status = sessionStatus(request);
+        if (new URL(request.url).searchParams.get("check") === "1" && !status.authenticated) {
+          return Response.json({ authenticated: false }, { status: 401, headers: { "Cache-Control": "no-store" } });
+        }
+        return Response.json(status, { headers: { "Cache-Control": "no-store" } });
       },
       POST: async ({ request }) => {
         const { runningOnVps } = await import("@/lib/server/remote");
