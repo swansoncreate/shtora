@@ -148,6 +148,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
   '/api/autosave': typeof ApiAutosaveRoute
   '/api/autosave-config': typeof ApiAutosaveConfigRoute
@@ -161,6 +162,7 @@ export interface FileRoutesByTo {
   '/api/logs': typeof ApiLogsRoute
   '/api/media': typeof ApiMediaRoute
   '/api/rpc': typeof ApiRpcRoute
+  '/api/session': typeof ApiSessionRoute
   '/api/state': typeof ApiStateRoute
   '/api/tick': typeof ApiTickRoute
   '/api/tokens': typeof ApiTokensRoute
