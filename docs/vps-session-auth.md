@@ -43,6 +43,8 @@ Before reloading Nginx, run `nginx -t`. Keep the existing backup outside `sites-
 
 ## Acceptance checks
 
+Run these checks before merging or deploying.
+
 1. Without a session, `GET /api/session` reports unauthenticated and `GET /api/state` is denied.
 2. A wrong password does not create a cookie.
 3. A correct password sets the session cookie; reload then allows `/api/state`, Dropbox operations, and app server functions.
