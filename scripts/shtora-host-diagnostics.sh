@@ -27,13 +27,12 @@ now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 load=$(awk '{print $1","$2","$3}' /proc/loadavg 2>/dev/null || echo "unknown")
 mem=$(awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {if(t>0) printf "%d", (t-a)*100/t; else print -1}' /proc/meminfo 2>/dev/null || echo -1)
 disk=$(df -P /opt/shtora 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')
-disk=${disk:- -1}
+disk=${disk:--1}
 record "{\"at\":\"$now\",\"area\":\"host\",\"event\":\"resources\",\"load\":\"$load\",\"memoryUsedPercent\":$mem,\"diskUsedPercent\":$disk}"
 
 probe() {
-  local label="$1" url="$2" start status total connect
-  local result
-  result=$(curl -k -sS -o /dev/null --max-time 12 -w '%{http_code} %{time_total} %{time_connect}' "$url" 2>/dev/null) || result="000 12.000 0.000"
+  local label="$1" url="$2" status total connect result
+  result=$(curl -sS -o /dev/null --max-time 12 -w '%{http_code} %{time_total} %{time_connect}' "$url" 2>/dev/null) || result="000 12.000 0.000"
   read -r status total connect <<< "$result"
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   record "{\"at\":\"$now\",\"area\":\"ping\",\"target\":\"$label\",\"status\":$((10#$status)),\"durationSeconds\":$total,\"connectSeconds\":$connect}"
