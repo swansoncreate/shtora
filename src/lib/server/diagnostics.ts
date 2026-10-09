@@ -10,7 +10,7 @@ function safeDetails(input?: Record<string, unknown>) {
   if (!input) return undefined;
   const output: Record<string, SafeValue> = {};
   for (const [key, value] of Object.entries(input).slice(0, 30)) {
-    if (/token|secret|password|prompt|message|text|url|image|cookie|auth|body|content|email|username|path|origin/i.test(key)) continue;
+    if (key === "promptPreview" && typeof value === "string") {\n      output.promptPreview = value.replace(/https?:\\/\\/\\S+/gi, "[url]").replace(/(api[_-]?key|token|password|secret)\\s*[:=]\\s*[^\\s,;]+/gi, "$1=[redacted]").slice(0, 1800);\n      continue;\n    }\n    if (/token|secret|password|prompt|message|text|url|image|cookie|auth|body|content|email|username|path|origin/i.test(key)) continue;
     if (typeof value === "number" || typeof value === "boolean" || value === null) output[key] = value;
     else if (value instanceof Error) {
       output[`${key}Type`] = value.name.slice(0, 80);
