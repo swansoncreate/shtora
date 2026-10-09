@@ -1,6 +1,7 @@
 import "@/lib/process-shim";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { VpsSessionGate } from "@/lib/auth/vps-session-gate";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AppQueryProvider } from "@/components/query-provider";
 import { Toaster } from "sonner";
@@ -39,7 +40,7 @@ export const Route = createRootRoute({
         <PreviewHostBridge />
         <AuthProvider>
           <AppQueryProvider>
-            <Outlet />
+            <VpsSessionGate><Outlet /></VpsSessionGate>
             <Toaster
               theme="dark"
               position="bottom-center"

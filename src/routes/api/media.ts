@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isAllowedMediaHost, mediaFetchHeaders } from "@/lib/media-host";
 import { isVideoMediaUrl } from "@/lib/instagram/media-url";
 
-async function serveById(id: string, request?: Request) {
+async function serveById(id: string, request?: Request, privateCache = false) {
   const { readDiskMediaById } = await import("@/lib/instagram/media-disk.server");
   const file = await readDiskMediaById(id);
   if (!file) return new Response("Not found", { status: 404 });
@@ -117,14 +117,20 @@ export const Route = createFileRoute("/api/media")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const { runningOnVps, vpsOrLocal, assertRpc } = await import("@/lib/server/remote");
+        const { runningOnVps, vpsOrLocal, assertAppOrRpc } = await import("@/lib/server/remote");
         if (runningOnVps()) {
-          const denied = assertRpc(request);
+          const denied = assertAppOrRpc(request);
           if (denied) return denied;
         }
+        const privateResponse = (response: Response) => {
+          if (!runningOnVps()) return response;
+          const headers = new Headers(response.headers);
+          headers.set("Cache-Control", "private, no-store");
+          return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+        };
         const byId = new URL(request.url).searchParams.get("id") || "";
         if (byId && /^[a-f0-9]{40}$/i.test(byId)) {
-          return vpsOrLocal(request, () => serveById(byId, request));
+          return privateResponse(await vpsOrLocal(request, () => serveById(byId, request, runningOnVps())));
         }
         const raw = new URL(request.url).searchParams.get("u");
         if (!raw) return new Response("Missing url", { status: 400 });
@@ -141,8 +147,8 @@ export const Route = createFileRoute("/api/media")({
           return new Response("Host not allowed", { status: 400 });
         }
         const local = await fetchUpstream(target, request);
-        if (local.ok || runningOnVps()) return local;
-        return vpsOrLocal(request, async () => local);
+        if (local.ok || runningOnVps()) return privateResponse(local);
+        return privateResponse(await vpsOrLocal(request, async () => local));
       },
       POST: async ({ request }) => {
         const { runningOnVps, vpsOrLocal, assertRpc } = await import("@/lib/server/remote");

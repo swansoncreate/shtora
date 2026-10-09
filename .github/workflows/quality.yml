@@ -6,9 +6,11 @@ on:
       - main
       - "test/**"
       - "release/**"
+      - "fix/**"
   pull_request:
     branches:
       - main
+      - "release/**"
 
 jobs:
   quality:
@@ -21,6 +23,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: bash -n scripts/configure-vps-session-auth.sh
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

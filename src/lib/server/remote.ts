@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { FRONT_RPC_KEY, FRONT_VPS_ORIGIN } from "./front-secret.server.ts";
+import { hasValidSession } from "./vps-session.server.ts";
 
 export function runningOnVps() {
   if (typeof process === "undefined") return false;
@@ -53,6 +54,12 @@ export function assertRpc(request: Request): Response | null {
     return Response.json({ error: "no rpc key" }, { status: 401 });
   }
   return null;
+}
+
+/** Browser requests require a signed session; trusted server calls may use the RPC key. */
+export function assertAppOrRpc(request: Request): Response | null {
+  if (hasValidSession(request)) return null;
+  return assertRpc(request);
 }
 
 export function corsHeaders(request: Request, methods: string) {
@@ -131,7 +138,7 @@ function isHealth(request: Request) {
 export async function vpsOrLocal(request: Request, local: () => Promise<Response>) {
   if (runningOnVps()) {
     if (!isHealth(request)) {
-      const denied = assertRpc(request);
+      const denied = assertAppOrRpc(request);
       if (denied) return denied;
     }
     return local();
