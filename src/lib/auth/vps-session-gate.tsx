@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useRouterState, Navigate } from "@tanstack/react-router";
+import { useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 
 export function VpsSessionGate({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [status, setStatus] = useState<"checking" | "allowed" | "login" | "misconfigured">("checking");
+  const [vpsProtected, setVpsProtected] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -19,6 +21,7 @@ export function VpsSessionGate({ children }: { children: ReactNode }) {
       })
       .then((result) => {
         if (!active) return;
+        setVpsProtected(Boolean(result.enabled));
         if (!result.enabled || result.authenticated) setStatus("allowed");
         else if (!result.configured) setStatus("misconfigured");
         else setStatus("login");
@@ -27,7 +30,24 @@ export function VpsSessionGate({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, [pathname]);
 
-  if (status === "allowed") return <>{children}</>;
+  if (status === "allowed") return (
+    <>
+      {children}
+      {vpsProtected && pathname !== "/login" ? (
+        <button
+          type="button"
+          onClick={async () => {
+            try { await fetch("/api/session", { method: "DELETE", credentials: "same-origin" }); } finally {
+              await navigate({ to: "/login", replace: true });
+            }
+          }}
+          className="fixed right-3 top-3 z-[100] rounded-full border border-white/15 bg-[#171513]/90 px-3 py-2 text-xs text-white/75 shadow-lg backdrop-blur"
+        >
+          Выйти
+        </button>
+      ) : null}
+    </>
+  );
   if (status === "login" && pathname !== "/login") return <Navigate to="/login" />;
   if (status === "checking") {
     return <main className="grid min-h-[100dvh] place-items-center bg-[#0e0d0c] text-sm text-white/60">Проверяем доступ…</main>;
