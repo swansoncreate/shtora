@@ -47,10 +47,12 @@ restore_old_build() {
   git reset --hard "$old_sha" || true
   sudo rm -rf "$ROOT/.vercel/output"
   sudo tar -xzf "$output_backup" -C "$ROOT"
+  npm ci || true
   sudo systemctl restart "$unit" || true
 }
 git fetch origin "$BRANCH"
 git merge --ff-only "origin/$BRANCH"
+sudo systemctl stop "$unit"
 if ! npm ci; then
   restore_old_build
   exit 1
