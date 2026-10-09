@@ -259,7 +259,7 @@ export function DropboxBrowser({
       );
     }
     return (
-      <div className="mt-6 rounded-2xl bg-surface px-4 py-10 text-center shadow-[var(--shadow-border)]">
+      <div className="mt-6 rounded-3xl border border-border/60 bg-surface px-5 py-12 text-center shadow-[var(--shadow-border)]">
         <p className="font-display text-2xl text-fg">Нет токена Dropbox</p>
         <p className="mt-2 text-sm text-muted">Вставь токен в настройках — здесь появятся твои папки и фото.</p>
         <Button className="mt-4 rounded-lg" onClick={onNeedToken}>
@@ -350,7 +350,7 @@ export function DropboxBrowser({
         <p className="mt-8 text-center text-sm text-muted">В этой папке пусто</p>
       ) : null}
 
-      <div className="mt-3 grid grid-cols-3 gap-1 pb-24">
+      <div className="mt-4 grid grid-cols-3 gap-1.5 pb-24">
         {files.map((entry) => {
           const on = selected.has(entry.path);
           if (entry.tag === "folder") {
@@ -358,7 +358,7 @@ export function DropboxBrowser({
               <button
                 key={entry.path}
                 type="button"
-                className="relative flex aspect-square flex-col items-center justify-center gap-2 rounded-md bg-elevated p-2 text-center"
+                className="relative flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-surface p-2 text-center shadow-[var(--shadow-border)]"
                 onClick={() => (selecting ? togglePath(entry.path) : onPath(entry.path))}
               >
                 <Folder className="size-8 text-accent" />
@@ -375,7 +375,7 @@ export function DropboxBrowser({
             <button
               key={entry.path}
               type="button"
-              className="relative aspect-square overflow-hidden rounded-md bg-elevated"
+              className="relative aspect-square overflow-hidden rounded-xl bg-elevated ring-1 ring-border/40"
               onClick={() =>
                 selecting
                   ? togglePath(entry.path)
