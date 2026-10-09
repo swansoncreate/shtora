@@ -41,7 +41,12 @@ function tokenIsValid(token: string): boolean {
 export function hasValidSession(request: Request): boolean {
   const cookie = request.headers.get("cookie") ?? "";
   const match = cookie.match(new RegExp("(?:^|;\\s*)" + SESSION_COOKIE + "=([^;]*)"));
-  return Boolean(match && tokenIsValid(decodeURIComponent(match[1] ?? "")));
+  if (!match) return false;
+  try {
+    return tokenIsValid(decodeURIComponent(match[1] ?? ""));
+  } catch {
+    return false;
+  }
 }
 
 export function sessionStatus(request: Request) {
