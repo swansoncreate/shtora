@@ -170,6 +170,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
   '/api/autosave': typeof ApiAutosaveRoute
   '/api/autosave-config': typeof ApiAutosaveConfigRoute
@@ -183,6 +184,7 @@ export interface FileRoutesById {
   '/api/logs': typeof ApiLogsRoute
   '/api/media': typeof ApiMediaRoute
   '/api/rpc': typeof ApiRpcRoute
+  '/api/session': typeof ApiSessionRoute
   '/api/state': typeof ApiStateRoute
   '/api/tick': typeof ApiTickRoute
   '/api/tokens': typeof ApiTokensRoute
@@ -212,6 +214,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/dropbox-oauth'
     | '/api/autosave'
     | '/api/autosave-config'
@@ -225,12 +228,14 @@ export interface FileRouteTypes {
     | '/api/logs'
     | '/api/media'
     | '/api/rpc'
+    | '/api/session'
     | '/api/state'
     | '/api/tick'
     | '/api/tokens'
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/dropbox-oauth'
     | '/api/autosave'
     | '/api/autosave-config'
@@ -244,6 +249,7 @@ export interface FileRouteTypes {
     | '/api/logs'
     | '/api/media'
     | '/api/rpc'
+    | '/api/session'
     | '/api/state'
     | '/api/tick'
     | '/api/tokens'
