@@ -13,6 +13,22 @@ export type FeedHydrateInput = {
   dropboxToken: string;
 };
 
+const FEED_GENERATION_TIMEOUT_MS = 90_000;
+
+async function withFeedDeadline<T>(work: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${FEED_GENERATION_TIMEOUT_MS}ms`)), FEED_GENERATION_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export class FeedEngine {
   private cards: FeedCard[] = [];
   private listeners = new Set<() => void>();
@@ -91,7 +107,13 @@ export class FeedEngine {
       while (tries < cap) {
         if (this.fillGen !== gen) return added;
         tries += 1;
-        const post = await generateNextDaily(favorites);
+        let post: Awaited<ReturnType<typeof generateNextDaily>>;
+        try {
+          post = await withFeedDeadline(generateNextDaily(favorites), "feed generation");
+        } catch (error) {
+          console.warn("[shtora:feed] generation stopped; keeping existing posts", error);
+          break;
+        }
         if (!post) break;
         const cur = loadDaily();
         const candidateImage = feedImageKey(post.imageUrl);
@@ -120,7 +142,13 @@ export class FeedEngine {
     try {
       for (const name of names) {
         if (this.fillGen !== gen) return added;
-        const post = await generateExtraPost(name, names);
+        let post: Awaited<ReturnType<typeof generateExtraPost>>;
+        try {
+          post = await withFeedDeadline(generateExtraPost(name, names), "feed regeneration");
+        } catch (error) {
+          console.warn("[shtora:feed] regeneration stopped; keeping existing posts", error);
+          continue;
+        }
         if (!post) continue;
         const cur = loadDaily();
         const candidateImage = feedImageKey(post.imageUrl);
