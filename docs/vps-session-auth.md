@@ -18,7 +18,7 @@ The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cooki
 From the VPS terminal, run the deployment helper from the published release branch:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/swansoncreate/shtora/release/grok-build-functional/scripts/deploy-vps-session-auth.sh | bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/swansoncreate/shtora/release/grok-build-functional/scripts/deploy-vps-session-auth.sh)"
 ```
 
 It proceeds only if `/opt/shtora` is a clean Git checkout already on `release/grok-build-functional`. It saves the current build under `/root`, fast-forwards that branch, rebuilds, restarts the detected systemd service, then invokes the setup below. If the current branch differs or the working tree has local changes, it stops without switching branches or overwriting them. The helper does not touch `/opt/shtora/data`.
