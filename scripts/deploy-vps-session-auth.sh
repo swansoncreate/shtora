@@ -52,7 +52,11 @@ restore_old_build() {
 }
 git fetch origin "$BRANCH"
 git merge --ff-only "origin/$BRANCH"
-sudo systemctl stop "$unit"
+if ! sudo systemctl stop "$unit"; then
+  git reset --hard "$old_sha"
+  echo "Could not stop $unit; source restored and no rebuild was attempted." >&2
+  exit 1
+fi
 if ! npm ci; then
   restore_old_build
   exit 1
