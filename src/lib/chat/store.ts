@@ -472,7 +472,12 @@ export function hydrateChats(): Promise<void> {
       }
     }
     try {
-      const api = await apiFetch("/api/state").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      const api = await apiFetch("/api/state", { signal: AbortSignal.timeout(12_000) })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch((error) => {
+          console.warn("[shtora:chat] remote hydration unavailable; continuing with local data", error);
+          return null;
+        });
       const threads = Array.isArray(api?.chats) ? api.chats : [];
       for (const raw of threads) {
         const remote = remoteToThread(raw as RemoteThread);
