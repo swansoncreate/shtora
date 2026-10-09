@@ -26,7 +26,7 @@ if [[ ! -d .vercel/output ]]; then
   echo "Expected existing build at $ROOT/.vercel/output; refusing to deploy without a rollback snapshot." >&2
   exit 1
 fi
-for cmd in git npm curl sudo tar; do
+for cmd in git npm curl sudo tar ss; do
   command -v "$cmd" >/dev/null || { echo "Missing required command: $cmd" >&2; exit 1; }
 done
 
