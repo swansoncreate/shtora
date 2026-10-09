@@ -6,8 +6,7 @@ import { ProfilePhotoViewer } from "@/components/profile-photo";
 import { MediaImg } from "@/components/media-img";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { buildPersona, stripChatMeta, storyFacts } from "@/lib/chat/functions";
-import { dumpBond } from "@/lib/chat/bond";
+import { buildPersona, stripChatMeta } from "@/lib/chat/functions";
 import {
   appendMessage,
   bumpWarmth,
@@ -30,7 +29,6 @@ import {
 import { getCachedProfile } from "@/lib/instagram/cache";
 import { storiesUnseen, useUnseenTick } from "@/lib/instagram/unseen";
 import { resolveChatImage } from "@/lib/instagram/media-cache";
-import { chatBackstoryFor } from "@/lib/shtora-settings";
 import { isChatTyping, resetChatEngine, subscribeTyping } from "@/lib/chat/engine";
 import { herAsk } from "@/lib/chat/life";
 import { cn } from "@/lib/utils";
@@ -379,10 +377,6 @@ function ThreadView({
 
   const messages = thread?.messages ?? [];
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  const metrics = thread
-    ? dumpBond(thread.bond, thread.warmth, storyFacts(chatBackstoryFor(username)).girlfriend)
-    : null;
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <ShtoraPageHeader
