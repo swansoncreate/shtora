@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0e0d0c;
-  --color-surface: #171614;
-  --color-elevated: #1f1d1b;
-  --color-fg: #f4efe6;
-  --color-muted: #9c958a;
-  --color-subtle: #6f6a62;
-  --color-accent: #d7cfc3;
-  --color-accent-fg: #0e0d0c;
+  --color-bg: #f7f3ef;
+  --color-surface: #fffdfb;
+  --color-elevated: #eee7e3;
+  --color-fg: #29202b;
+  --color-muted: #796d79;
+  --color-subtle: #9c8e99;
+  --color-accent: #c85c7d;
+  --color-accent-fg: #ffffff;
   --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
   --color-border-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
-  --color-danger: #c45c4a;
-  --color-ring: #d7cfc3;
+  --color-danger: #c13f58;
+  --color-ring: #c85c7d;
 
   --font-display: "Cormorant Garamond", "Times New Roman", serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
@@ -26,8 +26,8 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  --shadow-border: 0 0 0 1px rgba(244, 239, 230, 0.16);
-  --shadow-border-hover: 0 0 0 1px rgba(244, 239, 230, 0.28);
+  --shadow-border: 0 0 0 1px rgba(67, 38, 58, 0.09), 0 5px 18px rgba(75, 39, 58, 0.04);
+  --shadow-border-hover: 0 0 0 1px rgba(200, 92, 125, 0.32), 0 8px 24px rgba(75, 39, 58, 0.08);
 
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -108,19 +108,19 @@
   background-image:
     linear-gradient(
       90deg,
-      #0e0d0c 0%,
-      #1c1916 9%,
-      #2a2520 16%,
-      #141210 24%,
-      #24201c 32%,
-      #0e0d0c 40%,
-      #1a1714 48%,
-      #3a342c 54%,
-      #161412 62%,
-      #221e1a 72%,
-      #121110 82%,
-      #1f1b18 92%,
-      #0e0d0c 100%
+      #f7f3ef 0%,
+      #f2e8e8 9%,
+      #ead8e0 16%,
+      #f7f3ef 24%,
+      #f1e3e7 32%,
+      #f7f3ef 40%,
+      #f1e6e9 48%,
+      #e6c6d4 54%,
+      #f7f3ef 62%,
+      #f0e2e7 72%,
+      #f7f3ef 82%,
+      #f3e7ea 92%,
+      #f7f3ef 100%
     );
 }
 
