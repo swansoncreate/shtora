@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
+import { AlertCircle, Dices, Instagram, MessageCircle, Settings } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -140,7 +140,7 @@ function Home() {
           </div>
           <nav className="mt-4 flex gap-1 rounded-2xl border border-border/60 bg-surface/80 p-1.5 shadow-[var(--shadow-border)]" aria-label="Разделы">
             <AppTab
-              label="Instagram"
+              label="Лента"
               active={app === "instagram"}
               onClick={() => void navigate({ to: "/", search: {} })}
             >
@@ -169,6 +169,16 @@ function Home() {
               }
             >
               <Dices className="size-4" />
+            </AppTab>
+            <AppTab
+              label="Личка"
+              active={chatsOpen}
+              onClick={() => {
+                setChatUser(null);
+                setChatsOpen(true);
+              }}
+            >
+              <MessageCircle className="size-4" />
             </AppTab>
           </nav>
         </div>
