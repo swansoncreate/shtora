@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
+import { AlertCircle, Dices, Instagram, MessageCircle, Settings } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -119,28 +119,28 @@ function Home() {
   const caption = app === "dropbox" ? "Файлы" : app === "imagine" ? "Imagine" : "Лента";
 
   return (
-    <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md relative">
+    <div className="min-h-dvh flex flex-col bg-bg text-fg">
+      <header className="sticky top-0 z-20 relative border-b border-border/70 bg-bg/90 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 opacity-25 curtain-wash" aria-hidden />
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-3 sm:px-6">
-          <div className="flex items-start gap-3">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-4 sm:px-6">
+          <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
-              <p className="mt-1 text-sm text-muted">{caption}</p>
+              <p className="font-display text-[2.25rem] font-semibold leading-[0.9] tracking-[-0.04em] text-fg sm:text-4xl">штора</p>
+              <p className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted"><span className="size-1.5 rounded-full bg-accent" />{caption}</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="size-11 shrink-0 rounded-full"
+              className="size-11 shrink-0 rounded-2xl border border-border/70 bg-surface shadow-[var(--shadow-border)]"
               aria-label="Настройки"
               onClick={() => setSettingsOpen(true)}
             >
               <Settings className="size-5" />
             </Button>
           </div>
-          <nav className="mt-3 flex rounded-xl bg-elevated p-1" aria-label="Разделы">
+          <nav className="mt-4 flex gap-1 rounded-2xl border border-border/60 bg-surface/80 p-1.5 shadow-[var(--shadow-border)]" aria-label="Разделы">
             <AppTab
-              label="Instagram"
+              label="Лента"
               active={app === "instagram"}
               onClick={() => void navigate({ to: "/", search: {} })}
             >
@@ -169,6 +169,16 @@ function Home() {
               }
             >
               <Dices className="size-4" />
+            </AppTab>
+            <AppTab
+              label="Личка"
+              active={chatsOpen}
+              onClick={() => {
+                setChatUser(null);
+                setChatsOpen(true);
+              }}
+            >
+              <MessageCircle className="size-4" />
             </AppTab>
           </nav>
         </div>
@@ -259,8 +269,8 @@ function AppTab({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm text-muted transition-colors duration-[var(--motion-quick)]",
-        active && "bg-surface text-fg shadow-[var(--shadow-border)]",
+        "flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[12px] font-semibold text-muted transition-all duration-[var(--motion-quick)]",
+        active && "bg-accent text-accent-fg shadow-sm",
       )}
     >
       {children}

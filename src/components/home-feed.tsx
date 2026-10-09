@@ -34,7 +34,7 @@ export function HomeFeed({
 }) {
   if (items.length === 0) {
     return (
-      <div className="mt-16 flex flex-col items-center px-2 text-center">
+      <div className="mt-12 flex flex-col items-center rounded-[28px] border border-border/70 bg-surface px-6 py-12 text-center shadow-[var(--shadow-border)]">
         <p className="font-display text-3xl font-medium tracking-tight text-fg">Пока тихо</p>
         <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
           Потяни вниз — новые посты загрузятся, старые останутся.
@@ -54,7 +54,14 @@ export function HomeFeed({
   }
 
   return (
-    <div className="mt-7 flex flex-col gap-10">
+    <div className="mt-5 flex flex-col gap-7">
+      <div className="flex items-end justify-between px-1 pb-1">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-accent">SHTORA SOCIAL</p>
+          <h2 className="mt-1 font-display text-3xl font-semibold leading-none tracking-tight text-fg">Твоя лента</h2>
+        </div>
+        <span className="rounded-full border border-border/70 bg-surface px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{items.length} публикаций</span>
+      </div>
       {items.map((card) => {
         const posts = byUser.get(card.username) ?? (card.dropbox ? [] : [cardAsPost(card)]);
         const self = card.dropbox ? undefined : cardAsPost(card);
@@ -64,13 +71,13 @@ export function HomeFeed({
         const video = Boolean(card.dropbox?.video || card.post?.type === "video" || isVideoMediaUrl(card.post?.videoUrl || image));
         const hasStory = storiesUnseen(card.username);
         return (
-          <article key={card.id} className="min-w-0">
+          <article key={card.id} className="min-w-0 overflow-hidden rounded-[26px] border border-border/70 bg-surface p-3 shadow-[var(--shadow-border)]">
             <header className="mb-3 flex items-center gap-3 px-1">
               <button
                 type="button"
                 className={cn(
-                  "size-10 shrink-0 rounded-full border p-[2px]",
-                  hasStory ? "border-accent" : "border-border",
+                  "size-11 shrink-0 rounded-full border-2 p-[2px] shadow-sm",
+                  hasStory ? "border-accent" : "border-border/70",
                 )}
                 onClick={() => onOpenProfile(card.username)}
                 aria-label={`@${card.username}`}
@@ -101,7 +108,7 @@ export function HomeFeed({
                 else onOpenPost(card.username, posts.length ? posts : [cardAsPost(card)], index);
               }}
             />
-            <div className="mt-2 flex items-center gap-0.5 px-1">
+            <div className="mt-2 flex items-center gap-0.5 px-0.5">
               <Button
                 type="button"
                 variant="ghost"
@@ -174,7 +181,7 @@ function FeedFrame({
     >
       <button
         type="button"
-        className="relative block w-full overflow-hidden rounded-[14px] bg-elevated"
+        className="relative block w-full overflow-hidden rounded-[20px] bg-elevated"
         onClick={onOpen}
         aria-label={card.story ? `Сторис @${card.username}` : `Пост @${card.username}`}
       >
@@ -215,7 +222,7 @@ function FeedCaption({
   const [open, setOpen] = useState(false);
   const long = caption.length > 90;
   return (
-    <div className="mt-2 px-1">
+    <div className="mt-2 px-1 pb-1">
       <p className={cn("text-sm leading-relaxed text-fg", !open && long && "line-clamp-2")}>
         <button type="button" className="mr-1.5 font-medium" onClick={onOpenProfile}>
           {username}
