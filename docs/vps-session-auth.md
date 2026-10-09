@@ -11,7 +11,7 @@ Set these values in the existing systemd service environment (do not commit them
 
 Keep the existing `SHTORA_RPC_KEY`, `SHTORA_GROK_ORIGIN`, `SHTORA_SELF=1`, and `SHTORA_DATA_DIR=/opt/shtora/data` unchanged. Restart the existing service after adding the two new variables. Do not change the data directory.
 
-The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cookie. The RPC key remains a server-to-server credential and is not sent to the browser.
+The app login creates a signed, expiring, `HttpOnly; Secure; SameSite=Lax` cookie with a 14-day lifetime. The RPC key remains a server-to-server credential and is not sent to the browser.
 
 ## Static media must use the same session check
 
