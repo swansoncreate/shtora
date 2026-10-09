@@ -386,11 +386,7 @@ function ThreadView({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <ShtoraPageHeader
-        eyebrow={
-          metrics
-            ? `${thread?.mood || `@${username}`} · ${metrics.head}`
-            : thread?.mood || `@${username}`
-        }
+        eyebrow={thread?.mood || `@${username}`}
         title={thread?.fullName || `@${username}`}
         onBack={onBack}
         onSettings={onSettings}
@@ -494,7 +490,7 @@ function ThreadView({
                   ) : item.kind === "circle" && item.imageUrl ? (
                     <CircleNote url={item.imageUrl} />
                   ) : item.imageUrl ? (
-                    <button type="button" className="mb-1 block w-full" onClick={() => {
+                    <button type="button" className="mb-1 flex max-w-full justify-start" onClick={() => {
                       void resolveChatImage(item.imageUrl!).then((url) => setOpenPhoto(url || item.imageUrl!));
                     }}>
                       <ChatPic url={item.imageUrl} />
@@ -710,7 +706,7 @@ function ChatPic({ url }: { url: string }) {
     <img
       src={src}
       alt=""
-      className="max-h-72 w-full rounded-md object-cover"
+      className="max-h-[min(58dvh,460px)] max-w-full rounded-xl object-contain"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
     />
