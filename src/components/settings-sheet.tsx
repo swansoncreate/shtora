@@ -9,6 +9,7 @@ import { FEED_PROMPT } from "@/lib/imagine/prompt";
 import { type ShtoraSettings, type ShtoraSettingsPatch } from "@/lib/shtora-settings";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/shtora-origin";
+import { clearDiagnostics, exportDiagnostics } from "@/lib/diagnostics";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronLeft, Folder, LoaderCircle, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -488,6 +489,45 @@ export function SettingsSheet({
                 ) : null}
 
                 {tab === "more" ? (
+                  <Section title="Диагностика">
+                    <p className="mb-3 text-xs leading-relaxed text-subtle">
+                      Локальные записи последних 250 событий: зависания ленты, ошибки сети и этапы генерации фото. Тексты переписок, URL изображений и секреты не записываются.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 rounded-lg"
+                        onClick={() => {
+                          try {
+                            const blob = new Blob([exportDiagnostics()], { type: "application/json" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = "shtora-diagnostics.json";
+                            a.click();
+                            window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+                            toast.success("Лог диагностики выгружен");
+                          } catch {
+                            toast.error("Не удалось выгрузить лог");
+                          }
+                        }}
+                      >
+                        Выгрузить лог
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-11 rounded-lg"
+                        onClick={() => {
+                          clearDiagnostics();
+                          toast.success("Локальный лог очищен");
+                        }}
+                      >
+                        Очистить лог
+                      </Button>
+                    </div>
+                  </Section>
                   <Section title="Кубик">
                     <label className="mb-2 block text-sm font-medium text-fg" htmlFor="imagine-prompt">
                       Промпт ленты
