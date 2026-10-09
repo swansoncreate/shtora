@@ -176,7 +176,7 @@ export function SettingsSheet({
           className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[min(92dvh,44rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-border)] outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-[min(92vw,30rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
           aria-describedby="settings-desc"
         >
-          <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-3">
+          <div className="flex items-start justify-between gap-4 border-b border-border/50 bg-[radial-gradient(ellipse_at_top_right,var(--color-elevated),transparent_70%)] px-5 pb-4 pt-6">
             <div>
               <Dialog.Title className="font-display text-2xl font-medium tracking-tight text-fg">Настройки</Dialog.Title>
               <Dialog.Description id="settings-desc" className="mt-1 text-sm text-muted">
@@ -191,7 +191,7 @@ export function SettingsSheet({
           </div>
 
           {picker ? null : (
-            <div className="grid shrink-0 grid-cols-4 gap-1 px-6 pb-3">
+            <div className="grid shrink-0 grid-cols-4 gap-1 px-5 pb-3 pt-3">
               <div className="col-span-4 grid grid-cols-4 gap-1 rounded-xl bg-elevated p-1">
                 {(
                   [
@@ -217,7 +217,7 @@ export function SettingsSheet({
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
             {picker ? (
               <FolderBrowser
                 path={picker.path}
@@ -534,7 +534,7 @@ export function SettingsSheet({
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-border border-t py-5 first:border-t-0 first:pt-1">
+    <section className="my-2 rounded-2xl border border-border/50 bg-surface px-4 py-4 shadow-[var(--shadow-border)]">
       <p className="mb-3 text-xs font-medium tracking-wide text-subtle uppercase">{title}</p>
       {children}
     </section>

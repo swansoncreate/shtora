@@ -410,8 +410,8 @@ export function ImagineStudio({
     <div className="flex flex-1 flex-col">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-display text-2xl leading-none">Студия</p>
-          <p className="mt-1 text-sm text-muted">{hint}</p>
+          <p className="font-display text-3xl leading-none tracking-tight">Imagine</p>
+          <p className="mt-2 max-w-[28rem] text-sm leading-relaxed text-muted">{hint}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {files.length ? (
@@ -470,13 +470,13 @@ export function ImagineStudio({
       ) : (
         <button
           type="button"
-          className="mt-6 flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl bg-surface px-6 text-center shadow-[var(--shadow-border)]"
+          className="mt-5 flex min-h-48 flex-col items-center justify-center gap-3 rounded-3xl border border-border/60 bg-surface px-6 text-center shadow-[var(--shadow-border)]"
           onClick={() => setSourceOpen(true)}
         >
-          <span className="flex size-12 items-center justify-center rounded-full bg-elevated">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-accent/12 text-accent ring-1 ring-accent/20">
             <Plus className="size-5" />
           </span>
-          <span className="text-sm text-muted">С телефона или из Dropbox</span>
+          <span className="font-medium text-fg">Добавить исходник</span><span className="text-sm text-muted">С телефона или из Dropbox</span>
         </button>
       )}
 
@@ -525,7 +525,7 @@ export function ImagineStudio({
         </div>
       ) : null}
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <Button className="h-12 rounded-xl" disabled={Boolean(busy) || !canPhoto} onClick={() => void makePhoto()}>
           {busy === "photo" ? <LoaderCircle className="size-4 animate-spin" /> : <Dices className="size-4" />}
           {pickedPhotos.length ? "Изменить" : "Фото"}
@@ -572,7 +572,7 @@ export function ImagineStudio({
                   key={item.id}
                   role={results.length ? "button" : undefined}
                   tabIndex={results.length ? 0 : undefined}
-                  className="relative overflow-hidden rounded-xl bg-elevated"
+                  className="relative overflow-hidden rounded-2xl border border-border/50 bg-surface shadow-[var(--shadow-border)]"
                   onClick={results.length ? () => setOpen({ ...item, url: src }) : undefined}
                   onKeyDown={
                     results.length
