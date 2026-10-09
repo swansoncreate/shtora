@@ -489,6 +489,7 @@ export function SettingsSheet({
                 ) : null}
 
                 {tab === "more" ? (
+                  <>
                   <Section title="Диагностика">
                     <p className="mb-3 text-xs leading-relaxed text-subtle">
                       Локальные записи последних 250 событий: зависания ленты, ошибки сети и этапы генерации фото. Тексты переписок, URL изображений и секреты не записываются.
@@ -554,6 +555,7 @@ export function SettingsSheet({
                       </Button>
                     </div>
                   </Section>
+                  </>
                 ) : null}
               </>
             )}
