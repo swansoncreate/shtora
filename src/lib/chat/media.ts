@@ -111,6 +111,22 @@ async function jpeg(url: string) {
   });
 }
 
+const CHAT_IMAGE_TIMEOUT_MS = 90_000;
+
+async function withChatImageDeadline<T>(work: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}: время ожидания истекло. Попробуй ещё раз.`)), CHAT_IMAGE_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   if (!ask.ready || ask.kind === "none") return { ok: false, skipped: true, reason: ask.reason || "not-ready" };
   let imageUrl = "";
@@ -146,7 +162,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
     }
-    const pic = await composeChatPhoto({
+    const pic = await withChatImageDeadline(composeChatPhoto({
       data: {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
         userText: (ask.userText || "").slice(0, 400),
@@ -167,7 +183,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         timeContext: ask.timeContext,
         weather: ask.weather,
       },
-    });
+    }), "Imagine не вернул фото");
     prompt = pic.prompt || "";
     if (pic.ok && pic.url) {
       imageUrl = pic.url;

@@ -426,7 +426,10 @@ async function reply(username: string, lastId: string, stamp?: number) {
       if (!stamp && i < shown.length - 1) await new Promise((r) => window.setTimeout(r, 350));
     }
     setTyping(username, false);
-    const refused = !forceLook && (policy.photo === "none" || looksLikeRefuse(bubbles.join(" ")) || looksLikeRefuse(out.text || ""));
+    const explicitRefusal = looksLikeRefuse(bubbles.join(" ")) || looksLikeRefuse(out.text || "");
+    // "policy.photo === none" is a generation gate, not a character refusal.
+    // The old check discarded explicit photo promises before decideChatMedia could schedule Imagine.
+    const refused = !forceLook && explicitRefusal;
     const offered = forceLook || sheOffersPhoto(bubbles.join(" ")) || sheOffersPhoto(out.text || "");
     const burst = (getThread(username)?.messages ?? []).filter(
       (item) => item.role === "assistant" && (item.kind === "photo" || item.kind === "circle") && Date.now() - item.at < 8 * 60_000,
