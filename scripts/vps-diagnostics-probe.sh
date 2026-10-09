@@ -36,6 +36,7 @@ log "network" "local_health_probe" "\"status\":${health_status:-0},\"connectSeco
 if [[ -f /etc/shtora/session-auth.env ]]; then
   # Read only the configured public Grok origin; never emit env contents.
   grok_origin=$(sed -n 's/^SHTORA_GROK_ORIGIN=//p' /etc/shtora/session-auth.env | head -n1 | tr -d '"\047' || true)
+  if [[ -z "$grok_origin" && -f /opt/shtora/data/grok-origin.txt ]]; then grok_origin=$(head -n1 /opt/shtora/data/grok-origin.txt | tr -d '"\047' || true); fi
   if [[ "$grok_origin" =~ ^https://[a-zA-Z0-9.-]+\.grok\.me$ ]]; then
     timing=$(curl -sS -o /dev/null -w '%{http_code} %{time_namelookup} %{time_connect} %{time_appconnect} %{time_total}' --max-time 10 "$grok_origin/" 2>/dev/null || echo "000 0 0 0 10")
     read -r status dns connect tls total <<< "$timing"
