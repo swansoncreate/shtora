@@ -8,8 +8,8 @@ export const Route = createFileRoute("/api/rpc")({
         return new Response(null, { status: 204, headers: corsHeaders(request, "GET, POST, OPTIONS") });
       },
       POST: async ({ request }) => {
-        const { assertRpc, withCors } = await import("@/lib/server/remote");
-        const denied = assertRpc(request);
+        const { assertAppOrRpc, withCors } = await import("@/lib/server/remote");
+        const denied = assertAppOrRpc(request);
         if (denied) return withCors(denied, request, "GET, POST, OPTIONS");
         let body: { name?: string; data?: unknown } = {};
         try {
