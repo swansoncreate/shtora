@@ -9,6 +9,7 @@ import type { PhotoIntent, CameraMode } from "@/lib/visual/types";
 import { deterministicPhotoIntent } from "@/lib/visual/intent";
 import { listVisualMemoryFn } from "@/lib/visual/functions";
 import { getThread, patchThread } from "./store";
+import { diagnosticLog } from "@/lib/diagnostics";
 
 export type MediaPlan = {
   ready: boolean;
@@ -99,7 +100,7 @@ export function decideChatMedia(input: {
 
 async function jpeg(url: string) {
   if (url.startsWith("data:image")) return url;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
   if (!res.ok) return "";
   const blob = await res.blob();
   if (!blob.size || blob.type.includes("json")) return "";
@@ -146,6 +147,8 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       /* fall through to legacy generation if memory is unavailable */
     }
   }
+  const startedAt = Date.now();
+  diagnosticLog("info", "chat-photo", "generation started", { kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), gallery: ask.gallery });
   try {
     let sourceDataUrl: string | undefined;
     const inferredIntent: PhotoIntent =
@@ -159,7 +162,14 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       inferredIntent.mode === "continue" ||
       ("reference" in inferredIntent && inferredIntent.reference === "last_photo");
     if (reuse && ask.lastPhotoUrl) {
-      sourceDataUrl = (await jpeg(ask.lastPhotoUrl)) || undefined;
+      const sourceStartedAt = Date.now();
+      try {
+        sourceDataUrl = (await withChatImageDeadline(jpeg(ask.lastPhotoUrl), "Загрузка исходного фото")) || undefined;
+        diagnosticLog(sourceDataUrl ? "info" : "warn", "chat-photo", sourceDataUrl ? "source photo loaded" : "source photo unavailable", { reuse }, Date.now() - sourceStartedAt);
+      } catch (error) {
+        diagnosticLog("error", "chat-photo", "source photo download failed", { error: error instanceof Error ? error.message : String(error) }, Date.now() - sourceStartedAt);
+        sourceDataUrl = undefined;
+      }
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
     }
     const pic = await withChatImageDeadline(composeChatPhoto({
@@ -201,6 +211,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         }
       }
     } else {
+      diagnosticLog("error", "chat-photo", "Imagine returned no image", { error: pic.error || "empty result" }, Date.now() - startedAt);
       const raw = pic.error || "Imagine не собрал кадр";
       return {
         ok: false,
@@ -210,6 +221,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     }
   } catch (e) {
     const raw = e instanceof Error ? e.message : "Imagine не собрал кадр";
+    diagnosticLog("error", "chat-photo", "generation failed", { error: raw }, Date.now() - startedAt);
     return {
       ok: false,
       skipped: false,
@@ -253,5 +265,6 @@ async function persistStill(imageUrl: string, prompt: string, kind: "photo" | "c
   const id = crypto.randomUUID();
   const stable = await persistChatImage(imageUrl);
   const cached = await stashChatPhoto(id, stable);
+  diagnosticLog("info", "chat-photo", "image persisted", { kind, hasScene: Boolean(sceneId), hasJob: Boolean(jobId) });
   return { ok: true, kind, url: cached.startsWith("/") || cached.startsWith("blob:") ? cached : stable, prompt, sceneId, jobId };
 }
