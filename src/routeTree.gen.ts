@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as DropboxOauthRouteImport } from './routes/dropbox-oauth'
 import { Route as ApiAutosaveRouteImport } from './routes/api/autosave'
 import { Route as ApiAutosaveConfigRouteImport } from './routes/api/autosave-config'
@@ -23,6 +24,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiLogsRouteImport } from './routes/api/logs'
 import { Route as ApiMediaRouteImport } from './routes/api/media'
 import { Route as ApiRpcRouteImport } from './routes/api/rpc'
+import { Route as ApiSessionRouteImport } from './routes/api/session'
 import { Route as ApiStateRouteImport } from './routes/api/state'
 import { Route as ApiTickRouteImport } from './routes/api/tick'
 import { Route as ApiTokensRouteImport } from './routes/api/tokens'
@@ -30,6 +32,11 @@ import { Route as ApiTokensRouteImport } from './routes/api/tokens'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DropboxOauthRoute = DropboxOauthRouteImport.update({
@@ -97,6 +104,11 @@ const ApiRpcRoute = ApiRpcRouteImport.update({
   path: '/api/rpc',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSessionRoute = ApiSessionRouteImport.update({
+  id: '/api/session',
+  path: '/api/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStateRoute = ApiStateRouteImport.update({
   id: '/api/state',
   path: '/api/state',
@@ -115,6 +127,7 @@ const ApiTokensRoute = ApiTokensRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/dropbox-oauth': typeof DropboxOauthRoute
   '/api/autosave': typeof ApiAutosaveRoute
   '/api/autosave-config': typeof ApiAutosaveConfigRoute
@@ -128,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/api/logs': typeof ApiLogsRoute
   '/api/media': typeof ApiMediaRoute
   '/api/rpc': typeof ApiRpcRoute
+  '/api/session': typeof ApiSessionRoute
   '/api/state': typeof ApiStateRoute
   '/api/tick': typeof ApiTickRoute
   '/api/tokens': typeof ApiTokensRoute
@@ -175,6 +189,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/dropbox-oauth'
     | '/api/autosave'
     | '/api/autosave-config'
@@ -188,6 +203,7 @@ export interface FileRouteTypes {
     | '/api/logs'
     | '/api/media'
     | '/api/rpc'
+    | '/api/session'
     | '/api/state'
     | '/api/tick'
     | '/api/tokens'
@@ -233,6 +249,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   DropboxOauthRoute: typeof DropboxOauthRoute
   ApiAutosaveRoute: typeof ApiAutosaveRoute
   ApiAutosaveConfigRoute: typeof ApiAutosaveConfigRoute
@@ -246,6 +263,7 @@ export interface RootRouteChildren {
   ApiLogsRoute: typeof ApiLogsRoute
   ApiMediaRoute: typeof ApiMediaRoute
   ApiRpcRoute: typeof ApiRpcRoute
+  ApiSessionRoute: typeof ApiSessionRoute
   ApiStateRoute: typeof ApiStateRoute
   ApiTickRoute: typeof ApiTickRoute
   ApiTokensRoute: typeof ApiTokensRoute
@@ -258,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dropbox-oauth': {
@@ -351,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRpcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/session': {
+      id: '/api/session'
+      path: '/api/session'
+      fullPath: '/api/session'
+      preLoaderRoute: typeof ApiSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/state': {
       id: '/api/state'
       path: '/api/state'
@@ -377,6 +409,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   DropboxOauthRoute: DropboxOauthRoute,
   ApiAutosaveRoute: ApiAutosaveRoute,
   ApiAutosaveConfigRoute: ApiAutosaveConfigRoute,
@@ -390,6 +423,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLogsRoute: ApiLogsRoute,
   ApiMediaRoute: ApiMediaRoute,
   ApiRpcRoute: ApiRpcRoute,
+  ApiSessionRoute: ApiSessionRoute,
   ApiStateRoute: ApiStateRoute,
   ApiTickRoute: ApiTickRoute,
   ApiTokensRoute: ApiTokensRoute,
