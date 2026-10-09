@@ -73,6 +73,15 @@ test("feed.append without a key is 401 and a bad card is 400", async () => {
   assert.equal(bad.status, 400);
 });
 
+test("feed generation compares canonical image URLs, not CDN query variants", () => {
+  const daily = readFileSync(new URL("../src/lib/feed/daily.ts", import.meta.url), "utf8");
+  const engine = readFileSync(new URL("../src/lib/feed/engine.ts", import.meta.url), "utf8");
+  assert.match(daily, /export function feedImageKey/);
+  assert.match(daily, /url\.search = ""/);
+  assert.match(daily, /url\.hash = ""/);
+  assert.match(engine, /feedImageKey\(row\.imageUrl\) === candidateImage/);
+});
+
 test("no response keeps the local cache and likes stay in the browser", () => {
   const sync = readFileSync(new URL("../src/lib/feed/sync.ts", import.meta.url), "utf8");
   const useFeed = readFileSync(new URL("../src/lib/feed/use-feed.ts", import.meta.url), "utf8");
