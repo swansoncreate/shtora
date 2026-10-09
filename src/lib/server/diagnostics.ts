@@ -15,23 +15,24 @@ function safeDetails(input?: Record<string, unknown>) {
     else if (value instanceof Error) {
       output[`${key}Type`] = value.name.slice(0, 80);
       const code = (value as Error & { code?: unknown }).code;
-      if (typeof code === "string" && /^[A-Z0-9_\\-]{1,40}$/i.test(code)) output[`${key}Code`] = code;
-    } else if (typeof value === "string") {
       if (typeof code === "string" && /^[A-Z0-9_-]{1,40}$/i.test(code)) output[`${key}Code`] = code;
-      else output[key] = value.replace(/[\\r\\n\\t]/g, " ").slice(0, 120);
+    } else if (typeof value === "string") {
       if (/https?:\/\//i.test(value)) output[key] = value.replace(/https?:\/\/\S+/gi, "[url]").slice(0, 100);
+      else output[key] = value.replace(/[\r\n\t]/g, " ").slice(0, 120);
+    }
   }
   return Object.keys(output).length ? output : undefined;
 }
 
 export async function serverDiagnostic(level: Level, area: string, event: string, details?: Record<string, unknown>, durationMs?: number) {
+  const safe = safeDetails(details);
   const entry = {
-  const line = JSON.stringify(entry) + "\n";
+    at: new Date().toISOString(), level, source: "server",
     area: area.slice(0, 40), event: event.slice(0, 100),
     ...(Number.isFinite(durationMs) ? { durationMs: Math.max(0, Math.round(durationMs!)) } : {}),
-    ...(safeDetails(details) ? { details: safeDetails(details) } : {}),
+    ...(safe ? { details: safe } : {}),
   };
-  const line = JSON.stringify(entry) + "\\n";
+  const line = JSON.stringify(entry) + "\n";
   const task = writeQueue.then(async () => {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
