@@ -204,3 +204,20 @@ test("continuation resolution prefers the exact source photo when URLs match", (
   };
   assert.equal(resolveContinuationMemory([other, source], source.imageUrl, "dm-scene")?.id, "source");
 });
+
+test("continuation resolution never guesses from unrelated latest memory", () => {
+  const unrelated = {
+    id: "feed-1",
+    username: "alice",
+    imageUrl: "/chat-media/feed.webp",
+    createdAt: 9000,
+    scene: { place: "street", clothes: "blue coat", sceneId: "feed-scene" },
+    camera: { mode: "candid" },
+    source: "generated",
+    sceneId: "feed-scene",
+  };
+  assert.equal(
+    resolveContinuationMemory([unrelated], "/api/chat-media?id=missing", undefined),
+    undefined,
+  );
+});
