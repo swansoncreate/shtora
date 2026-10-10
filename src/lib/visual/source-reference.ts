@@ -25,3 +25,18 @@ export function resolveLastPhotoSceneId(
   if (photoSceneId) return photoSceneId;
   return photoRole === "assistant" ? worldSceneId : undefined;
 }
+
+
+/**
+ * Freeze the source photo for a turn at the point that turn's message entered
+ * the thread. Async model/generation work must not silently switch to a photo
+ * added by a later message.
+ */
+export function resolveTurnPhotoSnapshot<T extends { id: string; imageUrl?: string }>(
+  messages: T[],
+  messageId: string,
+): T | undefined {
+  const messageIndex = messages.findIndex((item) => item.id === messageId);
+  const relevant = messageIndex >= 0 ? messages.slice(0, messageIndex + 1) : messages;
+  return [...relevant].reverse().find((item) => Boolean(item.imageUrl));
+}
