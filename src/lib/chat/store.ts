@@ -30,6 +30,7 @@ export type ChatDebug = {
   lastMove?: string;
   imaginePrompt?: string;
   imagineKind?: string;
+  sceneId?: string;
 };
 
 export type ChatMessage = {
