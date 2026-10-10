@@ -160,10 +160,12 @@ export function planLifeScene(input: {
   const timeContext = world?.timeContext?.trim() || slot;
   const weather = world?.weather?.trim() || pick(WEATHER, seed, "weather");
   const outfit = world?.clothes?.trim() || makeOutfit(seed, input.recentOutfits);
+  const hair = world?.hair?.trim() || undefined;
   const pose = pick(POSES, seed, "pose");
   const camera: CameraMode = pose.startsWith("small mirror") ? "mirror" : (pick(["selfie", "full", "candid"], seed, "camera") as CameraMode);
   return {
     place,
+    hair,
     activity,
     timeContext,
     weather,
@@ -180,6 +182,7 @@ export function planPrompt(base: string, plan: ScenePlan) {
   return [
     style,
     "Scene: " + plan.place + ". Activity: " + plan.activity + ". Time: " + plan.timeContext + ". Weather/light: " + plan.weather + ".",
+    plan.hair ? "Hair: " + plan.hair + "." : "",
     "Outfit: " + plan.outfit + ". Pose/camera: " + plan.pose + ".",
     "Keep the moment plausible and lived-in. Preserve the supplied current location and outfit unless the shared world explicitly changes; only choose a new outfit when no current outfit is available. Vary pose and framing naturally without resetting the scene.",
   ]
