@@ -86,6 +86,44 @@ test("simulated new-scene flow creates a new scene without mutating the old one"
   assert.equal(newScene.clothes, "green dress");
 });
 
+test("a feed scene between two DM photos does not replace the DM scene", () => {
+  const dmWorld = {
+    place: "bathroom",
+    clothes: "black shirt",
+    activity: "getting ready",
+    timeContext: "evening",
+  };
+  const firstDmIntent = deterministicPhotoIntent("скинь селфи", false);
+  const firstDmScene = resolveScene({
+    username: "alice",
+    intent: firstDmIntent,
+    current: dmWorld,
+    now: 4000,
+  });
+
+  const feedScene = resolveScene({
+    username: "alice",
+    intent: { mode: "new_scene", scene: "street outfit post", reference: "identity" },
+    previous: firstDmScene,
+    current: { place: "street", clothes: "blue coat", activity: "taking a walk" },
+    now: 5000,
+  });
+  assert.notEqual(feedScene.id, firstDmScene.id);
+
+  // The DM continuation must be resolved from its own source photo/world, not the feed's latest scene.
+  const continuation = resolveScene({
+    username: "alice",
+    intent: deterministicPhotoIntent("теперь боком", true),
+    previous: firstDmScene,
+    current: { ...dmWorld, sceneId: firstDmScene.id },
+    now: 6000,
+  });
+  assert.equal(continuation.id, firstDmScene.id);
+  assert.equal(continuation.place, "bathroom");
+  assert.equal(continuation.clothes, "black shirt");
+  assert.notEqual(continuation.id, feedScene.id);
+});
+
 test("ordinary chat never creates a photo intent", () => {
   for (const text of ["как дела?", "что делаешь?", "ты где?", "расскажи что-нибудь"]) {
     assert.deepEqual(deterministicPhotoIntent(text, true), { mode: "none" });
