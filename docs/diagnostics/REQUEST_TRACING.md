@@ -18,6 +18,12 @@ This is diagnostic metadata, not a replacement for functional logs. Do not log r
 6. `dm.output.parsed`: parse success, bubble count, photo kind, world fields changed, result byte count. Never include generated bubble text or raw model output.
 7. `dm.commit.started|finished|failed`: number of bubbles, duplicate bubbles removed, thread patch outcome, messages persisted, elapsed time.
 8. `dm.photo.started|finished|failed`: image-generation route, photo kind, input-reference count, provider, status/latency, saved-message outcome. Never log image URLs or prompt text.
+9. `visual.continuation source context resolved`: whether the requested source image and scene ID matched stored visual memory, plus the safe resolution class (`source-url`, `scene-id`, or `none`). Never log either identifier or the URL.
+10. `visual.source selected|selection failed`: image-present boolean, byte count, identity-present boolean, and source-path-present boolean; never log the source path or image data.
+11. `visual.image persistence resolved`: distinguish a locally addressable `/chat-media/` URL from an unpersisted upstream fallback. The URL itself is never logged.
+12. `visual.visual memory saved|persistence chain failed` and `visual.source history persistence failed`: record whether the visual memory save completed, whether a generation job exists, and the error class only. A history-write failure must not turn a successfully generated image into a failed request.
+
+Use the same `traceId` from the DM turn for these events. The visual-generation job ID can be inspected through the generation-job store; do not expose it in ordinary user-facing messages.
 
 ### Feed generation
 
