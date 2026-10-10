@@ -161,6 +161,7 @@ async function commitPhoto(
     instagramUrls: identityUrls(username),
     lastPhotoUrl: lastPic?.imageUrl,
     lastPhotoRole: lastPic?.role,
+    sceneId: lastPic?.debug?.sceneId || world.sceneId,
     username,
   });
   if (!media.ok) {
@@ -176,7 +177,7 @@ async function commitPhoto(
       kind: media.kind,
       once,
       seq: nextSeq(username),
-      debug: { imaginePrompt: media.prompt.slice(0, 900), imagineKind: media.kind, want: log },
+      debug: { imaginePrompt: media.prompt.slice(0, 900), imagineKind: media.kind, sceneId: media.sceneId, want: log },
     },
     { incrementUnread: !viewing },
   );
