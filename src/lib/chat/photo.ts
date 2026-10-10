@@ -4,6 +4,7 @@ import { deterministicPhotoIntent, photoIntentSchema } from "@/lib/visual/intent
 import type { VisualContext } from "@/lib/visual/types";
 import { planLifeScene, planPrompt } from "@/lib/visual/planner";
 import { makeSceneId, resolveScene } from "@/lib/visual/scene";
+import { serverDiagnostic } from "@/lib/server/diagnostics.server";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -159,6 +160,15 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     let job: { id: string } | undefined;
+    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `visual-${Date.now().toString(36)}`;
+    const startedAt = Date.now();
+    serverDiagnostic("info", "visual", "generation started", {
+      traceId,
+      kind: data.kind,
+      intentMode: data.visualIntent?.mode || "auto",
+      hasWorld: Boolean(data.scene || data.clothes || data.world),
+      hasSource: Boolean(data.sourceDataUrl),
+    });
     try {
       const { latestVisualMemory, listVisualMemory, saveVisualMemory } = await import("@/lib/visual/memory.server");
       const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
@@ -242,6 +252,13 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       }
 
       const found = await identityJpeg({ ...data, username });
+      serverDiagnostic(found.image ? "info" : "warn", "visual", found.image ? "source selected" : "source selection failed", {
+        traceId,
+        hasImage: Boolean(found.image),
+        hasSourcePath: Boolean(found.sourcePath),
+        sourceBytes: found.image.length,
+        hasIdentity: Boolean(found.identity),
+      }, Date.now() - startedAt);
       if (!found.image) {
         if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: found.error || "Нет кадра.", retryable: true });
         return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
@@ -260,6 +277,14 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         }
       }
 
+      serverDiagnostic("info", "visual", "provider generation started", {
+        traceId,
+        kind: data.kind,
+        hasPrompt: Boolean(finalPrompt),
+        promptChars: (finalPrompt || "").length,
+        hasWorld: Boolean(data.world || baseContext.place || baseContext.clothes),
+        hasReferenceImage: Boolean(found.identity),
+      });
       const out = await makePhoto(
         found.image,
         data.kind,
@@ -271,6 +296,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         finalPrompt,
       );
       if (!out.ok || !out.url) {
+        serverDiagnostic("error", "visual", "provider generation failed", {
+          traceId,
+          kind: data.kind,
+          hasError: Boolean(out.error),
+          errorType: out.error ? "provider-error" : "empty-result",
+        }, Date.now() - startedAt);
         if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: out.error || "Imagine не собрал кадр.", retryable: true });
         return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
       }
@@ -278,6 +309,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
       const url = (await persistRemoteImage(out.url)) || out.url;
       if (found.sourcePath && username) await rememberSourcePath(username, found.sourcePath);
+      serverDiagnostic("info", "visual", "image persisted", {
+        traceId,
+        kind: data.kind,
+        hasPersistedUrl: Boolean(url),
+        hasJob: Boolean(job),
+      }, Date.now() - startedAt);
 
       let sceneId = data.sceneId || previous?.sceneId;
       if (username) {
@@ -361,6 +398,11 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
 
       return { ok: true as const, url, prompt: out.prompt || finalPrompt || "", kind: data.kind, jobId: job?.id, sceneId };
     } catch (err) {
+      serverDiagnostic("error", "visual", "generation failed unexpectedly", {
+        traceId,
+        kind: data.kind,
+        errorType: err instanceof Error ? err.name : "unknown",
+      }, Date.now() - startedAt);
       const msg = err instanceof Error ? err.message : "Imagine не собрал кадр.";
       const clean = /var\/task|EACCES|EROFS|ENOENT|permission/i.test(msg)
         ? "Не удалось сохранить кадр. Попробуй ещё раз."
