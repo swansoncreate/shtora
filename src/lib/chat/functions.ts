@@ -892,14 +892,27 @@ export const chatReply = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }): Promise<ChatOut> => {
+    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `dm-${Date.now().toString(36)}`;
+    const startedAt = Date.now();
+    const { serverDiagnostic } = await import("@/lib/server/diagnostics.server");
+    serverDiagnostic("info", "dm", "request received", {
+      traceId,
+      historyCount: data.history.length,
+      hasUserImage: Boolean(data.userImageDataUrl || data.selfieDataUrl),
+      worldFieldCount: Object.keys(data.world || {}).length,
+      engine: data.chatEngine || "grok",
+    });
     const { runningOnVps } = await import("@/lib/server/remote");
     if (runningOnVps()) {
       const { callGrokApp } = await import("@/lib/server/grok-app");
-      const out = await callGrokApp<ChatOut>("reply", { ...data, chatApiKey: undefined, chatEngine: "grok" });
+      const out = await callGrokApp<ChatOut>("reply", { ...data, traceId, chatApiKey: undefined, chatEngine: "grok" });
+      serverDiagnostic(out.ok ? "info" : "error", "dm", "request finished", { traceId, ok: out.ok, route: "published-grok" }, Date.now() - startedAt);
       return patchCameraOut(out, data);
     }
     const { replyDm } = await import("@/lib/dm/chat");
-    return replyDm({ ...data, chatEngine: data.chatEngine || "grok" });
+    const out = await replyDm({ ...data, traceId, chatEngine: data.chatEngine || "grok" });
+    serverDiagnostic(out.ok ? "info" : "error", "dm", "request finished", { traceId, ok: out.ok, route: "local-engine" }, Date.now() - startedAt);
+    return out;
   });
 
 export const chatPing = createServerFn({ method: "POST" })
