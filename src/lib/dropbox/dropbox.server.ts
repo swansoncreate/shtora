@@ -496,11 +496,14 @@ export async function pickDropboxImageSource(
   const { candidates: list, exhaustedExclusions } = rankDropboxCandidates(usable, opts.excludePaths || []);
   // Randomize only while fresh candidates exist. If every file was used recently,
   // walk least-recently-used paths first instead of randomly repeating one.
-  const shuffled = opts.seed && !exhaustedExclusions
-    ? seededShuffle(list, opts.seed)
-    : exhaustedExclusions
-      ? [...list]
-      : [...list].sort((a, b) => b.at.localeCompare(a.at));
+  let shuffled: ListedImage[];
+  if (opts.seed && !exhaustedExclusions) {
+    shuffled = seededShuffle(list, opts.seed);
+  } else if (exhaustedExclusions) {
+    shuffled = [...list];
+  } else {
+    shuffled = [...list].sort((a, b) => b.at.localeCompare(a.at));
+  }
   const start = opts.seed || exhaustedExclusions ? 0 : Math.abs(opts.skip || 0) % shuffled.length;
   const tries = Math.min(shuffled.length, 16);
   for (let i = 0; i < tries; i += 1) {
