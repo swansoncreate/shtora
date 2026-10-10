@@ -85,8 +85,9 @@ async function identityJpeg(data: {
     ? { image: "", error: "" }
     : await firstInstagram([data.identityUrl, ...(data.instagramUrls ?? [])].filter(Boolean) as string[], 0);
   const reuse = await sourceReferenceJpeg(data.sourceDataUrl);
-  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "", sourcePath: "" };
-  if (data.visualIntent && "reference" in data.visualIntent && data.visualIntent.reference === "last_photo") {
+  const lastPhotoReference = Boolean(data.visualIntent && "reference" in data.visualIntent && data.visualIntent.reference === "last_photo");
+  if (reuse) return { image: reuse, identity: lastPhotoReference ? reuse : portrait.image || reuse, error: "", sourcePath: "" };
+  if (lastPhotoReference) {
     return { image: "", identity: portrait.image, error: "Последнее фото из чата недоступно; продолжение без него запрещено.", sourcePath: "" };
   }
   if (data.dropboxToken && data.dropboxFolder) {
