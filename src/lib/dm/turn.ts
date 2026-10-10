@@ -9,7 +9,7 @@ import { appendMessage, asWarmth, getThread, markThreadRead, patchThread } from 
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
 import { diagnosticLog } from "@/lib/diagnostics";
-import { resolveLastPhotoSceneId } from "@/lib/visual/source-reference";
+import { resolveLastPhotoSceneId, resolveTurnPhotoSnapshot } from "@/lib/visual/source-reference";
 import type { ChatWorld } from "@/lib/chat/world";
 
 export async function runLiveTurn(username: string, messageId: string, viewing: boolean, stamp?: number) {
@@ -17,6 +17,7 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
   const startedAt = Date.now();
   const live = getThread(username);
   const last = live?.messages.find((m) => m.id === messageId) || live?.messages.at(-1);
+  const turnPhoto = live ? resolveTurnPhotoSnapshot(live.messages, messageId) : undefined;
   diagnosticLog("info", "dm", "turn started", { traceId, historyCount: live?.messages.length || 0, hasLastMessage: Boolean(last) });
   if (!live || !last || last.role !== "user") return false;
   let userImageDataUrl: string | undefined;
@@ -111,6 +112,9 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
       viewing,
       last.text || "",
       traceId,
+      turnPhoto?.imageUrl,
+      turnPhoto?.role,
+      turnPhoto?.debug?.sceneId,
     ).catch((err) => {
       toast.error(err instanceof Error ? err.message : "Кадр не собрался");
     });
@@ -131,8 +135,10 @@ async function commitPhoto(
   viewing: boolean,
   userText: string,
   traceId?: string,
+  lastPhotoUrl?: string,
+  lastPhotoRole?: "user" | "assistant",
+  lastPhotoSceneId?: string,
 ) {
-  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => Boolean(item.imageUrl));
   const world = (getThread(username)?.world || {}) as ChatWorld;
   let dropboxToken: string | undefined;
   let dropboxFolder: string | undefined;
@@ -160,9 +166,9 @@ async function commitPhoto(
     dropboxFolder,
     dropboxSeed: `${username}-${Date.now()}`,
     instagramUrls: identityUrls(username),
-    lastPhotoUrl: lastPic?.imageUrl,
-    lastPhotoRole: lastPic?.role,
-    sceneId: resolveLastPhotoSceneId(lastPic?.debug?.sceneId, lastPic?.role, world.sceneId),
+    lastPhotoUrl,
+    lastPhotoRole,
+    sceneId: resolveLastPhotoSceneId(lastPhotoSceneId, lastPhotoRole, world.sceneId),
     username,
   });
   if (!media.ok) {
