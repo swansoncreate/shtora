@@ -20,6 +20,7 @@ export type MediaPlan = {
 };
 
 export type MediaAsk = MediaPlan & {
+  traceId?: string;
   clothes?: string;
   place?: string;
   hair?: string;
@@ -148,7 +149,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     }
   }
   const startedAt = Date.now();
-  diagnosticLog("info", "chat-photo", "generation started", { kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), gallery: ask.gallery });
+  diagnosticLog("info", "chat-photo", "generation started", { traceId: ask.traceId, kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), gallery: ask.gallery });
   try {
     let sourceDataUrl: string | undefined;
     const inferredIntent: PhotoIntent =
@@ -175,6 +176,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     const pic = await withChatImageDeadline(composeChatPhoto({
       data: {
         kind: ask.gallery ? "gallery" : ask.kind === "circle" ? "selfie" : ask.kind || "selfie",
+        traceId: ask.traceId,
         userText: (ask.userText || "").slice(0, 400),
         scene: ask.gallery ? "" : (ask.place || "").slice(0, 80),
         world: ask.gallery
@@ -211,7 +213,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         }
       }
     } else {
-      diagnosticLog("error", "chat-photo", "Imagine returned no image", { error: pic.error || "empty result" }, Date.now() - startedAt);
+      diagnosticLog("error", "chat-photo", "Imagine returned no image", { traceId: ask.traceId, errorType: pic.error ? "provider-error" : "empty-result" }, Date.now() - startedAt);
       const raw = pic.error || "Imagine не собрал кадр";
       return {
         ok: false,
@@ -221,7 +223,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     }
   } catch (e) {
     const raw = e instanceof Error ? e.message : "Imagine не собрал кадр";
-    diagnosticLog("error", "chat-photo", "generation failed", { error: raw }, Date.now() - startedAt);
+    diagnosticLog("error", "chat-photo", "generation failed", { traceId: ask.traceId, errorType: e instanceof Error ? e.name : "unknown" }, Date.now() - startedAt);
     return {
       ok: false,
       skipped: false,
