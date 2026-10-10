@@ -198,6 +198,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         dropboxSeed: ask.dropboxSeed,
         instagramUrls: ask.instagramUrls,
         sourceDataUrl,
+        sourceImageUrl: ask.lastPhotoUrl,
         username: ask.username,
         sceneId: ask.sceneId,
         visualIntent: inferredIntent.mode === "none" ? undefined : inferredIntent,
