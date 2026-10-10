@@ -68,14 +68,20 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
       },
     });
   } catch (err) {
+    diagnosticLog("error", "dm", "request failed before response", {
+      traceId,
+      errorType: err instanceof Error ? err.name : "unknown",
+    }, Date.now() - startedAt);
     toast.error(err instanceof Error ? err.message : "Чат не ответил");
     return false;
   }
   if (!out.ok) {
+    diagnosticLog("error", "dm", "request returned error", { traceId, hasError: Boolean(out.error) }, Date.now() - startedAt);
     toast.error(out.error);
     return false;
   }
   if (!out.dm || !out.log) {
+    diagnosticLog("error", "dm", "response rejected before commit", { traceId, isDm: Boolean(out.dm), hasLog: Boolean(out.log) }, Date.now() - startedAt);
     toast.error("Ответ не записался");
     return false;
   }
