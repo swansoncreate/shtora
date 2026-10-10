@@ -160,6 +160,7 @@ async function commitPhoto(
     dropboxSeed: `${username}-${Date.now()}`,
     instagramUrls: identityUrls(username),
     lastPhotoUrl: lastPic?.imageUrl,
+    lastPhotoRole: lastPic?.role,
     username,
   });
   if (!media.ok) {
