@@ -333,12 +333,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       if (username) {
         const current: VisualContext = {
           ...baseContext,
-            place: plan?.place || baseContext.place || previous?.scene?.place,
-          clothes: plan?.outfit || baseContext.clothes || previous?.scene?.clothes,
-          hair: baseContext.hair || previous?.scene?.hair,
-          activity: plan?.activity || baseContext.activity || previous?.scene?.activity,
-          timeContext: plan?.timeContext || baseContext.timeContext || previous?.scene?.timeContext,
-          weather: plan?.weather || baseContext.weather || previous?.scene?.weather,
+            place: plan?.place || baseContext.place || sceneReference?.scene?.place,
+          clothes: plan?.outfit || baseContext.clothes || sceneReference?.scene?.clothes,
+          hair: baseContext.hair || sceneReference?.scene?.hair,
+          activity: plan?.activity || baseContext.activity || sceneReference?.scene?.activity,
+          timeContext: plan?.timeContext || baseContext.timeContext || sceneReference?.scene?.timeContext,
+          weather: plan?.weather || baseContext.weather || sceneReference?.scene?.weather,
           sceneId,
         };
         const scene = resolveScene({
