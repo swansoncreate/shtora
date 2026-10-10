@@ -17,7 +17,7 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
   const startedAt = Date.now();
   const live = getThread(username);
   const last = live?.messages.find((m) => m.id === messageId) || live?.messages.at(-1);
-  const turnPhoto = live ? resolveTurnPhotoSnapshot(live.messages, messageId) : undefined;
+  const turnPhoto = live && last ? resolveTurnPhotoSnapshot(live.messages, last.id) : undefined;
   diagnosticLog("info", "dm", "turn started", { traceId, historyCount: live?.messages.length || 0, hasLastMessage: Boolean(last) });
   if (!live || !last || last.role !== "user") return false;
   let userImageDataUrl: string | undefined;
