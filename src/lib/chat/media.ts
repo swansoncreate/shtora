@@ -157,21 +157,26 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
       (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
         ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
         : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl)));
-    const reuse =
-      Boolean(ask.lastPhotoUrl) &&
-      !ask.gallery &&
-      inferredIntent.mode === "continue" ||
-      ("reference" in inferredIntent && inferredIntent.reference === "last_photo");
+    const needsLastPhoto = "reference" in inferredIntent && inferredIntent.reference === "last_photo";
+    if (needsLastPhoto && !ask.lastPhotoUrl) {
+      diagnosticLog("warn", "chat-photo", "continuation blocked: no previous chat photo", { traceId: ask.traceId, mode: inferredIntent.mode });
+      return { ok: false, skipped: false, error: "Не нашла предыдущее фото в этом чате. Пришли фото ещё раз или попроси новый кадр." };
+    }
+    const reuse = needsLastPhoto && !ask.gallery;
     if (reuse && ask.lastPhotoUrl) {
       const sourceStartedAt = Date.now();
       try {
         sourceDataUrl = (await withChatImageDeadline(jpeg(ask.lastPhotoUrl), "Загрузка исходного фото")) || undefined;
-        diagnosticLog(sourceDataUrl ? "info" : "warn", "chat-photo", sourceDataUrl ? "source photo loaded" : "source photo unavailable", { reuse }, Date.now() - sourceStartedAt);
+        diagnosticLog(sourceDataUrl ? "info" : "warn", "chat-photo", sourceDataUrl ? "source photo loaded" : "source photo unavailable", { traceId: ask.traceId, reuse }, Date.now() - sourceStartedAt);
       } catch (error) {
-        diagnosticLog("error", "chat-photo", "source photo download failed", { error: error instanceof Error ? error.message : String(error) }, Date.now() - sourceStartedAt);
+        diagnosticLog("error", "chat-photo", "source photo download failed", { traceId: ask.traceId, errorType: error instanceof Error ? error.name : "unknown" }, Date.now() - sourceStartedAt);
         sourceDataUrl = undefined;
       }
       if (sourceDataUrl && !sourceDataUrl.startsWith("data:image")) sourceDataUrl = undefined;
+      if (!sourceDataUrl) {
+        diagnosticLog("error", "chat-photo", "continuation blocked: previous photo unavailable", { traceId: ask.traceId }, Date.now() - sourceStartedAt);
+        return { ok: false, skipped: false, error: "Не удалось загрузить последнее фото из чата. Не буду подменять его случайным кадром — попробуй ещё раз." };
+      }
     }
     const pic = await withChatImageDeadline(composeChatPhoto({
       data: {
