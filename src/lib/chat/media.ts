@@ -34,6 +34,7 @@ export type MediaAsk = MediaPlan & {
   dropboxSeed?: string;
   instagramUrls?: string[];
   lastPhotoUrl?: string;
+  lastPhotoRole?: "user" | "assistant";
   username?: string;
   visualIntent?: PhotoIntent;
 };
@@ -149,7 +150,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
     }
   }
   const startedAt = Date.now();
-  diagnosticLog("info", "chat-photo", "generation started", { traceId: ask.traceId, kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), gallery: ask.gallery });
+  diagnosticLog("info", "chat-photo", "generation started", { traceId: ask.traceId, kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), previousPhotoRole: ask.lastPhotoRole || "unknown", gallery: ask.gallery });
   try {
     let sourceDataUrl: string | undefined;
     const textIntent = deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl));
