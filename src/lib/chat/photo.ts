@@ -179,12 +179,16 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
       const { rememberSourcePath } = await import("@/lib/visual/source-history.server");
       const username = data.username?.trim().toLowerCase();
-      const previous = username ? await latestVisualMemory(username) : undefined;
       const intent =
         data.visualIntent ||
         (data.kind === "feed"
           ? { mode: "new_scene" as const, camera: "candid" as const, reference: "identity" as const }
           : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
+      const latest = username ? await latestVisualMemory(username) : undefined;
+      // A continuation must inherit context from its own scene, not whichever unrelated image was generated most recently (e.g. a feed post).
+      const sceneReference = username && "reference" in intent && intent.reference === "last_photo" && data.sceneId
+        ? (await listVisualMemory(username)).find((item) => item.sceneId === data.sceneId) || latest
+        : latest;
 
       if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
         const query = intent.mode === "memory" ? intent.memoryQuery : intent.query;
@@ -205,13 +209,13 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         intent.mode === "new_scene" || intent.mode === "pov" ? intent.scene : undefined;
       const intentClothes = intent.mode === "new_scene" ? intent.clothes : undefined;
       const baseContext: VisualContext = {
-        place: data.scene || intentScene || previous?.scene?.place,
-        clothes: data.clothes || intentClothes || previous?.scene?.clothes,
-        hair: data.hair || previous?.scene?.hair,
-        activity: data.activity || previous?.scene?.activity,
-        timeContext: data.timeContext || previous?.scene?.timeContext,
-        weather: data.weather || previous?.scene?.weather,
-        sceneId: data.sceneId || previous?.sceneId || undefined,
+        place: data.scene || intentScene || sceneReference?.scene?.place,
+        clothes: data.clothes || intentClothes || sceneReference?.scene?.clothes,
+        hair: data.hair || sceneReference?.scene?.hair,
+        activity: data.activity || sceneReference?.scene?.activity,
+        timeContext: data.timeContext || sceneReference?.scene?.timeContext,
+        weather: data.weather || sceneReference?.scene?.weather,
+        sceneId: data.sceneId || sceneReference?.sceneId || undefined,
       };
 
       let plan = undefined;
@@ -247,7 +251,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             sceneId: data.sceneId,
             scenePlan: plan,
             worldSnapshot: baseContext,
-            parentId: data.parentId || previous?.id,
+            parentId: data.parentId || sceneReference?.id,
             provider: "pending",
           });
           await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
@@ -321,7 +325,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         hasJob: Boolean(job),
       }, Date.now() - startedAt);
 
-      let sceneId = data.sceneId || previous?.sceneId;
+      let sceneId = data.sceneId || sceneReference?.sceneId;
       if (username) {
         const current: VisualContext = {
           ...baseContext,
@@ -336,12 +340,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         const scene = resolveScene({
           username,
           intent,
-          previous: previous
+          previous: sceneReference
             ? {
-                id: previous.sceneId || makeSceneId(username, previous.createdAt),
+                id: sceneReference.sceneId || makeSceneId(username, sceneReference.createdAt),
                 username,
-                createdAt: previous.createdAt,
-                ...previous.scene,
+                createdAt: sceneReference.createdAt,
+                ...sceneReference.scene,
               }
             : undefined,
           current,
@@ -364,7 +368,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
               ),
             },
             source: "generated",
-            parentId: data.parentId || previous?.id,
+            parentId: data.parentId || sceneReference?.id,
             sceneId,
             prompt: out.prompt || finalPrompt,
             worldSnapshot: current,
