@@ -35,6 +35,7 @@ export type MediaAsk = MediaPlan & {
   instagramUrls?: string[];
   lastPhotoUrl?: string;
   lastPhotoRole?: "user" | "assistant";
+  sceneId?: string;
   username?: string;
   visualIntent?: PhotoIntent;
 };
@@ -198,6 +199,7 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
         instagramUrls: ask.instagramUrls,
         sourceDataUrl,
         username: ask.username,
+        sceneId: ask.sceneId,
         visualIntent: inferredIntent.mode === "none" ? undefined : inferredIntent,
         hair: ask.hair,
         activity: ask.activity,
