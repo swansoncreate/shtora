@@ -41,7 +41,7 @@ OUTPUT_BACKUP="/root/shtora-output-before-code-update-$STAMP.tar.gz"
 DATA_BACKUP="/root/shtora-data-before-code-update-$STAMP.tar.gz"
 ROLLBACK_DIR="$ROOT/.vercel/output.rollback-$STAMP"
 FAILED_DIR="$ROOT/.vercel/output.failed-$STAMP"
-OLD_SHA="$(git rev-parse HEAD)"
+OLD_SHA="unavailable: current VPS build is prebuilt and has no verified source SHA"
 NEW_STAGED="$ROOT/.vercel/output.next"
 
 cleanup() { rm -rf "$WORK"; }
@@ -102,7 +102,7 @@ cp -a "$NEW_OUTPUT" "$NEW_STAGED"
 echo "Backups ready:"
 echo "  Data:   $DATA_BACKUP"
 echo "  Build:  $OUTPUT_BACKUP"
-echo "  Old SHA: $OLD_SHA"
+echo "  Previous deployed source SHA: $OLD_SHA"
 echo "  New SHA: $NEW_SHA"
 echo "Stopping $unit for the artifact switch."
 if ! systemctl stop "$unit"; then
@@ -157,7 +157,7 @@ fi
 echo
 echo "Code-only deployment passed local health checks."
 echo "Release commit: $NEW_SHA"
-echo "Previous commit: $OLD_SHA"
+echo "Previous deployed source SHA: $OLD_SHA"
 echo "Previous build directory: $ROLLBACK_DIR"
 echo "Build backup: $OUTPUT_BACKUP"
 echo "Data backup: $DATA_BACKUP"
