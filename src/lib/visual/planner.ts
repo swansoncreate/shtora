@@ -181,7 +181,7 @@ export function planPrompt(base: string, plan: ScenePlan) {
     style,
     "Scene: " + plan.place + ". Activity: " + plan.activity + ". Time: " + plan.timeContext + ". Weather/light: " + plan.weather + ".",
     "Outfit: " + plan.outfit + ". Pose/camera: " + plan.pose + ".",
-    "Keep the moment plausible and lived-in. Clothing is freely chosen for context; do not follow a fixed outfit list and do not deliberately repeat recent outfits.",
+    "Keep the moment plausible and lived-in. Preserve the supplied current location and outfit unless the shared world explicitly changes; only choose a new outfit when no current outfit is available. Vary pose and framing naturally without resetting the scene.",
   ]
     .join(" ")
     .slice(0, 1800);
