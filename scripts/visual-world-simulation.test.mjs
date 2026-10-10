@@ -42,6 +42,21 @@ test("simulated Instagram chat photo flow keeps camera continuity", () => {
   assert.equal(scene.parentSceneId, undefined);
 });
 
+test("continuation keeps the source scene id even if visual memory is unavailable", () => {
+  const intent = deterministicPhotoIntent("продолжи", true);
+  assert.equal(intent.mode, "continue");
+  assert.equal(intent.reference, "last_photo");
+  const scene = resolveScene({
+    username: "alice",
+    intent,
+    current: { place: "bathroom", clothes: "black shirt", sceneId: "source-scene-42" },
+    now: 2500,
+  });
+  assert.equal(scene.id, "source-scene-42");
+  assert.equal(scene.place, "bathroom");
+  assert.equal(scene.clothes, "black shirt");
+});
+
 test("simulated new-scene flow creates a new scene without mutating the old one", () => {
   const oldWorld = { place: "bathroom", clothes: "black shirt", activity: "getting ready" };
   const oldIntent = deterministicPhotoIntent("скинь селфи", false);
