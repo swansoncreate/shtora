@@ -1,5 +1,6 @@
 import { appendMessage, applyBond, getThread, markThreadRead, patchThread } from "@/lib/chat/store";
 import { stripChatTic } from "@/lib/chat/functions";
+import { diagnosticLog } from "@/lib/diagnostics";
 
 export type CommitPatch = {
   bubbles?: string[];
@@ -13,6 +14,10 @@ export type CommitPatch = {
   placeRu?: string;
   clothesRu?: string;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   clothesNamed?: boolean;
   memAbout?: string;
   memOpen?: string;
@@ -22,22 +27,24 @@ export type CommitPatch = {
   once?: boolean;
 };
 
-export async function commitBubbles(username: string, out: CommitPatch, viewing: boolean, stamp?: number) {
+export async function commitBubbles(username: string, out: CommitPatch, viewing: boolean, stamp?: number, traceId?: string) {
+  const startedAt = Date.now();
+  diagnosticLog("info", "dm", "commit started", { traceId, hasOutput: Boolean(out.log), requestedBubbles: out.bubbles?.length || 0 });
   if (!out.log) return { bubbles: [] as string[], world: getThread(username)?.world };
   const live = getThread(username);
   const world = {
     ...(live?.world || {}),
-    place: out.place,
-    clothes: out.clothes,
-    hair: out.hair,
-    placeRu: out.placeRu,
-    clothesRu: out.clothesRu,
-    hairRu: out.hairRu,
-    clothesNamed: out.clothesNamed,
-    activity: live?.world?.activity,
-    timeContext: live?.world?.timeContext,
-    weather: live?.world?.weather,
-    sceneId: live?.world?.sceneId,
+    place: out.place ?? live?.world?.place,
+    clothes: out.clothes ?? live?.world?.clothes,
+    hair: out.hair ?? live?.world?.hair,
+    placeRu: out.placeRu ?? live?.world?.placeRu,
+    clothesRu: out.clothesRu ?? live?.world?.clothesRu,
+    hairRu: out.hairRu ?? live?.world?.hairRu,
+    clothesNamed: out.clothesNamed ?? live?.world?.clothesNamed,
+    activity: out.activity ?? live?.world?.activity,
+    timeContext: out.timeContext ?? live?.world?.timeContext,
+    weather: out.weather ?? live?.world?.weather,
+    sceneId: out.sceneId ?? live?.world?.sceneId,
     memAbout: out.memAbout ?? live?.world?.memAbout,
     memOpen: out.memOpen ?? live?.world?.memOpen,
     memDodged: out.memDodged ?? live?.world?.memDodged,
@@ -86,6 +93,12 @@ export async function commitBubbles(username: string, out: CommitPatch, viewing:
     unreadOnce = false;
   }
   if (viewing) await markThreadRead(username);
+  diagnosticLog("info", "dm", "commit finished", {
+    traceId,
+    requestedBubbles: out.bubbles?.length || 0,
+    persistedBubbles: bubbles.length,
+    worldFieldCount: Object.keys(world).filter((key) => world[key as keyof typeof world] !== undefined).length,
+  }, Date.now() - startedAt);
   return { bubbles, world };
 }
 

@@ -8,11 +8,11 @@ function safeDetails(input?: Record<string, unknown>): Record<string, string | n
   if (!input) return undefined;
   const out: Record<string, string | number | boolean | null> = {};
   for (const [key, value] of Object.entries(input).slice(0, 20)) {
-    if (/token|secret|password|prompt|message|text|url|image|cookie|auth/i.test(key)) continue;
+    if (/token|secret|password|prompt|message|text|url|image|cookie|auth|stack|detail/i.test(key)) continue;
     if (typeof value === "string") out[key] = value.slice(0, 180);
     else if (typeof value === "number" || typeof value === "boolean" || value === null) out[key] = value;
-    else if (value instanceof Error) out[ key ] = value.name;
-    else out[key] = String(value).slice(0, 100);
+    else if (value instanceof Error) out[key] = value.name;
+    else out[key] = Object.prototype.toString.call(value).slice(0, 100);
   }
   return out;
 }
@@ -24,13 +24,14 @@ export function diagnosticLog(
   details?: Record<string, unknown>,
   durationMs?: number,
 ) {
+  const sanitized = safeDetails(details);
   const entry: DiagnosticEntry = {
     at: new Date().toISOString(),
     level,
     area: area.slice(0, 40),
     event: event.slice(0, 120),
     ...(Number.isFinite(durationMs) ? { durationMs: Math.max(0, Math.round(durationMs!)) } : {}),
-    ...(safeDetails(details) ? { details: safeDetails(details) } : {}),
+    ...(sanitized ? { details: sanitized } : {}),
   };
   try {
     const old = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -44,6 +45,30 @@ export function diagnosticLog(
   else if (level === "warn") console.warn("[shtora:diag]", entry);
   else console.info("[shtora:diag]", entry);
 }
+
+let globalListenersInstalled = false;
+function installGlobalDiagnostics() {
+  if (globalListenersInstalled || typeof window === "undefined") return;
+  globalListenersInstalled = true;
+  window.addEventListener("error", (event) => {
+    diagnosticLog("error", "browser", "uncaught error", {
+      kind: event.error instanceof Error ? event.error.name : "ErrorEvent",
+      line: event.lineno || 0,
+      column: event.colno || 0,
+    });
+  });
+  window.addEventListener("unhandledrejection", (event) => {
+    diagnosticLog("error", "browser", "unhandled promise rejection", {
+      kind: event.reason instanceof Error ? event.reason.name : typeof event.reason,
+    });
+  });
+  window.addEventListener("online", () => diagnosticLog("info", "network", "browser online"));
+  window.addEventListener("offline", () => diagnosticLog("warn", "network", "browser offline"));
+  document.addEventListener("visibilitychange", () => {
+    diagnosticLog("info", "browser", "visibility changed", { visible: document.visibilityState === "visible" });
+  });
+}
+installGlobalDiagnostics();
 
 export function exportDiagnostics(): string {
   try {

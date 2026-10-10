@@ -4,6 +4,8 @@ import { deterministicPhotoIntent, photoIntentSchema } from "@/lib/visual/intent
 import type { VisualContext } from "@/lib/visual/types";
 import { planLifeScene, planPrompt } from "@/lib/visual/planner";
 import { makeSceneId, resolveScene } from "@/lib/visual/scene";
+import { serverDiagnostic } from "@/lib/server/diagnostics.server";
+import { resolveContinuationMemory } from "@/lib/visual/source-reference";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -84,7 +86,11 @@ async function identityJpeg(data: {
     ? { image: "", error: "" }
     : await firstInstagram([data.identityUrl, ...(data.instagramUrls ?? [])].filter(Boolean) as string[], 0);
   const reuse = await sourceReferenceJpeg(data.sourceDataUrl);
-  if (reuse) return { image: reuse, identity: portrait.image || reuse, error: "", sourcePath: "" };
+  const lastPhotoReference = Boolean(data.visualIntent && "reference" in data.visualIntent && data.visualIntent.reference === "last_photo");
+  if (reuse) return { image: reuse, identity: lastPhotoReference ? reuse : portrait.image || reuse, error: "", sourcePath: "" };
+  if (lastPhotoReference) {
+    return { image: "", identity: portrait.image, error: "Последнее фото из чата недоступно; продолжение без него запрещено.", sourcePath: "" };
+  }
   if (data.dropboxToken && data.dropboxFolder) {
     try {
       const { pickDropboxImageSource } = await import("@/lib/dropbox/dropbox.server");
@@ -133,9 +139,11 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   .validator(
     z.object({
       kind: z.string().min(1).max(20),
+      traceId: z.string().max(100).optional(),
       userText: z.string().max(400).optional(),
       context: z.string().max(500).optional(),
       scene: z.string().max(300).optional(),
+      clothes: z.string().max(160).optional(),
       hair: z.string().max(120).optional(),
       activity: z.string().max(160).optional(),
       timeContext: z.string().max(80).optional(),
@@ -148,6 +156,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       identityUrl: z.string().max(2000).optional(),
       world: z.string().max(400).optional(),
       sourceDataUrl: z.string().min(32).max(8_000_000).optional(),
+      sourceImageUrl: z.string().max(2000).optional(),
       prompt: z.string().max(1200).optional(),
       noIdentity: z.boolean().optional(),
        username: z.string().min(1).max(40).optional(),
@@ -158,17 +167,49 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     let job: { id: string } | undefined;
+    const traceId = data.traceId || (typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `visual-${Date.now().toString(36)}`);
+    const startedAt = Date.now();
+    serverDiagnostic("info", "visual", "generation started", {
+      traceId,
+      kind: data.kind,
+      intentMode: data.visualIntent?.mode || "auto",
+      hasWorld: Boolean(data.scene || data.clothes || data.world),
+      hasSource: Boolean(data.sourceDataUrl),
+    });
     try {
       const { latestVisualMemory, listVisualMemory, saveVisualMemory } = await import("@/lib/visual/memory.server");
       const { createGenerationJob, updateGenerationJob } = await import("@/lib/visual/jobs.server");
       const { rememberSourcePath } = await import("@/lib/visual/source-history.server");
       const username = data.username?.trim().toLowerCase();
-      const previous = username ? await latestVisualMemory(username) : undefined;
       const intent =
         data.visualIntent ||
         (data.kind === "feed"
           ? { mode: "new_scene" as const, camera: "candid" as const, reference: "identity" as const }
           : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
+      const latest = username ? await latestVisualMemory(username) : undefined;
+      // A continuation must inherit context from its own scene, not whichever unrelated image was generated most recently (e.g. a feed post).
+      const isLastPhotoContinuation = "reference" in intent && intent.reference === "last_photo";
+      const memories = username && isLastPhotoContinuation ? await listVisualMemory(username) : [];
+      const sceneReference = isLastPhotoContinuation
+        ? resolveContinuationMemory(memories, data.sourceImageUrl, data.sceneId)
+        : latest;
+      const sourcePhotoReference = isLastPhotoContinuation && data.sourceImageUrl
+        ? memories.find((item) => item.imageUrl === data.sourceImageUrl)
+        : undefined;
+      const sceneIdReference = isLastPhotoContinuation && data.sceneId
+        ? memories.find((item) => item.sceneId === data.sceneId)
+        : undefined;
+      if (isLastPhotoContinuation) {
+        serverDiagnostic("info", "visual", "continuation source context resolved", {
+          traceId,
+          sourcePhotoProvided: Boolean(data.sourceImageUrl),
+          sourcePhotoMatch: Boolean(sourcePhotoReference),
+          sceneIdProvided: Boolean(data.sceneId),
+          sceneIdMatch: Boolean(sceneIdReference),
+          hasSceneContext: Boolean(sceneReference),
+          referenceResolution: sourcePhotoReference ? "source-url" : sceneIdReference ? "scene-id" : "none",
+        });
+      }
 
       if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
         const query = intent.mode === "memory" ? intent.memoryQuery : intent.query;
@@ -189,13 +230,13 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         intent.mode === "new_scene" || intent.mode === "pov" ? intent.scene : undefined;
       const intentClothes = intent.mode === "new_scene" ? intent.clothes : undefined;
       const baseContext: VisualContext = {
-        place: data.scene || intentScene || previous?.scene?.place,
-        clothes: intentClothes || previous?.scene?.clothes,
-        hair: data.hair || previous?.scene?.hair,
-        activity: data.activity || previous?.scene?.activity,
-        timeContext: data.timeContext || previous?.scene?.timeContext,
-        weather: data.weather || previous?.scene?.weather,
-        sceneId: data.sceneId || previous?.sceneId || undefined,
+        place: data.scene || intentScene || sceneReference?.scene?.place,
+        clothes: data.clothes || intentClothes || sceneReference?.scene?.clothes,
+        hair: data.hair || sceneReference?.scene?.hair,
+        activity: data.activity || sceneReference?.scene?.activity,
+        timeContext: data.timeContext || sceneReference?.scene?.timeContext,
+        weather: data.weather || sceneReference?.scene?.weather,
+        sceneId: data.sceneId || sceneReference?.sceneId || undefined,
       };
 
       let plan = undefined;
@@ -231,7 +272,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             sceneId: data.sceneId,
             scenePlan: plan,
             worldSnapshot: baseContext,
-            parentId: data.parentId || previous?.id,
+            parentId: data.parentId || sceneReference?.id,
             provider: "pending",
           });
           await updateGenerationJob(username, job.id, { status: plan ? "planning" : "source_selected" });
@@ -241,6 +282,13 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       }
 
       const found = await identityJpeg({ ...data, username });
+      serverDiagnostic(found.image ? "info" : "warn", "visual", found.image ? "source selected" : "source selection failed", {
+        traceId,
+        hasImage: Boolean(found.image),
+        hasSourcePath: Boolean(found.sourcePath),
+        sourceBytes: found.image.length,
+        hasIdentity: Boolean(found.identity),
+      }, Date.now() - startedAt);
       if (!found.image) {
         if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: found.error || "Нет кадра.", retryable: true });
         return { ok: false as const, url: undefined, error: found.error || "Нет кадра.", prompt: "", kind: data.kind };
@@ -259,6 +307,14 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         }
       }
 
+      serverDiagnostic("info", "visual", "provider generation started", {
+        traceId,
+        kind: data.kind,
+        hasPrompt: Boolean(finalPrompt),
+        promptChars: (finalPrompt || "").length,
+        hasWorld: Boolean(data.world || baseContext.place || baseContext.clothes),
+        hasReferenceImage: Boolean(found.identity),
+      });
       const out = await makePhoto(
         found.image,
         data.kind,
@@ -270,35 +326,63 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
         finalPrompt,
       );
       if (!out.ok || !out.url) {
+        serverDiagnostic("error", "visual", "provider generation failed", {
+          traceId,
+          kind: data.kind,
+          hasError: Boolean(out.error),
+          errorType: out.error ? "provider-error" : "empty-result",
+        }, Date.now() - startedAt);
         if (username && job) await updateGenerationJob(username, job.id, { status: "failed", error: out.error || "Imagine не собрал кадр.", retryable: true });
         return { ok: out.ok, url: out.url, error: out.error, prompt: out.prompt, kind: data.kind };
       }
 
       const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
-      const url = (await persistRemoteImage(out.url)) || out.url;
-      if (found.sourcePath && username) await rememberSourcePath(username, found.sourcePath);
+      const persistedUrl = await persistRemoteImage(out.url);
+      const url = persistedUrl || out.url;
+      if (found.sourcePath && username) {
+        try {
+          await rememberSourcePath(username, found.sourcePath);
+        } catch (err) {
+          // A source-history write must not turn a successful generated image into a failed request.
+          serverDiagnostic("warn", "visual", "source history persistence failed", {
+            traceId,
+            kind: data.kind,
+            hasSourcePath: true,
+            errorType: err instanceof Error ? err.name : "unknown",
+          }, Date.now() - startedAt);
+        }
+      }
+      const imagePersistedLocally = Boolean(persistedUrl && /\/chat-media\//.test(persistedUrl));
+      serverDiagnostic("info", "visual", "image persistence resolved", {
+        traceId,
+        kind: data.kind,
+        imagePersistedLocally,
+        usingUnpersistedFallback: !imagePersistedLocally,
+        hasJob: Boolean(job),
+      }, Date.now() - startedAt);
 
-      let sceneId = data.sceneId || previous?.sceneId;
+      let sceneId = data.sceneId || sceneReference?.sceneId;
+      let visualMemorySaved = false;
       if (username) {
         const current: VisualContext = {
           ...baseContext,
-            place: plan?.place || baseContext.place || previous?.scene?.place,
-          clothes: plan?.outfit || baseContext.clothes || previous?.scene?.clothes,
-          hair: baseContext.hair || previous?.scene?.hair,
-          activity: plan?.activity || baseContext.activity || previous?.scene?.activity,
-          timeContext: plan?.timeContext || baseContext.timeContext || previous?.scene?.timeContext,
-          weather: plan?.weather || baseContext.weather || previous?.scene?.weather,
+            place: plan?.place || baseContext.place || sceneReference?.scene?.place,
+          clothes: plan?.outfit || baseContext.clothes || sceneReference?.scene?.clothes,
+          hair: baseContext.hair || sceneReference?.scene?.hair,
+          activity: plan?.activity || baseContext.activity || sceneReference?.scene?.activity,
+          timeContext: plan?.timeContext || baseContext.timeContext || sceneReference?.scene?.timeContext,
+          weather: plan?.weather || baseContext.weather || sceneReference?.scene?.weather,
           sceneId,
         };
         const scene = resolveScene({
           username,
           intent,
-          previous: previous
+          previous: sceneReference
             ? {
-                id: previous.sceneId || makeSceneId(username, previous.createdAt),
+                id: sceneReference.sceneId || makeSceneId(username, sceneReference.createdAt),
                 username,
-                createdAt: previous.createdAt,
-                ...previous.scene,
+                createdAt: sceneReference.createdAt,
+                ...sceneReference.scene,
               }
             : undefined,
           current,
@@ -321,13 +405,20 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
               ),
             },
             source: "generated",
-            parentId: data.parentId || previous?.id,
+            parentId: data.parentId || sceneReference?.id,
             sceneId,
             prompt: out.prompt || finalPrompt,
             worldSnapshot: current,
             sourcePath: found.sourcePath || undefined,
             tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
           });
+          visualMemorySaved = true;
+          serverDiagnostic("info", "visual", "visual memory saved", {
+            traceId,
+            kind: data.kind,
+            hasSceneId: Boolean(sceneId),
+            hasParent: Boolean(data.parentId || sceneReference?.id),
+          }, Date.now() - startedAt);
           if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: out.provider || "image-gateway" });
           try {
             const { commitWorld } = await import("@/lib/world/disk.server");
@@ -353,13 +444,25 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           } catch {
             /* world disk can be unavailable on ephemeral publication runtimes */
           }
-        } catch {
-          /* persistence is best-effort; the generated image remains usable */
+        } catch (err) {
+          // Keep the generated image usable, but make the failed persistence stage visible in diagnostics.
+          serverDiagnostic("error", "visual", "visual persistence chain failed", {
+            traceId,
+            kind: data.kind,
+            visualMemorySaved,
+            hasJob: Boolean(job),
+            errorType: err instanceof Error ? err.name : "unknown",
+          }, Date.now() - startedAt);
         }
       }
 
       return { ok: true as const, url, prompt: out.prompt || finalPrompt || "", kind: data.kind, jobId: job?.id, sceneId };
     } catch (err) {
+      serverDiagnostic("error", "visual", "generation failed unexpectedly", {
+        traceId,
+        kind: data.kind,
+        errorType: err instanceof Error ? err.name : "unknown",
+      }, Date.now() - startedAt);
       const msg = err instanceof Error ? err.message : "Imagine не собрал кадр.";
       const clean = /var\/task|EACCES|EROFS|ENOENT|permission/i.test(msg)
         ? "Не удалось сохранить кадр. Попробуй ещё раз."

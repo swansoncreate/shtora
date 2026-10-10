@@ -7,6 +7,9 @@ await register(pathToFileURL(new URL("./src-alias-hook.mjs", import.meta.url).pa
 
 const { deterministicPhotoIntent } = await import("../src/lib/visual/intent.ts");
 const { resolveScene } = await import("../src/lib/visual/scene.ts");
+const { resolveContinuationMemory } = await import("../src/lib/visual/source-reference.ts");
+const { resolveLastPhotoSceneId } = await import("../src/lib/visual/source-reference.ts");
+const { resolveTurnPhotoSnapshot } = await import("../src/lib/visual/source-reference.ts");
 
 test("simulated Instagram chat photo flow keeps camera continuity", () => {
   let previousPhoto = false;
@@ -42,6 +45,21 @@ test("simulated Instagram chat photo flow keeps camera continuity", () => {
   assert.equal(scene.parentSceneId, undefined);
 });
 
+test("continuation keeps the source scene id even if visual memory is unavailable", () => {
+  const intent = deterministicPhotoIntent("продолжи", true);
+  assert.equal(intent.mode, "continue");
+  assert.equal(intent.reference, "last_photo");
+  const scene = resolveScene({
+    username: "alice",
+    intent,
+    current: { place: "bathroom", clothes: "black shirt", sceneId: "source-scene-42" },
+    now: 2500,
+  });
+  assert.equal(scene.id, "source-scene-42");
+  assert.equal(scene.place, "bathroom");
+  assert.equal(scene.clothes, "black shirt");
+});
+
 test("simulated new-scene flow creates a new scene without mutating the old one", () => {
   const oldWorld = { place: "bathroom", clothes: "black shirt", activity: "getting ready" };
   const oldIntent = deterministicPhotoIntent("скинь селфи", false);
@@ -71,6 +89,44 @@ test("simulated new-scene flow creates a new scene without mutating the old one"
   assert.equal(newScene.clothes, "green dress");
 });
 
+test("a feed scene between two DM photos does not replace the DM scene", () => {
+  const dmWorld = {
+    place: "bathroom",
+    clothes: "black shirt",
+    activity: "getting ready",
+    timeContext: "evening",
+  };
+  const firstDmIntent = deterministicPhotoIntent("скинь селфи", false);
+  const firstDmScene = resolveScene({
+    username: "alice",
+    intent: firstDmIntent,
+    current: dmWorld,
+    now: 4000,
+  });
+
+  const feedScene = resolveScene({
+    username: "alice",
+    intent: { mode: "new_scene", scene: "street outfit post", reference: "identity" },
+    previous: firstDmScene,
+    current: { place: "street", clothes: "blue coat", activity: "taking a walk" },
+    now: 5000,
+  });
+  assert.notEqual(feedScene.id, firstDmScene.id);
+
+  // The DM continuation must be resolved from its own source photo/world, not the feed's latest scene.
+  const continuation = resolveScene({
+    username: "alice",
+    intent: deterministicPhotoIntent("теперь боком", true),
+    previous: firstDmScene,
+    current: { ...dmWorld, sceneId: firstDmScene.id },
+    now: 6000,
+  });
+  assert.equal(continuation.id, firstDmScene.id);
+  assert.equal(continuation.place, "bathroom");
+  assert.equal(continuation.clothes, "black shirt");
+  assert.notEqual(continuation.id, feedScene.id);
+});
+
 test("ordinary chat never creates a photo intent", () => {
   for (const text of ["как дела?", "что делаешь?", "ты где?", "расскажи что-нибудь"]) {
     assert.deepEqual(deterministicPhotoIntent(text, true), { mode: "none" });
@@ -96,4 +152,113 @@ test("semantic intent parser falls back safely on malformed provider output", as
   const fallback = deterministicPhotoIntent("теперь боком", true);
   assert.equal(parseSemanticPhotoIntent("not-json", fallback).camera, "side");
   assert.equal(parseSemanticPhotoIntent(JSON.stringify({ mode: "invalid" }), fallback).camera, "side");
+});
+
+test("cached chat-photo URL mismatch falls back to its scene, not the latest feed image", () => {
+  const feedMemory = {
+    id: "feed-1",
+    username: "alice",
+    imageUrl: "/chat-media/feed-image.webp",
+    createdAt: 6000,
+    scene: { place: "street", clothes: "blue coat", sceneId: "feed-scene" },
+    camera: { mode: "candid" },
+    source: "generated",
+    sceneId: "feed-scene",
+  };
+  const dmMemory = {
+    id: "dm-1",
+    username: "alice",
+    imageUrl: "/chat-media/persisted-dm-image.webp",
+    createdAt: 5000,
+    scene: { place: "bathroom", clothes: "black shirt", sceneId: "dm-scene" },
+    camera: { mode: "selfie" },
+    source: "generated",
+    sceneId: "dm-scene",
+  };
+
+  // The chat bubble can point at a cache URL while visual memory stores the persisted URL.
+  const selected = resolveContinuationMemory(
+    [feedMemory, dmMemory],
+    "/api/chat-media?id=local-cache-id",
+    "dm-scene",
+  );
+  assert.equal(selected?.id, "dm-1");
+  assert.equal(selected?.scene.place, "bathroom");
+  assert.equal(selected?.scene.clothes, "black shirt");
+});
+
+test("continuation resolution prefers the exact source photo when URLs match", () => {
+  const source = {
+    id: "source",
+    username: "alice",
+    imageUrl: "/chat-media/source.webp",
+    createdAt: 5000,
+    scene: { place: "bathroom", clothes: "black shirt", sceneId: "dm-scene" },
+    camera: { mode: "selfie" },
+    source: "generated",
+    sceneId: "dm-scene",
+  };
+  const other = {
+    ...source,
+    id: "other",
+    imageUrl: "/chat-media/other.webp",
+    createdAt: 6000,
+  };
+  assert.equal(resolveContinuationMemory([other, source], source.imageUrl, "dm-scene")?.id, "source");
+});
+
+test("continuation resolution never guesses from unrelated latest memory", () => {
+  const unrelated = {
+    id: "feed-1",
+    username: "alice",
+    imageUrl: "/chat-media/feed.webp",
+    createdAt: 9000,
+    scene: { place: "street", clothes: "blue coat", sceneId: "feed-scene" },
+    camera: { mode: "candid" },
+    source: "generated",
+    sceneId: "feed-scene",
+  };
+  assert.equal(
+    resolveContinuationMemory([unrelated], "/api/chat-media?id=missing", undefined),
+    undefined,
+  );
+});
+
+test("user-uploaded photo does not inherit unrelated thread scene id", () => {
+  assert.equal(resolveLastPhotoSceneId(undefined, "user", "feed-scene"), undefined);
+});
+
+test("assistant photo may use thread scene id when legacy photo lacks one", () => {
+  assert.equal(resolveLastPhotoSceneId(undefined, "assistant", "dm-scene"), "dm-scene");
+});
+
+test("explicit photo scene id takes precedence over thread state", () => {
+  assert.equal(resolveLastPhotoSceneId("photo-scene", "user", "feed-scene"), "photo-scene");
+});
+
+
+test("turn photo snapshot does not switch to an image added by a later message", () => {
+  const messages = [
+    { id: "photo-before", role: "assistant", imageUrl: "/dm-before.webp" },
+    { id: "user-turn", role: "user", text: "change pose" },
+    { id: "photo-after", role: "assistant", imageUrl: "/dm-after.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "user-turn")?.imageUrl, "/dm-before.webp");
+});
+
+test("turn photo snapshot uses a user-uploaded image on the current message", () => {
+  const messages = [
+    { id: "old-photo", role: "assistant", imageUrl: "/old.webp" },
+    { id: "user-turn", role: "user", imageUrl: "/uploaded.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "user-turn")?.imageUrl, "/uploaded.webp");
+});
+
+
+test("turn photo snapshot does not guess from newest image when message id is unknown", () => {
+  const messages = [
+    { id: "photo-before", role: "assistant", imageUrl: "/dm-before.webp" },
+    { id: "later-photo", role: "assistant", imageUrl: "/dm-later.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "missing-message"), undefined);
 });

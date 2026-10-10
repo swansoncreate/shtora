@@ -34,12 +34,12 @@ test("Grok gateway returns bounded provider errors for non-2xx responses", async
 
 test("Grok gateway converts malformed JSON and transport failures into safe errors", async () => {
   const previousFetch = globalThis.fetch;
-  const responses = [
-    new Response("{not-json", { status: 200 }),
-    Promise.reject(new Error("socket closed")),
-  ];
-
-  globalThis.fetch = async () => await responses.shift();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response("{not-json", { status: 200 });
+    throw new Error("socket closed");
+  };
 
   try {
     const malformed = await callGrokApp("ping", {});

@@ -5,14 +5,20 @@ import { characterCanon, folderForAccount, getShtoraSettings } from "@/lib/shtor
 import { liveDropboxToken } from "@/lib/dropbox/token";
 import { chatReply, stripChatMeta } from "@/lib/chat/functions";
 import { asBond } from "@/lib/chat/bond";
-import { appendMessage, asWarmth, getThread, markThreadRead } from "@/lib/chat/store";
+import { appendMessage, asWarmth, getThread, markThreadRead, patchThread } from "@/lib/chat/store";
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
+import { diagnosticLog } from "@/lib/diagnostics";
+import { resolveLastPhotoSceneId, resolveTurnPhotoSnapshot } from "@/lib/visual/source-reference";
 import type { ChatWorld } from "@/lib/chat/world";
 
 export async function runLiveTurn(username: string, messageId: string, viewing: boolean, stamp?: number) {
+  const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `dm-${Date.now().toString(36)}`;
+  const startedAt = Date.now();
   const live = getThread(username);
   const last = live?.messages.find((m) => m.id === messageId) || live?.messages.at(-1);
+  const turnPhoto = live && last ? resolveTurnPhotoSnapshot(live.messages, last.id) : undefined;
+  diagnosticLog("info", "dm", "turn started", { traceId, historyCount: live?.messages.length || 0, hasLastMessage: Boolean(last) });
   if (!live || !last || last.role !== "user") return false;
   let userImageDataUrl: string | undefined;
   if (last.imageUrl) {
@@ -39,6 +45,7 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
   try {
     out = await chatReply({
       data: {
+        traceId,
         username: username.slice(0, 40),
         fullName: (profile?.fullName || live.fullName || "").slice(0, 80) || undefined,
         history,
@@ -63,18 +70,35 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
       },
     });
   } catch (err) {
+    diagnosticLog("error", "dm", "request failed before response", {
+      traceId,
+      errorType: err instanceof Error ? err.name : "unknown",
+    }, Date.now() - startedAt);
     toast.error(err instanceof Error ? err.message : "Чат не ответил");
     return false;
   }
   if (!out.ok) {
+    diagnosticLog("error", "dm", "request returned error", { traceId, hasError: Boolean(out.error) }, Date.now() - startedAt);
     toast.error(out.error);
     return false;
   }
   if (!out.dm || !out.log) {
+    diagnosticLog("error", "dm", "response rejected before commit", { traceId, isDm: Boolean(out.dm), hasLog: Boolean(out.log) }, Date.now() - startedAt);
     toast.error("Ответ не записался");
     return false;
   }
-  const saved = await commitBubbles(username, out, viewing, stamp);
+  diagnosticLog("info", "dm", "model output accepted", {
+    traceId,
+    bubbleCount: Array.isArray(out.bubbles) ? out.bubbles.length : 0,
+    photoRequested: Boolean(out.photoKind && out.photoKind !== "none"),
+    hasWorldUpdate: Boolean(out.place || out.clothes || out.hair),
+  });
+  const saved = await commitBubbles(username, out, viewing, stamp, traceId);
+  diagnosticLog("info", "dm", "turn committed", {
+    traceId,
+    savedBubbleCount: saved.bubbles.length,
+    worldUpdated: Boolean(saved.world),
+  }, Date.now() - startedAt);
   if (out.photoKind && out.photoKind !== "none" && out.log) {
     void commitPhoto(
       username,
@@ -86,6 +110,11 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
       Boolean(out.once),
       out.log,
       viewing,
+      last.text || "",
+      traceId,
+      turnPhoto?.imageUrl,
+      turnPhoto?.role,
+      turnPhoto?.debug?.sceneId,
     ).catch((err) => {
       toast.error(err instanceof Error ? err.message : "Кадр не собрался");
     });
@@ -104,7 +133,13 @@ async function commitPhoto(
   once: boolean,
   log: string,
   viewing: boolean,
+  userText: string,
+  traceId?: string,
+  lastPhotoUrl?: string,
+  lastPhotoRole?: "user" | "assistant",
+  lastPhotoSceneId?: string,
 ) {
+  const world = (getThread(username)?.world || {}) as ChatWorld;
   let dropboxToken: string | undefined;
   let dropboxFolder: string | undefined;
   try {
@@ -113,10 +148,8 @@ async function commitPhoto(
   } catch {
     dropboxToken = undefined;
   }
-  const angle = photoKind === "back" || photoKind === "side" || photoKind === "full";
-  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => item.role === "assistant" && item.imageUrl);
-  const world = (getThread(username)?.world || {}) as ChatWorld;
   const media = await sendChatMedia({
+    traceId,
     ready: true,
     kind: photoKind === "circle" ? "selfie" : photoKind,
     circle: photoKind === "circle",
@@ -128,12 +161,14 @@ async function commitPhoto(
     activity: world.activity,
     timeContext: world.timeContext,
     weather: world.weather,
-    userText: "",
+    userText: userText.slice(0, 400),
     dropboxToken,
     dropboxFolder,
     dropboxSeed: `${username}-${Date.now()}`,
     instagramUrls: identityUrls(username),
-    lastPhotoUrl: angle ? lastPic?.imageUrl : undefined,
+    lastPhotoUrl,
+    lastPhotoRole,
+    sceneId: resolveLastPhotoSceneId(lastPhotoSceneId, lastPhotoRole, world.sceneId),
     username,
   });
   if (!media.ok) {
@@ -149,10 +184,18 @@ async function commitPhoto(
       kind: media.kind,
       once,
       seq: nextSeq(username),
-      debug: { imaginePrompt: media.prompt.slice(0, 900), imagineKind: media.kind, want: log },
+      debug: { imaginePrompt: media.prompt.slice(0, 900), imagineKind: media.kind, sceneId: media.sceneId, want: log },
     },
     { incrementUnread: !viewing },
   );
+  if (media.sceneId) {
+    const current = getThread(username);
+    if (current) {
+      await patchThread(username, {
+        world: { ...(current.world || {}), sceneId: media.sceneId },
+      });
+    }
+  }
   if (viewing) await markThreadRead(username);
 }
 

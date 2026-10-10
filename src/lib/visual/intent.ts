@@ -52,7 +52,7 @@ function cameraFromText(text: string): CameraMode | undefined {
 }
 
 function explicitSceneChange(text: string) {
-  return /пошли в|идём в|идем в|переод|другой наряд|другая одеж|на улице|в кафе|в ресторан|в бар|на пляж|в парк|в аэропорт|на вокзал/.test(
+  return /пошли в|идём в|идем в|перейдём в|перейдем в|теперь в|на улице|в кафе|в ресторан|в бар|на пляж|в парк|в аэропорт|на вокзал/.test(
     text.toLowerCase(),
   );
 }
@@ -100,7 +100,7 @@ export function deterministicPhotoIntent(raw: string, previousPhoto = false): Ph
     };
   }
 
-  const continuationAsk = /друг(ую|ой|ое) поз|позу|поменяй поз|измени поз|повернись|развернись|друг(ой|ой) ракурс|ракурс|поближе|подальше|сверху|снизу|переоденься|переодень|смени одеж|другую одеж|другой наряд|в этой же одеж|так же но|теперь иначе|ещ[её] вариант|another pose|different pose|change (the )?pose|different angle|change outfit/i.test(t);
+  const continuationAsk = /продолжи|продолжение|друг(ую|ой|ое) поз|позу|поменяй поз|измени поз|повернись|развернись|друг(ой|ой) ракурс|ракурс|поближе|подальше|сверху|снизу|переоденься|переодень|смени одеж|другую одеж|другой наряд|в этой же одеж|так же но|такую же|такой же|ещ[её] одну|ещ[её] одно|теперь иначе|ещ[её] вариант|another pose|different pose|change (the )?pose|different angle|change outfit|one more/i.test(t);
   if (continuationAsk && previousPhoto && !explicitSceneChange(text)) {
     const changes: string[] = [];
     if (/поз|повернись|развернись/.test(t)) changes.push("change pose");

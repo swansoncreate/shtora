@@ -11,6 +11,7 @@ import { dmHint, settleMove } from "./settle";
 import { consumeVoice } from "./voice-walk";
 import { z } from "zod";
 import { fitDmWorld } from "./world";
+import { serverDiagnostic } from "@/lib/server/diagnostics.server";
 
 export type DmResult = {
   ok: true;
@@ -29,6 +30,10 @@ export type DmResult = {
   placeRu?: string;
   clothesRu?: string;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   clothesNamed?: boolean;
   memAbout?: string;
   memOpen?: string;
@@ -66,14 +71,30 @@ export class DmChat {
     const stage = stageFrom(bond, facts.girlfriend);
     const day = dayNow();
     const slot = input.slot || day.slot;
+    const traceId = input.traceId || `dm-${Date.now().toString(36)}`;
     const world = fitDmWorld(input.world, slot);
+    serverDiagnostic("info", "dm", "turn started", {
+      traceId,
+      ping,
+      historyCount: (input.history || []).length,
+      worldFieldCount: Object.keys(input.world || {}).length,
+      slot,
+      hasUserImage: Boolean(input.userImageDataUrl),
+    });
     const pull = pullOf(bond);
     if (ping && pingClosed(stage, slot, pull, world.memOpen)) return this.empty(pingClosed(stage, slot, pull, world.memOpen) || "ping-closed");
     const last = [...(input.history ?? [])].reverse().find((m) => m.role === "user");
     const text = last?.text || input.lastSnippet || "";
     const hinted = dmHint(text);
     const camera = cameraKindFromText(text);
+    const classifierStartedAt = Date.now();
     const judged = await this.classify(input, text, hinted.hint, hinted.hintNude);
+    serverDiagnostic("info", "dm", "classifier finished", {
+      traceId,
+      move: judged.move,
+      confidence: judged.confidence,
+      durationMs: Date.now() - classifierStartedAt,
+    });
     const settled = settleMove(judged, hinted.hint, hinted.hintNude, text);
     const { move, nude, confidence } = settled;
     const hint = hinted.hint;
@@ -117,7 +138,20 @@ export class DmChat {
       first: await this.shot(input, messages, temp),
       again: (note) => this.shot(input, [...messages, { role: "system", content: note }], temp),
     });
-    if ("failed" in resolved) return { ok: false, error: resolved.failed };
+    if ("failed" in resolved) {
+      serverDiagnostic("error", "dm", "output resolution failed", {
+        traceId,
+        errorType: "voice-resolution-failed",
+      });
+      return { ok: false, error: resolved.failed };
+    }
+    serverDiagnostic("info", "dm", "output parsed", {
+      traceId,
+      bubbleCount: resolved.bubbles.length,
+      photoKind: resolved.photo,
+      worldFieldsPresent: ["place", "clothes", "hair", "activity", "timeContext", "weather"].filter((key) => Boolean(resolved.world[key as keyof typeof resolved.world])).length,
+      hasMemoryUpdate: Boolean(resolved.world.memAbout || resolved.world.memOpen || resolved.world.memDodged),
+    });
     return this.pack(
       input,
       resolved.world,
@@ -175,6 +209,10 @@ export class DmChat {
       placeRu: world.placeRu,
       clothesRu: world.clothesRu,
       hairRu: world.hairRu,
+      activity: world.activity,
+      timeContext: world.timeContext,
+      weather: world.weather,
+      sceneId: world.sceneId,
       clothesNamed: world.clothesNamed,
       memAbout: world.memAbout,
       memOpen: world.memOpen,
@@ -248,7 +286,29 @@ export class DmChat {
   }
 
   private async ask(input: BrainInput, messages: unknown[], temperature: number) {
+    const startedAt = Date.now();
+    let requestBytes = 0;
+    try {
+      requestBytes = JSON.stringify(messages).length;
+    } catch {
+      requestBytes = -1;
+    }
+    serverDiagnostic("info", "model", "request started", {
+      traceId: input.traceId || "untraced",
+      engine: input.chatEngine || "grok",
+      modelConfigured: Boolean(input.chatModel),
+      temperature,
+      messageCount: Array.isArray(messages) ? messages.length : 0,
+      requestBytes,
+    });
     const out = await runChatModel(input, messages, temperature, true);
+    serverDiagnostic(out.ok ? "info" : "error", "model", out.ok ? "request finished" : "request failed", {
+      traceId: input.traceId || "untraced",
+      engine: input.chatEngine || "grok",
+      ok: out.ok,
+      responseChars: out.ok ? out.content.length : 0,
+      errorPresent: !out.ok,
+    }, Date.now() - startedAt);
     if (!out.ok) return { ok: false as const, error: out.error, content: "" };
     return { ok: true as const, content: out.content, error: "" };
   }

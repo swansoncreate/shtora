@@ -102,7 +102,8 @@ export class FeedEngine {
     this.filling = true;
     this.emit();
     const startedAt = Date.now();
-    diagnosticLog("info", "feed", "fill started", { force, favorites: favorites.length });
+    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `feed-${Date.now().toString(36)}`;
+    diagnosticLog("info", "feed", "fill started", { traceId, force, favorites: favorites.length });
     let added = 0;
     try {
       let tries = 0;
@@ -112,10 +113,10 @@ export class FeedEngine {
         tries += 1;
         let post: Awaited<ReturnType<typeof generateNextDaily>>;
         try {
-          post = await withFeedDeadline(generateNextDaily(favorites), "feed generation");
+          post = await withFeedDeadline(generateNextDaily(favorites, traceId), "feed generation");
         } catch (error) {
           console.warn("[shtora:feed] generation stopped; keeping existing posts", error);
-          diagnosticLog("error", "feed", "generation failed or timed out", { error: error instanceof Error ? error.message : String(error), tries }, Date.now() - startedAt);
+          diagnosticLog("error", "feed", "generation failed or timed out", { traceId, errorType: error instanceof Error ? error.name : "unknown", tries }, Date.now() - startedAt);
           break;
         }
         if (!post) break;
@@ -125,13 +126,14 @@ export class FeedEngine {
         cur.posts.unshift(post);
         saveDaily(cur);
         added += 1;
+        diagnosticLog("info", "feed", "post persisted", { traceId, postId: post.id, postCount: cur.posts.length, added });
         this.emit();
       }
     } finally {
       if (this.fillGen === gen) {
         this.filling = false;
         this.emit();
-        diagnosticLog("info", "feed", "fill finished", { added, visiblePosts: this.cards.length }, Date.now() - startedAt);
+        diagnosticLog("info", "feed", "fill finished", { traceId, added, visiblePosts: this.cards.length }, Date.now() - startedAt);
       }
     }
     return added;
@@ -144,17 +146,18 @@ export class FeedEngine {
     this.filling = true;
     this.emit();
     const startedAt = Date.now();
-    diagnosticLog("info", "feed", "regeneration started", { favorites: names.length });
+    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `feed-${Date.now().toString(36)}`;
+    diagnosticLog("info", "feed", "regeneration started", { traceId, favorites: names.length });
     let added = 0;
     try {
       for (const name of names) {
         if (this.fillGen !== gen) return added;
         let post: Awaited<ReturnType<typeof generateExtraPost>>;
         try {
-          post = await withFeedDeadline(generateExtraPost(name, names), "feed regeneration");
+          post = await withFeedDeadline(generateExtraPost(name, names, traceId), "feed regeneration");
         } catch (error) {
           console.warn("[shtora:feed] regeneration stopped; keeping existing posts", error);
-          diagnosticLog("error", "feed", "regeneration failed or timed out", { error: error instanceof Error ? error.message : String(error), username: name }, Date.now() - startedAt);
+          diagnosticLog("error", "feed", "regeneration failed or timed out", { traceId, errorType: error instanceof Error ? error.name : "unknown", username: name }, Date.now() - startedAt);
           continue;
         }
         if (!post) continue;
@@ -164,13 +167,14 @@ export class FeedEngine {
         cur.posts.unshift(post);
         saveDaily(cur);
         added += 1;
+        diagnosticLog("info", "feed", "post persisted", { traceId, postId: post.id, postCount: cur.posts.length, added });
         this.emit();
       }
     } finally {
       if (this.fillGen === gen) {
         this.filling = false;
         this.emit();
-        diagnosticLog("info", "feed", "regeneration finished", { added, visiblePosts: this.cards.length }, Date.now() - startedAt);
+        diagnosticLog("info", "feed", "regeneration finished", { traceId, added, visiblePosts: this.cards.length }, Date.now() - startedAt);
       }
     }
     return added;

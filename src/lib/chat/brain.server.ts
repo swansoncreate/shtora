@@ -28,6 +28,7 @@ export type BrainTurn = {
 };
 
 export type BrainInput = {
+  traceId?: string;
   username: string;
   fullName?: string;
   history?: BrainTurn[];

@@ -30,6 +30,7 @@ export type ChatDebug = {
   lastMove?: string;
   imaginePrompt?: string;
   imagineKind?: string;
+  sceneId?: string;
 };
 
 export type ChatMessage = {
@@ -280,6 +281,15 @@ function messagesOverlap(a: ChatMessage[], b: ChatMessage[]) {
   return b.some((m) => (m.id && ids.has(m.id)) || sigs.has(msgSig(m)));
 }
 
+function mergeWorldState(older?: ChatWorld, newer?: ChatWorld): ChatWorld | undefined {
+  if (!older && !newer) return undefined;
+  const merged: ChatWorld = { ...(older || {}) };
+  for (const [key, value] of Object.entries(newer || {})) {
+    if (value !== undefined && value !== null && value !== "") Object.assign(merged, { [key]: value });
+  }
+  return merged;
+}
+
 function mergeThread(local: ChatThread | undefined, remote: ChatThread): ChatThread {
   if (!local) return remote;
   const localAt = local.updatedAt || 0;
@@ -299,7 +309,7 @@ function mergeThread(local: ChatThread | undefined, remote: ChatThread): ChatThr
     marks: local.marks || newer.marks,
     warmth: newer.warmth,
     bond: newer.bond || older.bond,
-    world: newer.world || older.world,
+    world: mergeWorldState(older.world, newer.world),
     memory: newer.memory || older.memory,
     mood: newer.mood || older.mood,
     arc: newer.arc || older.arc,

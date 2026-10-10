@@ -10,6 +10,7 @@ import {
   withExt,
 } from "./paths";
 import { isShtoraPhotoTag } from "./tags";
+import { rankDropboxCandidates } from "./source-selection";
 
 const API = "https://api.dropboxapi.com/2";
 const CONTENT = "https://content.dropboxapi.com/2";
@@ -489,14 +490,21 @@ export async function pickDropboxImageSource(
   const tagged = await taggedDropboxImages(t, clean);
   if (!tagged.length) return undefined;
 
-  const excluded = new Set((opts.excludePaths || []).map((p) => p.trim().toLowerCase()).filter(Boolean));
   const faces = tagged.filter((f) => isFaceLikelyPath(f.path));
   const pool = faces.length ? faces : tagged.filter((f) => !/_cover|\/видео\/|\/video\//i.test(f.path));
   const usable = pool.length ? pool : tagged;
-  const filtered = usable.filter((f) => !excluded.has(f.path.toLowerCase()));
-  const list = filtered.length ? filtered : usable;
-  const shuffled = opts.seed ? seededShuffle(list, opts.seed) : [...list].sort((a, b) => b.at.localeCompare(a.at));
-  const start = opts.seed ? 0 : Math.abs(opts.skip || 0) % shuffled.length;
+  const { candidates: list, exhaustedExclusions } = rankDropboxCandidates(usable, opts.excludePaths || []);
+  // Randomize only while fresh candidates exist. If every file was used recently,
+  // walk least-recently-used paths first instead of randomly repeating one.
+  let shuffled: ListedImage[];
+  if (opts.seed && !exhaustedExclusions) {
+    shuffled = seededShuffle(list, opts.seed);
+  } else if (exhaustedExclusions) {
+    shuffled = [...list];
+  } else {
+    shuffled = [...list].sort((a, b) => b.at.localeCompare(a.at));
+  }
+  const start = opts.seed || exhaustedExclusions ? 0 : Math.abs(opts.skip || 0) % shuffled.length;
   const tries = Math.min(shuffled.length, 16);
   for (let i = 0; i < tries; i += 1) {
     const pick = shuffled[(start + i) % shuffled.length];
