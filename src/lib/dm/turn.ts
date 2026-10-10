@@ -85,7 +85,7 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
     photoRequested: Boolean(out.photoKind && out.photoKind !== "none"),
     hasWorldUpdate: Boolean(out.place || out.clothes || out.hair),
   });
-  const saved = await commitBubbles(username, out, viewing, stamp);
+  const saved = await commitBubbles(username, out, viewing, stamp, traceId);
   diagnosticLog("info", "dm", "turn committed", {
     traceId,
     savedBubbleCount: saved.bubbles.length,
