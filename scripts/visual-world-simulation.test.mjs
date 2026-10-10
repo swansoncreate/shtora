@@ -7,6 +7,7 @@ await register(pathToFileURL(new URL("./src-alias-hook.mjs", import.meta.url).pa
 
 const { deterministicPhotoIntent } = await import("../src/lib/visual/intent.ts");
 const { resolveScene } = await import("../src/lib/visual/scene.ts");
+const { resolveContinuationMemory } = await import("../src/lib/visual/source-reference.ts");
 
 test("simulated Instagram chat photo flow keeps camera continuity", () => {
   let previousPhoto = false;
@@ -149,4 +150,57 @@ test("semantic intent parser falls back safely on malformed provider output", as
   const fallback = deterministicPhotoIntent("теперь боком", true);
   assert.equal(parseSemanticPhotoIntent("not-json", fallback).camera, "side");
   assert.equal(parseSemanticPhotoIntent(JSON.stringify({ mode: "invalid" }), fallback).camera, "side");
+});
+
+test("cached chat-photo URL mismatch falls back to its scene, not the latest feed image", () => {
+  const feedMemory = {
+    id: "feed-1",
+    username: "alice",
+    imageUrl: "/chat-media/feed-image.webp",
+    createdAt: 6000,
+    scene: { place: "street", clothes: "blue coat", sceneId: "feed-scene" },
+    camera: { mode: "candid" },
+    source: "generated",
+    sceneId: "feed-scene",
+  };
+  const dmMemory = {
+    id: "dm-1",
+    username: "alice",
+    imageUrl: "/chat-media/persisted-dm-image.webp",
+    createdAt: 5000,
+    scene: { place: "bathroom", clothes: "black shirt", sceneId: "dm-scene" },
+    camera: { mode: "selfie" },
+    source: "generated",
+    sceneId: "dm-scene",
+  };
+
+  // The chat bubble can point at a cache URL while visual memory stores the persisted URL.
+  const selected = resolveContinuationMemory(
+    [feedMemory, dmMemory],
+    "/api/chat-media?id=local-cache-id",
+    "dm-scene",
+  );
+  assert.equal(selected?.id, "dm-1");
+  assert.equal(selected?.scene.place, "bathroom");
+  assert.equal(selected?.scene.clothes, "black shirt");
+});
+
+test("continuation resolution prefers the exact source photo when URLs match", () => {
+  const source = {
+    id: "source",
+    username: "alice",
+    imageUrl: "/chat-media/source.webp",
+    createdAt: 5000,
+    scene: { place: "bathroom", clothes: "black shirt", sceneId: "dm-scene" },
+    camera: { mode: "selfie" },
+    source: "generated",
+    sceneId: "dm-scene",
+  };
+  const other = {
+    ...source,
+    id: "other",
+    imageUrl: "/chat-media/other.webp",
+    createdAt: 6000,
+  };
+  assert.equal(resolveContinuationMemory([other, source], source.imageUrl, "dm-scene")?.id, "source");
 });
