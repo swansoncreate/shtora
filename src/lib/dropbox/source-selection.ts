@@ -14,7 +14,8 @@ export function rankDropboxCandidates<T extends DropboxCandidate>(
   const fresh = candidates.filter((item) => !excluded.has(item.path.trim().toLowerCase()));
   if (fresh.length) return { candidates: fresh, exhaustedExclusions: false };
 
-  const recentIndex = new Map(recent.map((path, index) => [path, index]));
+  const recentIndex = new Map<string, number>();
+  recent.forEach((path, index) => recentIndex.set(path, index));
   const ordered = [...candidates].sort((a, b) => {
     const aIndex = recentIndex.get(a.path.trim().toLowerCase()) ?? -1;
     const bIndex = recentIndex.get(b.path.trim().toLowerCase()) ?? -1;
