@@ -153,14 +153,19 @@ export function planLifeScene(input: {
   const slot = hour < 11 ? "morning" : hour < 17 ? "daytime" : hour < 23 ? "evening" : "late night";
   const seed = input.username + ":" + now.toString(36);
   const entry = distinctPlace(PLACES, input.recentPlaces, seed, "place");
-  const outfit = makeOutfit(seed, input.recentOutfits);
+  const world = input.world;
+  // The feed may vary framing and pose, but it must not silently reset the character's current world.
+  const place = world?.place?.trim() || entry[0];
+  const activity = world?.activity?.trim() || (world?.place ? "continuing her current day" : entry[1]);
+  const timeContext = world?.timeContext?.trim() || slot;
+  const weather = world?.weather?.trim() || pick(WEATHER, seed, "weather");
+  const outfit = world?.clothes?.trim() || makeOutfit(seed, input.recentOutfits);
   const pose = pick(POSES, seed, "pose");
-  const weather = pick(WEATHER, seed, "weather");
   const camera: CameraMode = pose.startsWith("small mirror") ? "mirror" : (pick(["selfie", "full", "candid"], seed, "camera") as CameraMode);
   return {
-    place: entry[0],
-    activity: entry[1],
-    timeContext: slot,
+    place,
+    activity,
+    timeContext,
     weather,
     outfit,
     pose,
