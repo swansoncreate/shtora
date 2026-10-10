@@ -136,6 +136,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       userText: z.string().max(400).optional(),
       context: z.string().max(500).optional(),
       scene: z.string().max(300).optional(),
+      clothes: z.string().max(160).optional(),
       hair: z.string().max(120).optional(),
       activity: z.string().max(160).optional(),
       timeContext: z.string().max(80).optional(),
@@ -190,7 +191,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       const intentClothes = intent.mode === "new_scene" ? intent.clothes : undefined;
       const baseContext: VisualContext = {
         place: data.scene || intentScene || previous?.scene?.place,
-        clothes: intentClothes || previous?.scene?.clothes,
+        clothes: data.clothes || intentClothes || previous?.scene?.clothes,
         hair: data.hair || previous?.scene?.hair,
         activity: data.activity || previous?.scene?.activity,
         timeContext: data.timeContext || previous?.scene?.timeContext,
