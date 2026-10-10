@@ -21,13 +21,16 @@ export function serverDiagnostic(
   durationMs?: number,
 ) {
   const clean: Record<string, string | number | boolean | null> = {};
+  const traceId = typeof details.traceId === "string" ? details.traceId.slice(0, 100) : undefined;
   for (const [key, value] of Object.entries(details).slice(0, 30)) {
+    if (key === "traceId") continue;
     const safe = safeValue(key, value);
     if (safe !== undefined) clean[key] = safe;
   }
   const entry = {
     at: new Date().toISOString(),
     level,
+    ...(traceId ? { traceId } : {}),
     area: area.slice(0, 40),
     event: event.slice(0, 100),
     ...(Number.isFinite(durationMs) ? { durationMs: Math.max(0, Math.round(durationMs!)) } : {}),
