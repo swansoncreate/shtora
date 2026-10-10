@@ -494,7 +494,6 @@ function isSpicy(userText: string, kind: string) {
 export const buildPersona = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      traceId: z.string().max(100).optional(),
       username: z.string().min(1).max(40),
       fullName: z.string().max(80).optional(),
       bio: z.string().max(400).optional(),
