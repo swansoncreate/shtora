@@ -131,6 +131,8 @@ async function commitPhoto(
   userText: string,
   traceId?: string,
 ) {
+  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => Boolean(item.imageUrl));
+  const world = (getThread(username)?.world || {}) as ChatWorld;
   let dropboxToken: string | undefined;
   let dropboxFolder: string | undefined;
   try {
@@ -139,8 +141,6 @@ async function commitPhoto(
   } catch {
     dropboxToken = undefined;
   }
-  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => Boolean(item.imageUrl));
-  const world = (getThread(username)?.world || {}) as ChatWorld;
   const media = await sendChatMedia({
     traceId,
     ready: true,
