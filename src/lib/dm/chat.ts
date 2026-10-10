@@ -134,7 +134,20 @@ export class DmChat {
       first: await this.shot(input, messages, temp),
       again: (note) => this.shot(input, [...messages, { role: "system", content: note }], temp),
     });
-    if ("failed" in resolved) return { ok: false, error: resolved.failed };
+    if ("failed" in resolved) {
+      serverDiagnostic("error", "dm", "output resolution failed", {
+        traceId,
+        errorType: "voice-resolution-failed",
+      });
+      return { ok: false, error: resolved.failed };
+    }
+    serverDiagnostic("info", "dm", "output parsed", {
+      traceId,
+      bubbleCount: resolved.bubbles.length,
+      photoKind: resolved.photo,
+      worldFieldsPresent: ["place", "clothes", "hair", "activity", "timeContext", "weather"].filter((key) => Boolean(resolved.world[key as keyof typeof resolved.world])).length,
+      hasMemoryUpdate: Boolean(resolved.world.memAbout || resolved.world.memOpen || resolved.world.memDodged),
+    });
     return this.pack(
       input,
       resolved.world,
