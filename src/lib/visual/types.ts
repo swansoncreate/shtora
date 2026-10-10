@@ -51,6 +51,7 @@ export type VisualMemory = {
 
 export type ScenePlan = {
   place: string;
+  hair?: string;
   activity: string;
   timeContext: string;
   weather: string;
