@@ -14,6 +14,10 @@ export type CommitPatch = {
   placeRu?: string;
   clothesRu?: string;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   clothesNamed?: boolean;
   memAbout?: string;
   memOpen?: string;
@@ -37,10 +41,10 @@ export async function commitBubbles(username: string, out: CommitPatch, viewing:
     clothesRu: out.clothesRu ?? live?.world?.clothesRu,
     hairRu: out.hairRu ?? live?.world?.hairRu,
     clothesNamed: out.clothesNamed ?? live?.world?.clothesNamed,
-    activity: live?.world?.activity,
-    timeContext: live?.world?.timeContext,
-    weather: live?.world?.weather,
-    sceneId: live?.world?.sceneId,
+    activity: out.activity ?? live?.world?.activity,
+    timeContext: out.timeContext ?? live?.world?.timeContext,
+    weather: out.weather ?? live?.world?.weather,
+    sceneId: out.sceneId ?? live?.world?.sceneId,
     memAbout: out.memAbout ?? live?.world?.memAbout,
     memOpen: out.memOpen ?? live?.world?.memOpen,
     memDodged: out.memDodged ?? live?.world?.memDodged,
