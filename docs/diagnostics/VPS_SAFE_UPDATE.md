@@ -98,7 +98,7 @@ Do not deploy from the feature branch by changing the branch name inside an exis
 
 A dedicated code-only updater has been added at `scripts/deploy-vps-code-only.sh`. It builds in a temporary clone, explicitly skips `npm run build` because that command also runs database migrations, checks free disk space, backs up `data` and the existing build, stages output before stopping the service, switches the build, and rolls back the previous artifact if local health checks fail. It does not edit Nginx, authentication configuration, systemd unit files, or the diagnostics timer.
 
-The updater is **not yet approved for live use** until its shell syntax passes CI and the owner completes Phase A on the actual VPS. It assumes `/opt/shtora`, the `release/grok-build-functional` branch, port 8080, `shtora.service`, and a Vercel/Nitro output shape. Stop if any assumption differs.
+The updater is **not yet approved for live use** until its shell syntax passes CI and the owner completes Phase A on the actual VPS. It assumes `/opt/shtora`, the `release/grok-build-functional` branch for the temporary source clone, port 8080, `shtora.service`, a separate `/opt/shtora/data` directory, and a Vercel/Nitro output shape. It does not require `/opt/shtora` itself to be a Git checkout. Stop if any runtime/path assumption differs.
 
 The existing `deploy-vps-session-auth-prebuilt.sh` is **not** this code-only procedure: it also configures session auth/Nginx and installs a host diagnostics timer. Do not use it for a routine code update.
 
