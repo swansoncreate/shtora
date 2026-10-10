@@ -96,9 +96,11 @@ Do not deploy from the feature branch by changing the branch name inside an exis
 
 ## Phase E — deployment and verification
 
-Use a dedicated code-only deployment procedure after the release gate. It must build in a temporary directory, leave `/opt/shtora/data` untouched, preserve the existing build until the replacement has built successfully, switch builds atomically, restart only the verified service, and automatically restore the old build if health checks fail.
+A dedicated code-only updater has been added at `scripts/deploy-vps-code-only.sh`. It builds in a temporary clone, explicitly skips `npm run build` because that command also runs database migrations, checks free disk space, backs up `data` and the existing build, stages output before stopping the service, switches the build, and rolls back the previous artifact if local health checks fail. It does not edit Nginx, authentication configuration, systemd unit files, or the diagnostics timer.
 
-The existing `deploy-vps-session-auth-prebuilt.sh` is **not** this code-only procedure: it also configures session auth/Nginx and installs a host diagnostics timer. Do not use it for this PR without separately reviewing those side effects.
+The updater is **not yet approved for live use** until its shell syntax passes CI and the owner completes Phase A on the actual VPS. It assumes `/opt/shtora`, the `release/grok-build-functional` branch, port 8080, `shtora.service`, and a Vercel/Nitro output shape. Stop if any assumption differs.
+
+The existing `deploy-vps-session-auth-prebuilt.sh` is **not** this code-only procedure: it also configures session auth/Nginx and installs a host diagnostics timer. Do not use it for a routine code update.
 
 After the code-only switch, check:
 
@@ -122,4 +124,4 @@ The actual rollback commands must use the service name and backup timestamp reco
 
 ## Current decision
 
-**Prepared, not deployed.** The next engineering task is to create and test a dedicated code-only VPS updater/rollback script, then perform a live preflight with the owner. No VPS state is changed by following the preparation stage alone.
+**Prepared, not deployed.** The code-only updater is committed on the feature branch and is included in CI shell-syntax checks. After CI passes, perform the live read-only preflight with the owner before deciding whether it is safe to use. No VPS state is changed by preparing this procedure or adding the script.
