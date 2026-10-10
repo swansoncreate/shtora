@@ -8,6 +8,7 @@ await register(pathToFileURL(new URL("./src-alias-hook.mjs", import.meta.url).pa
 const { deterministicPhotoIntent } = await import("../src/lib/visual/intent.ts");
 const { resolveScene } = await import("../src/lib/visual/scene.ts");
 const { resolveContinuationMemory } = await import("../src/lib/visual/source-reference.ts");
+const { resolveLastPhotoSceneId } = await import("../src/lib/visual/source-reference.ts");
 
 test("simulated Instagram chat photo flow keeps camera continuity", () => {
   let previousPhoto = false;
@@ -220,4 +221,16 @@ test("continuation resolution never guesses from unrelated latest memory", () =>
     resolveContinuationMemory([unrelated], "/api/chat-media?id=missing", undefined),
     undefined,
   );
+});
+
+test("user-uploaded photo does not inherit unrelated thread scene id", () => {
+  assert.equal(resolveLastPhotoSceneId(undefined, "user", "feed-scene"), undefined);
+});
+
+test("assistant photo may use thread scene id when legacy photo lacks one", () => {
+  assert.equal(resolveLastPhotoSceneId(undefined, "assistant", "dm-scene"), "dm-scene");
+});
+
+test("explicit photo scene id takes precedence over thread state", () => {
+  assert.equal(resolveLastPhotoSceneId("photo-scene", "user", "feed-scene"), "photo-scene");
 });
