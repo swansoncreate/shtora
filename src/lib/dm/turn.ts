@@ -8,11 +8,15 @@ import { asBond } from "@/lib/chat/bond";
 import { appendMessage, asWarmth, getThread, markThreadRead } from "@/lib/chat/store";
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
+import { diagnosticLog } from "@/lib/diagnostics";
 import type { ChatWorld } from "@/lib/chat/world";
 
 export async function runLiveTurn(username: string, messageId: string, viewing: boolean, stamp?: number) {
+  const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `dm-${Date.now().toString(36)}`;
+  const startedAt = Date.now();
   const live = getThread(username);
   const last = live?.messages.find((m) => m.id === messageId) || live?.messages.at(-1);
+  diagnosticLog("info", "dm", "turn started", { traceId, historyCount: live?.messages.length || 0, hasLastMessage: Boolean(last) });
   if (!live || !last || last.role !== "user") return false;
   let userImageDataUrl: string | undefined;
   if (last.imageUrl) {
@@ -39,6 +43,7 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
   try {
     out = await chatReply({
       data: {
+        traceId,
         username: username.slice(0, 40),
         fullName: (profile?.fullName || live.fullName || "").slice(0, 80) || undefined,
         history,
@@ -74,7 +79,18 @@ export async function runLiveTurn(username: string, messageId: string, viewing: 
     toast.error("Ответ не записался");
     return false;
   }
+  diagnosticLog("info", "dm", "model output accepted", {
+    traceId,
+    bubbleCount: Array.isArray(out.bubbles) ? out.bubbles.length : 0,
+    photoRequested: Boolean(out.photoKind && out.photoKind !== "none"),
+    hasWorldUpdate: Boolean(out.place || out.clothes || out.hair),
+  });
   const saved = await commitBubbles(username, out, viewing, stamp);
+  diagnosticLog("info", "dm", "turn committed", {
+    traceId,
+    savedBubbleCount: saved.bubbles.length,
+    worldUpdated: Boolean(saved.world),
+  }, Date.now() - startedAt);
   if (out.photoKind && out.photoKind !== "none" && out.log) {
     void commitPhoto(
       username,
