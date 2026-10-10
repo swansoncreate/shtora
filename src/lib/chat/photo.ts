@@ -352,11 +352,12 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           }, Date.now() - startedAt);
         }
       }
-      serverDiagnostic("info", "visual", "image persisted", {
+      const imagePersistedLocally = Boolean(persistedUrl && /\/chat-media\//.test(persistedUrl));
+      serverDiagnostic("info", "visual", "image persistence resolved", {
         traceId,
         kind: data.kind,
-        imagePersistedLocally: Boolean(persistedUrl),
-        usingRemoteFallback: !persistedUrl,
+        imagePersistedLocally,
+        usingUnpersistedFallback: !imagePersistedLocally,
         hasJob: Boolean(job),
       }, Date.now() - startedAt);
 
