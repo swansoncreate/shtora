@@ -30,6 +30,10 @@ export type DmResult = {
   placeRu?: string;
   clothesRu?: string;
   hairRu?: string;
+  activity?: string;
+  timeContext?: string;
+  weather?: string;
+  sceneId?: string;
   clothesNamed?: boolean;
   memAbout?: string;
   memOpen?: string;
@@ -205,6 +209,10 @@ export class DmChat {
       placeRu: world.placeRu,
       clothesRu: world.clothesRu,
       hairRu: world.hairRu,
+      activity: world.activity,
+      timeContext: world.timeContext,
+      weather: world.weather,
+      sceneId: world.sceneId,
       clothesNamed: world.clothesNamed,
       memAbout: world.memAbout,
       memOpen: world.memOpen,
