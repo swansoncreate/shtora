@@ -274,7 +274,7 @@ export function isSameFeedDay(at: number) {
   return moscowDay(at || 0) === todayKey();
 }
 
-export async function generateNextDaily(prefer: string[]): Promise<DailyPost | null> {
+export async function generateNextDaily(prefer: string[], traceId?: string): Promise<DailyPost | null> {
   await hydrateChats().catch(() => undefined);
   const state = loadDaily();
   const names = pickUsernames(prefer);
@@ -294,7 +294,7 @@ export async function generateNextDaily(prefer: string[]): Promise<DailyPost | n
         continue;
       }
       try {
-        const post = await generateFor(username, slot, prefer);
+        const post = await generateFor(username, slot, prefer, false, traceId);
         if (post) return post;
       } catch {
         /* next account */
@@ -309,6 +309,7 @@ async function generateFor(
   slot: FeedSlot,
   favorites: string[],
   extra = false,
+  parentTraceId?: string,
 ): Promise<DailyPost | null> {
   const settings = getShtoraSettings();
   let dropboxToken: string | undefined;
@@ -320,7 +321,7 @@ async function generateFor(
   const folder = folderForAccount(username, settings);
   const ownFolder = /\/общее$/i.test(folder) ? undefined : folder;
   const seed = username + "-" + slot + "-" + todayKey();
-  const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `feed-${Date.now().toString(36)}`;
+  const traceId = parentTraceId || (typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `feed-${Date.now().toString(36)}`);
   const thread = getThread(username);
   const world = thread?.world;
   const worldLine = [
@@ -386,8 +387,8 @@ async function generateFor(
   return post;
 }
 
-export async function generateExtraPost(username: string, favorites: string[]): Promise<DailyPost | null> {
+export async function generateExtraPost(username: string, favorites: string[], traceId?: string): Promise<DailyPost | null> {
   const hour = moscowHour();
   const slot: FeedSlot = hour < 17 ? "morning" : "evening";
-  return generateFor(username, slot, favorites, true);
+  return generateFor(username, slot, favorites, true, traceId);
 }
