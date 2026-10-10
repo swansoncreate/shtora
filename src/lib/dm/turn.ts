@@ -5,7 +5,7 @@ import { characterCanon, folderForAccount, getShtoraSettings } from "@/lib/shtor
 import { liveDropboxToken } from "@/lib/dropbox/token";
 import { chatReply, stripChatMeta } from "@/lib/chat/functions";
 import { asBond } from "@/lib/chat/bond";
-import { appendMessage, asWarmth, getThread, markThreadRead } from "@/lib/chat/store";
+import { appendMessage, asWarmth, getThread, markThreadRead, patchThread } from "@/lib/chat/store";
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
 import { diagnosticLog } from "@/lib/diagnostics";
@@ -181,6 +181,14 @@ async function commitPhoto(
     },
     { incrementUnread: !viewing },
   );
+  if (media.sceneId) {
+    const current = getThread(username);
+    if (current) {
+      await patchThread(username, {
+        world: { ...(current.world || {}), sceneId: media.sceneId },
+      });
+    }
+  }
   if (viewing) await markThreadRead(username);
 }
 
