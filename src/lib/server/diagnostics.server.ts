@@ -5,9 +5,10 @@ const MAX_BYTES = 3 * 1024 * 1024;
 const MAX_BACKUPS = 3;
 let writeQueue: Promise<unknown> = Promise.resolve();
 
-function safeValue(key: string, value: unknown): string | number | boolean | null | undefined {
-  if (/password|secret|token|cookie|authorization|prompt|message|text|image|url|body|payload|content|email|username/i.test(key)) return undefined;
+export function safeDiagnosticValue(key: string, value: unknown): string | number | boolean | null | undefined {
+  // Preserve safe scalar telemetry (counts, durations, and hasX flags) even when the key mentions a sensitive field.
   if (typeof value === "number" || typeof value === "boolean" || value === null) return value;
+  if (/password|secret|token|cookie|authorization|prompt|message|text|image|url|body|payload|content|email|username/i.test(key)) return undefined;
   if (value instanceof Error) return value.name;
   if (typeof value === "string") return value.slice(0, 160).replace(/https?:\/\/\S+/gi, "[url]");
   return undefined;
@@ -24,7 +25,7 @@ export function serverDiagnostic(
   const traceId = typeof details.traceId === "string" ? details.traceId.slice(0, 100) : undefined;
   for (const [key, value] of Object.entries(details).slice(0, 30)) {
     if (key === "traceId") continue;
-    const safe = safeValue(key, value);
+    const safe = safeDiagnosticValue(key, value);
     if (safe !== undefined) clean[key] = safe;
   }
   const entry = {
