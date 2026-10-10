@@ -204,6 +204,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           sceneIdProvided: Boolean(data.sceneId),
           sceneIdMatch: Boolean(sceneIdReference),
           hasSceneContext: Boolean(sceneReference),
+          referenceResolution: sourcePhotoReference ? "source-url" : sceneIdReference ? "scene-id" : "none",
         });
       }
 
