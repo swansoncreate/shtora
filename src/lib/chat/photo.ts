@@ -5,6 +5,7 @@ import type { VisualContext } from "@/lib/visual/types";
 import { planLifeScene, planPrompt } from "@/lib/visual/planner";
 import { makeSceneId, resolveScene } from "@/lib/visual/scene";
 import { serverDiagnostic } from "@/lib/server/diagnostics.server";
+import { resolveContinuationMemory } from "@/lib/visual/source-reference";
 
 function trimDataImage(raw?: string) {
   const s = (raw || "").trim();
@@ -189,13 +190,15 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       // A continuation must inherit context from its own scene, not whichever unrelated image was generated most recently (e.g. a feed post).
       const isLastPhotoContinuation = "reference" in intent && intent.reference === "last_photo";
       const memories = username && isLastPhotoContinuation ? await listVisualMemory(username) : [];
-      const sourcePhotoReference = isLastPhotoContinuation
-        ? memories.find((item) => Boolean(data.sourceImageUrl) && item.imageUrl === data.sourceImageUrl)
+      const sceneReference = isLastPhotoContinuation
+        ? resolveContinuationMemory(memories, data.sourceImageUrl, data.sceneId)
+        : latest;
+      const sourcePhotoReference = isLastPhotoContinuation && data.sourceImageUrl
+        ? memories.find((item) => item.imageUrl === data.sourceImageUrl)
         : undefined;
-      const sceneIdReference = isLastPhotoContinuation
-        ? memories.find((item) => Boolean(data.sceneId) && item.sceneId === data.sceneId)
+      const sceneIdReference = isLastPhotoContinuation && data.sceneId
+        ? memories.find((item) => item.sceneId === data.sceneId)
         : undefined;
-      const sceneReference = isLastPhotoContinuation ? sourcePhotoReference || sceneIdReference : latest;
       if (isLastPhotoContinuation) {
         serverDiagnostic("info", "visual", "continuation source context resolved", {
           traceId,
