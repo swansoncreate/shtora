@@ -253,3 +253,12 @@ test("turn photo snapshot uses a user-uploaded image on the current message", ()
   ];
   assert.equal(resolveTurnPhotoSnapshot(messages, "user-turn")?.imageUrl, "/uploaded.webp");
 });
+
+
+test("turn photo snapshot does not guess from newest image when message id is unknown", () => {
+  const messages = [
+    { id: "photo-before", role: "assistant", imageUrl: "/dm-before.webp" },
+    { id: "later-photo", role: "assistant", imageUrl: "/dm-later.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "missing-message"), undefined);
+});
