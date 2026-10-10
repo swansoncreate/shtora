@@ -9,6 +9,7 @@ const { deterministicPhotoIntent } = await import("../src/lib/visual/intent.ts")
 const { resolveScene } = await import("../src/lib/visual/scene.ts");
 const { resolveContinuationMemory } = await import("../src/lib/visual/source-reference.ts");
 const { resolveLastPhotoSceneId } = await import("../src/lib/visual/source-reference.ts");
+const { resolveTurnPhotoSnapshot } = await import("../src/lib/visual/source-reference.ts");
 
 test("simulated Instagram chat photo flow keeps camera continuity", () => {
   let previousPhoto = false;
@@ -233,4 +234,22 @@ test("assistant photo may use thread scene id when legacy photo lacks one", () =
 
 test("explicit photo scene id takes precedence over thread state", () => {
   assert.equal(resolveLastPhotoSceneId("photo-scene", "user", "feed-scene"), "photo-scene");
+});
+
+
+test("turn photo snapshot does not switch to an image added by a later message", () => {
+  const messages = [
+    { id: "photo-before", role: "assistant", imageUrl: "/dm-before.webp" },
+    { id: "user-turn", role: "user", text: "change pose" },
+    { id: "photo-after", role: "assistant", imageUrl: "/dm-after.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "user-turn")?.imageUrl, "/dm-before.webp");
+});
+
+test("turn photo snapshot uses a user-uploaded image on the current message", () => {
+  const messages = [
+    { id: "old-photo", role: "assistant", imageUrl: "/old.webp" },
+    { id: "user-turn", role: "user", imageUrl: "/uploaded.webp" },
+  ];
+  assert.equal(resolveTurnPhotoSnapshot(messages, "user-turn")?.imageUrl, "/uploaded.webp");
 });
