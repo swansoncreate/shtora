@@ -9,6 +9,7 @@ import { appendMessage, asWarmth, getThread, markThreadRead, patchThread } from 
 import { sendChatMedia } from "@/lib/chat/media";
 import { commitBubbles, nextSeq } from "./commit";
 import { diagnosticLog } from "@/lib/diagnostics";
+import { resolveLastPhotoSceneId } from "@/lib/visual/source-reference";
 import type { ChatWorld } from "@/lib/chat/world";
 
 export async function runLiveTurn(username: string, messageId: string, viewing: boolean, stamp?: number) {
@@ -161,7 +162,7 @@ async function commitPhoto(
     instagramUrls: identityUrls(username),
     lastPhotoUrl: lastPic?.imageUrl,
     lastPhotoRole: lastPic?.role,
-    sceneId: lastPic?.debug?.sceneId || world.sceneId,
+    sceneId: resolveLastPhotoSceneId(lastPic?.debug?.sceneId, lastPic?.role, world.sceneId),
     username,
   });
   if (!media.ok) {
