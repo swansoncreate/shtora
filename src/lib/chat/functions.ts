@@ -494,6 +494,7 @@ function isSpicy(userText: string, kind: string) {
 export const buildPersona = createServerFn({ method: "POST" })
   .validator(
     z.object({
+      traceId: z.string().max(100).optional(),
       username: z.string().min(1).max(40),
       fullName: z.string().max(80).optional(),
       bio: z.string().max(400).optional(),
@@ -892,7 +893,7 @@ export const chatReply = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }): Promise<ChatOut> => {
-    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `dm-${Date.now().toString(36)}`;
+    const traceId = data.traceId || (typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `dm-${Date.now().toString(36)}`);
     const startedAt = Date.now();
     const { serverDiagnostic } = await import("@/lib/server/diagnostics.server");
     serverDiagnostic("info", "dm", "request received", {
