@@ -337,16 +337,31 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       }
 
       const { persistRemoteImage } = await import("@/lib/imagine/persist.server");
-      const url = (await persistRemoteImage(out.url)) || out.url;
-      if (found.sourcePath && username) await rememberSourcePath(username, found.sourcePath);
+      const persistedUrl = await persistRemoteImage(out.url);
+      const url = persistedUrl || out.url;
+      if (found.sourcePath && username) {
+        try {
+          await rememberSourcePath(username, found.sourcePath);
+        } catch (err) {
+          // A source-history write must not turn a successful generated image into a failed request.
+          serverDiagnostic("warn", "visual", "source history persistence failed", {
+            traceId,
+            kind: data.kind,
+            hasSourcePath: true,
+            errorType: err instanceof Error ? err.name : "unknown",
+          }, Date.now() - startedAt);
+        }
+      }
       serverDiagnostic("info", "visual", "image persisted", {
         traceId,
         kind: data.kind,
-        hasPersistedUrl: Boolean(url),
+        imagePersistedLocally: Boolean(persistedUrl),
+        usingRemoteFallback: !persistedUrl,
         hasJob: Boolean(job),
       }, Date.now() - startedAt);
 
       let sceneId = data.sceneId || sceneReference?.sceneId;
+      let visualMemorySaved = false;
       if (username) {
         const current: VisualContext = {
           ...baseContext,
@@ -396,6 +411,13 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
             sourcePath: found.sourcePath || undefined,
             tags: [data.kind, plan?.place, plan?.outfit].filter((v): v is string => Boolean(v)).slice(0, 20),
           });
+          visualMemorySaved = true;
+          serverDiagnostic("info", "visual", "visual memory saved", {
+            traceId,
+            kind: data.kind,
+            hasSceneId: Boolean(sceneId),
+            hasParent: Boolean(data.parentId || sceneReference?.id),
+          }, Date.now() - startedAt);
           if (job) await updateGenerationJob(username, job.id, { status: "persisted", finalPrompt: out.prompt || finalPrompt, provider: out.provider || "image-gateway" });
           try {
             const { commitWorld } = await import("@/lib/world/disk.server");
@@ -421,8 +443,15 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           } catch {
             /* world disk can be unavailable on ephemeral publication runtimes */
           }
-        } catch {
-          /* persistence is best-effort; the generated image remains usable */
+        } catch (err) {
+          // Keep the generated image usable, but make the failed persistence stage visible in diagnostics.
+          serverDiagnostic("error", "visual", "visual persistence chain failed", {
+            traceId,
+            kind: data.kind,
+            visualMemorySaved,
+            hasJob: Boolean(job),
+            errorType: err instanceof Error ? err.name : "unknown",
+          }, Date.now() - startedAt);
         }
       }
 
