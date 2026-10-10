@@ -139,7 +139,7 @@ async function commitPhoto(
   } catch {
     dropboxToken = undefined;
   }
-  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => item.role === "assistant" && item.imageUrl);
+  const lastPic = [...(getThread(username)?.messages ?? [])].reverse().find((item) => Boolean(item.imageUrl));
   const world = (getThread(username)?.world || {}) as ChatWorld;
   const media = await sendChatMedia({
     traceId,
