@@ -320,6 +320,7 @@ async function generateFor(
   const folder = folderForAccount(username, settings);
   const ownFolder = /\/общее$/i.test(folder) ? undefined : folder;
   const seed = username + "-" + slot + "-" + todayKey();
+  const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `feed-${Date.now().toString(36)}`;
   const thread = getThread(username);
   const world = thread?.world;
   const worldLine = [
@@ -333,6 +334,7 @@ async function generateFor(
   const pic = await composeChatPhoto({
     data: {
       kind: "feed",
+      traceId,
       prompt: feedPrompt(settings.imaginePrompt),
       noIdentity: true,
       dropboxToken: ownFolder ? dropboxToken : undefined,
@@ -357,6 +359,7 @@ async function generateFor(
     const next = await composeChatPhoto({
       data: {
         kind: "feed",
+        traceId,
         prompt: feedPrompt((settings.imaginePrompt || "") + " Same exact scene, person, outfit, light and time. Use a different natural pose and framing only."),
         noIdentity: true,
         sourceDataUrl: pic.url,
