@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Dices, Instagram, Settings } from "lucide-react";
+import { AlertCircle, Dices, Instagram, Settings, Sparkles } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DropboxBrowser } from "@/components/dropbox-browser";
 import { ImagineStudio } from "@/components/imagine-studio";
@@ -128,6 +128,14 @@ function Home() {
               <p className="font-display text-[2rem] font-medium leading-none tracking-tight text-fg sm:text-4xl">Штора</p>
               <p className="mt-1 text-sm text-muted">{caption}</p>
             </div>
+            <a
+              href="/redesign"
+              className="mr-1 inline-flex h-11 items-center gap-2 rounded-full border border-border/80 bg-elevated px-3 text-xs font-medium text-muted transition-colors hover:text-fg"
+              aria-label="Открыть новый дизайн"
+            >
+              <Sparkles className="size-4" />
+              <span className="hidden sm:inline">New vision</span>
+            </a>
             <Button
               variant="ghost"
               size="icon"
