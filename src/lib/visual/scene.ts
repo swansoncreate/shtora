@@ -42,7 +42,7 @@ export function resolveScene(input: {
   const newScene = explicitNew || sceneChanged(textChanges, prev, current);
 
   if (prev && !newScene && input.intent.mode !== "new_scene") {
-    return { ...prev, ...current, id: prev.id };
+    return { ...prev, ...current, id: current.sceneId || prev.id };
   }
 
   return {
