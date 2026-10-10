@@ -349,6 +349,7 @@ async function generateFor(
       timeContext: world?.timeContext || undefined,
       weather: world?.weather || undefined,
       world: worldLine || undefined,
+      sceneId: world?.sceneId || undefined,
       visualIntent: { mode: "new_scene", camera: "candid", reference: "identity" },
     },
   });
