@@ -88,7 +88,7 @@ export async function callGrokApp<T>(op: "reply" | "ping" | "imagine", data: unk
       return parsed as T;
     } catch (error) {
       serverDiagnostic("error", "grok", "invalid JSON response", { op, status: res.status, responseBytes: Buffer.byteLength(text), error }, duration);
-      return { ok: false, error: "Grok вернул некорректный ответ" } as T;
+      return { ok: false, error: "Grok вернул некорректный JSON-ответ" } as T;
     }
   } catch (err) {
     const duration = Date.now() - started;
