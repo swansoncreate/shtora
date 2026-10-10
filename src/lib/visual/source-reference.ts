@@ -37,6 +37,7 @@ export function resolveTurnPhotoSnapshot<T extends { id: string; imageUrl?: stri
   messageId: string,
 ): T | undefined {
   const messageIndex = messages.findIndex((item) => item.id === messageId);
-  const relevant = messageIndex >= 0 ? messages.slice(0, messageIndex + 1) : messages;
+  if (messageIndex < 0) return undefined;
+  const relevant = messages.slice(0, messageIndex + 1);
   return [...relevant].reverse().find((item) => Boolean(item.imageUrl));
 }
