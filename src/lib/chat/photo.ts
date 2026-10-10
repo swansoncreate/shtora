@@ -155,6 +155,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       identityUrl: z.string().max(2000).optional(),
       world: z.string().max(400).optional(),
       sourceDataUrl: z.string().min(32).max(8_000_000).optional(),
+      sourceImageUrl: z.string().max(2000).optional(),
       prompt: z.string().max(1200).optional(),
       noIdentity: z.boolean().optional(),
        username: z.string().min(1).max(40).optional(),
@@ -186,8 +187,11 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
           : deterministicPhotoIntent(data.userText || data.kind, Boolean(data.sourceDataUrl)));
       const latest = username ? await latestVisualMemory(username) : undefined;
       // A continuation must inherit context from its own scene, not whichever unrelated image was generated most recently (e.g. a feed post).
-      const sceneReference = username && "reference" in intent && intent.reference === "last_photo" && data.sceneId
-        ? (await listVisualMemory(username)).find((item) => item.sceneId === data.sceneId) || latest
+      const isLastPhotoContinuation = "reference" in intent && intent.reference === "last_photo";
+      const memories = username && isLastPhotoContinuation ? await listVisualMemory(username) : [];
+      const sceneReference = isLastPhotoContinuation
+        ? memories.find((item) => data.sourceImageUrl && item.imageUrl === data.sourceImageUrl)
+          || memories.find((item) => data.sceneId && item.sceneId === data.sceneId)
         : latest;
 
       if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
