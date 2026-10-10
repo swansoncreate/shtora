@@ -320,6 +320,16 @@ async function generateFor(
   const folder = folderForAccount(username, settings);
   const ownFolder = /\/общее$/i.test(folder) ? undefined : folder;
   const seed = username + "-" + slot + "-" + todayKey();
+  const thread = getThread(username);
+  const world = thread?.world;
+  const worldLine = [
+    world?.place ? `PLACE: ${world.place}` : "",
+    world?.clothes ? `CLOTHES: ${world.clothes}` : "",
+    world?.hair ? `HAIR: ${world.hair}` : "",
+    world?.activity ? `ACTIVITY: ${world.activity}` : "",
+    world?.timeContext ? `TIME: ${world.timeContext}` : "",
+    world?.weather ? `WEATHER: ${world.weather}` : "",
+  ].filter(Boolean).join(". ").slice(0, 400);
   const pic = await composeChatPhoto({
     data: {
       kind: "feed",
@@ -329,6 +339,13 @@ async function generateFor(
       dropboxFolder: ownFolder,
       dropboxSeed: seed,
       username,
+      scene: world?.place || undefined,
+      clothes: world?.clothes || undefined,
+      hair: world?.hair || undefined,
+      activity: world?.activity || undefined,
+      timeContext: world?.timeContext || undefined,
+      weather: world?.weather || undefined,
+      world: worldLine || undefined,
       visualIntent: { mode: "new_scene", camera: "candid", reference: "identity" },
     },
   });
