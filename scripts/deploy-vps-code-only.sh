@@ -20,27 +20,17 @@ for cmd in git npm node curl tar ss systemctl cp mv date mktemp df du; do
   command -v "$cmd" >/dev/null || { echo "Missing required command: $cmd" >&2; exit 1; }
 done
 
-[[ -d "$ROOT/.git" ]] || { echo "Expected Git checkout at $ROOT; no changes made." >&2; exit 1; }
+# The live VPS may intentionally be a prebuilt-output deployment, not a Git checkout.
+# Fetch/build the release in a temporary clone; do not require or alter live Git state.
 [[ -d "$ROOT/.vercel/output" ]] || { echo "Current build missing; no changes made." >&2; exit 1; }
 [[ -d "$ROOT/data" ]] || { echo "Persistent data directory missing; refusing to update." >&2; exit 1; }
 
-cd "$ROOT"
-current_branch="$(git branch --show-current)"
-[[ "$current_branch" == "$BRANCH" ]] || {
-  echo "Expected branch '$BRANCH', found '$current_branch'; no changes made." >&2
-  exit 1
-}
-[[ -z "$(git status --porcelain)" ]] || {
-  echo "Working tree is not clean. No changes made." >&2
-  git status --short
-  exit 1
-}
-
-pid="$(ss -ltnp "sport = :${PORT}" 2>/dev/null | sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p' | head -n1)"
+pid="$(ss -ltnp "sport = :${PORT}" 2>/dev/null | sed -n 's/.*pid=\\([0-9][0-9]*\\).*/\\1/p' | head -n1)"
 [[ -n "$pid" ]] || { echo "No process listening on port $PORT; no changes made." >&2; exit 1; }
-unit="$(grep -oE '[^/[:space:]]+\.service' "/proc/$pid/cgroup" 2>/dev/null | tail -n1 || true)"
+unit="$(grep -oE '[^/[:space:]]+\\.service' "/proc/$pid/cgroup" 2>/dev/null | tail -n1 || true)"
+[[ -n "$unit" ]] || { echo "Could not identify the systemd service for PID $pid; no changes made." >&2; exit 1; }
 [[ "$unit" == "$EXPECTED_SERVICE" ]] || {
-  echo "Expected service '$EXPECTED_SERVICE', found '${unit:-unknown}'. No changes made." >&2
+  echo "Expected service '$EXPECTED_SERVICE', found '$unit'. Stop and inspect the host before updating." >&2
   exit 1
 }
 systemctl is-active --quiet "$unit" || { echo "$unit is not active; no changes made." >&2; exit 1; }
