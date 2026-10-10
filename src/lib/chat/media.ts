@@ -152,11 +152,14 @@ export async function sendChatMedia(ask: MediaAsk): Promise<MediaOut> {
   diagnosticLog("info", "chat-photo", "generation started", { traceId: ask.traceId, kind: ask.kind, hasPreviousPhoto: Boolean(ask.lastPhotoUrl), gallery: ask.gallery });
   try {
     let sourceDataUrl: string | undefined;
+    const textIntent = deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl));
     const inferredIntent: PhotoIntent =
       ask.visualIntent ||
-      (ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
-        ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
-        : deterministicPhotoIntent(ask.userText || "", Boolean(ask.lastPhotoUrl)));
+      (textIntent.mode !== "none"
+        ? textIntent
+        : ask.kind === "back" || ask.kind === "side" || ask.kind === "full"
+          ? { mode: "continue", camera: ask.kind as CameraMode, reference: "last_photo" }
+          : textIntent);
     const needsLastPhoto = "reference" in inferredIntent && inferredIntent.reference === "last_photo";
     if (needsLastPhoto && !ask.lastPhotoUrl) {
       diagnosticLog("warn", "chat-photo", "continuation blocked: no previous chat photo", { traceId: ask.traceId, mode: inferredIntent.mode });
