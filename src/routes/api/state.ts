@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { AccountSnapshot } from "@/lib/server/snapshots";
+import { serverDiagnostic } from "@/lib/server/diagnostics.server";
 
 export const Route = createFileRoute("/api/state")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const started = Date.now();
+        serverDiagnostic("info", "api", "state request started", { method: "GET" });
         const { vpsOrLocal } = await import("@/lib/server/remote");
-        return vpsOrLocal(request, async () => {
+        const response = await vpsOrLocal(request, async () => {
         const [{ readAllDiskThreads }, { listSnapshots, readTickStatus, slimSnapshot }, tick] = await Promise.all([
           import("@/lib/chat/disk.server"),
           import("@/lib/server/snapshots"),
@@ -31,6 +34,8 @@ export const Route = createFileRoute("/api/state")({
           saved: status?.saved ?? 0,
         });
         });
+        serverDiagnostic(response.ok ? "info" : "warn", "api", "state request finished", { status: response.status }, Date.now() - started);
+        return response;
       },
     },
   },
