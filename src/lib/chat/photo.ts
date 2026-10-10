@@ -134,6 +134,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   .validator(
     z.object({
       kind: z.string().min(1).max(20),
+      traceId: z.string().max(100).optional(),
       userText: z.string().max(400).optional(),
       context: z.string().max(500).optional(),
       scene: z.string().max(300).optional(),
@@ -160,7 +161,7 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     let job: { id: string } | undefined;
-    const traceId = typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `visual-${Date.now().toString(36)}`;
+    const traceId = data.traceId || (typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `visual-${Date.now().toString(36)}`);
     const startedAt = Date.now();
     serverDiagnostic("info", "visual", "generation started", {
       traceId,
