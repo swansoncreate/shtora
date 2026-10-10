@@ -189,10 +189,23 @@ export const composeChatPhoto = createServerFn({ method: "POST" })
       // A continuation must inherit context from its own scene, not whichever unrelated image was generated most recently (e.g. a feed post).
       const isLastPhotoContinuation = "reference" in intent && intent.reference === "last_photo";
       const memories = username && isLastPhotoContinuation ? await listVisualMemory(username) : [];
-      const sceneReference = isLastPhotoContinuation
-        ? memories.find((item) => data.sourceImageUrl && item.imageUrl === data.sourceImageUrl)
-          || memories.find((item) => data.sceneId && item.sceneId === data.sceneId)
-        : latest;
+      const sourcePhotoReference = isLastPhotoContinuation
+        ? memories.find((item) => Boolean(data.sourceImageUrl) && item.imageUrl === data.sourceImageUrl)
+        : undefined;
+      const sceneIdReference = isLastPhotoContinuation
+        ? memories.find((item) => Boolean(data.sceneId) && item.sceneId === data.sceneId)
+        : undefined;
+      const sceneReference = isLastPhotoContinuation ? sourcePhotoReference || sceneIdReference : latest;
+      if (isLastPhotoContinuation) {
+        serverDiagnostic("info", "visual", "continuation source context resolved", {
+          traceId,
+          sourcePhotoProvided: Boolean(data.sourceImageUrl),
+          sourcePhotoMatch: Boolean(sourcePhotoReference),
+          sceneIdProvided: Boolean(data.sceneId),
+          sceneIdMatch: Boolean(sceneIdReference),
+          hasSceneContext: Boolean(sceneReference),
+        });
+      }
 
       if (username && (intent.mode === "memory" || intent.mode === "gallery")) {
         const query = intent.mode === "memory" ? intent.memoryQuery : intent.query;
